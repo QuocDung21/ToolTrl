@@ -5,6 +5,20 @@ import NaturalLanguage
 import Translation
 #endif
 
+public struct WordGloss: Identifiable, Sendable, Hashable {
+    public var id = UUID()
+    public let original: String
+    public var gloss: String
+    public let cleanWord: String
+    
+    public init(id: UUID = UUID(), original: String, gloss: String, cleanWord: String) {
+        self.id = id
+        self.original = original
+        self.gloss = gloss
+        self.cleanWord = cleanWord
+    }
+}
+
 @MainActor
 public final class TranslationViewModel: ObservableObject {
     @Published public var originalText: String = ""
@@ -12,6 +26,7 @@ public final class TranslationViewModel: ObservableObject {
     @Published public var detectedLanguage: String = "en"
     @Published public var definition: String? = nil
     @Published public var richEntry: RichWordEntry? = nil
+    @Published public var wordGlosses: [WordGloss] = []
     @Published public var isLoading: Bool = false
     @Published public var isBookmarked: Bool = false
     @Published public var targetLanguage: TargetLanguage {
@@ -50,6 +65,7 @@ public final class TranslationViewModel: ObservableObject {
         self.translatedText = ""
         self.definition = nil
         self.richEntry = nil
+        self.wordGlosses = []
         self.isLoading = true
         self.isBookmarked = VocabularyService.shared.isWordSaved(trimmed)
         
@@ -82,9 +98,12 @@ public final class TranslationViewModel: ObservableObject {
                     self.speakOriginal()
                 }
             }
+        } else {
+            // 3. Fetch Word-by-Word Glosses in Parallel
+            fetchWordGlosses(for: trimmed)
         }
         
-        // 3. Trigger Apple Neural AI Translation
+        // 4. Trigger Apple Neural AI Translation
         updateTranslation()
     }
     
@@ -109,6 +128,55 @@ public final class TranslationViewModel: ObservableObject {
             if self.translatedText.isEmpty && self.isLoading {
                 await self.runFallbackTranslation()
             }
+        }
+    }
+    
+    // MARK: - Parallel Word-by-Word Gloss Fetcher
+    private func fetchWordGlosses(for text: String) {
+        let tokens = text.split(separator: " ").map { String($0) }
+        guard tokens.count >= 2 && tokens.count <= 50 else { return }
+        
+        // Initial placeholder glosses
+        self.wordGlosses = tokens.map { token in
+            let clean = token.trimmingCharacters(in: .punctuationCharacters)
+            return WordGloss(original: token, gloss: "...", cleanWord: clean)
+        }
+        
+        Task {
+            let target = self.targetLanguage.rawValue
+            var results: [WordGloss] = []
+            
+            await withTaskGroup(of: (Int, String, String, String).self) { group in
+                for (index, token) in tokens.enumerated() {
+                    let clean = token.trimmingCharacters(in: .punctuationCharacters)
+                    group.addTask {
+                        guard !clean.isEmpty else {
+                            return (index, token, "", clean)
+                        }
+                        
+                        let cacheKey = "gloss_\(clean.lowercased())_\(target)"
+                        if let cached = TranslationCache.shared.getTranslation(key: cacheKey) {
+                            return (index, token, cached, clean)
+                        }
+                        
+                        if let translated = await TranslationService.shared.translateFallback(text: clean, from: "auto", to: target) {
+                            let cleanTrans = translated.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                            TranslationCache.shared.setTranslation(key: cacheKey, value: cleanTrans)
+                            return (index, token, cleanTrans, clean)
+                        }
+                        return (index, token, clean.lowercased(), clean)
+                    }
+                }
+                
+                var gathered: [(Int, String, String, String)] = []
+                for await item in group {
+                    gathered.append(item)
+                }
+                gathered.sort { $0.0 < $1.0 }
+                results = gathered.map { WordGloss(original: $0.1, gloss: $0.2, cleanWord: $0.3) }
+            }
+            
+            self.wordGlosses = results
         }
     }
     

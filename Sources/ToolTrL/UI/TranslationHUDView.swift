@@ -495,8 +495,8 @@ public struct TranslationHUDView: View {
             
             // Content based on selected mode
             switch AppSettings.shared.translationDisplayMode {
-            case .stacked:
-                stackedSentenceTranslationView
+            case .wordByWord:
+                wordByWordSentenceTranslationView
             case .onlyTarget:
                 onlyTargetSentenceTranslationView
             case .standard:
@@ -505,90 +505,146 @@ public struct TranslationHUDView: View {
         }
     }
     
-    // MARK: - Mode 1: Song Ngữ Gộp (Tiếng Việt trên - Tiếng Anh dưới)
-    private var stackedSentenceTranslationView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 10))
-                        .foregroundColor(.blue)
-                    Text("SONG NGỮ GỘP (VIỆT - ANH)")
-                        .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(.blue)
-                }
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.55)
-                        .frame(width: 10, height: 10)
-                }
-                
-                Spacer()
-                
-                // Audio Vietnamese
-                Button(action: {
-                    viewModel.speakTranslated()
-                }) {
-                    HStack(spacing: 2) {
-                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 9))
-                        Text("Đọc TV")
-                            .font(.system(size: 9.5, weight: .medium))
+    // MARK: - Mode 1: Dịch Từng Từ Tương Ứng (Interlinear Ruby: Việt trên - Anh dưới)
+    private var wordByWordSentenceTranslationView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Interlinear Word Flow Box
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(systemName: "character.bubble.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.blue)
+                        Text("DỊCH TỪNG TỪ TƯƠNG ỨNG (RUBY)")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundColor(.blue)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2.5)
-                    .background(Color.blue.opacity(0.1))
-                    .foregroundColor(.blue)
-                    .cornerRadius(4)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        viewModel.speakOriginal()
+                    }) {
+                        HStack(spacing: 2) {
+                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 9))
+                            Text("Nghe TA")
+                                .font(.system(size: 9.5, weight: .medium))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2.5)
+                        .background(Color.primary.opacity(0.06))
+                        .foregroundColor(.secondary)
+                        .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Nghe phát âm cả câu tiếng Anh")
                 }
-                .buttonStyle(.plain)
-                .help("Nghe đọc tiếng Việt")
                 
-                // Audio English
-                Button(action: {
-                    viewModel.speakOriginal()
-                }) {
-                    HStack(spacing: 2) {
-                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 9))
-                        Text("Đọc TA")
-                            .font(.system(size: 9.5, weight: .medium))
+                // Word-by-Word Interlinear Flow
+                if !viewModel.wordGlosses.isEmpty {
+                    WrappingHStack(models: viewModel.wordGlosses) { item in
+                        Button(action: {
+                            viewModel.speakCustom(text: item.cleanWord, languageCode: "en-US", speakerID: "wbw_\(item.id)")
+                        }) {
+                            VStack(spacing: 2) {
+                                // Tiếng Việt ở trên
+                                Text(item.gloss.isEmpty ? "—" : item.gloss)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.blue)
+                                    .lineLimit(1)
+                                
+                                // Tiếng Anh ở dưới
+                                Text(item.original)
+                                    .font(.system(size: 12.5, weight: .medium))
+                                    .foregroundColor(.primary)
+                                    .lineLimit(1)
+                            }
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3.5)
+                            .background(Color.blue.opacity(0.06))
+                            .cornerRadius(5)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .stroke(Color.blue.opacity(0.18), lineWidth: 0.8)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .help("Bấm để nghe đọc từ [\(item.cleanWord)]")
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2.5)
-                    .background(Color.primary.opacity(0.06))
-                    .foregroundColor(.secondary)
-                    .cornerRadius(4)
+                } else {
+                    LiveSpokenTextView(
+                        text: viewModel.originalText,
+                        speakerID: "original",
+                        font: .system(size: 12),
+                        defaultColor: .primary,
+                        lineSpacing: 3.5
+                    )
                 }
-                .buttonStyle(.plain)
-                .help("Nghe đọc tiếng Anh")
-                
-                // Copy Button
-                Button(action: {
-                    viewModel.copyTranslation()
-                    copied = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                        copied = false
-                    }
-                }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 9))
-                        Text(copied ? "Đã chép" : "Sao chép")
-                            .font(.system(size: 9.5, weight: .medium))
-                    }
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2.5)
-                    .background(Color.blue.opacity(0.12))
-                    .foregroundColor(.blue)
-                    .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
             }
+            .padding(10)
+            .background(Color.primary.opacity(0.03))
+            .cornerRadius(8)
             
-            VStack(alignment: .leading, spacing: 8) {
-                // Tiếng Việt ở trên (Vibrant & Bold)
+            // Full Natural AI Translation Card
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.blue)
+                        Text("CÂU DỊCH HOÀN CHỈNH (AI)")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.blue)
+                    }
+                    
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .scaleEffect(0.5)
+                            .frame(width: 10, height: 10)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        viewModel.speakTranslated()
+                    }) {
+                        HStack(spacing: 2) {
+                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 9))
+                            Text("Nghe TV")
+                                .font(.system(size: 9.5, weight: .medium))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2.5)
+                        .background(Color.blue.opacity(0.12))
+                        .foregroundColor(.blue)
+                        .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Button(action: {
+                        viewModel.copyTranslation()
+                        copied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            copied = false
+                        }
+                    }) {
+                        HStack(spacing: 3) {
+                            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                                .font(.system(size: 9))
+                            Text(copied ? "Đã chép" : "Sao chép")
+                                .font(.system(size: 9.5, weight: .medium))
+                        }
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2.5)
+                        .background(Color.blue.opacity(0.12))
+                        .foregroundColor(.blue)
+                        .cornerRadius(4)
+                    }
+                    .buttonStyle(.plain)
+                }
+                
                 if viewModel.translatedText.isEmpty && viewModel.isLoading {
                     Text("Đang dịch thông minh bằng AI...")
                         .font(.system(size: 12.5))
@@ -599,26 +655,14 @@ public struct TranslationHUDView: View {
                     LiveSpokenTextView(
                         text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
                         speakerID: "translated",
-                        font: .system(size: 13.5, weight: .semibold),
+                        font: .system(size: 13, weight: .medium),
                         defaultColor: .primary,
                         lineSpacing: 4
                     )
                 }
-                
-                Divider()
-                    .opacity(0.25)
-                
-                // Tiếng Anh ở dưới (Secondary & Elegant)
-                LiveSpokenTextView(
-                    text: viewModel.originalText,
-                    speakerID: "original",
-                    font: .system(size: 11.5),
-                    defaultColor: .secondary,
-                    lineSpacing: 3.5
-                )
             }
             .padding(11)
-            .background(Color.blue.opacity(0.06))
+            .background(Color.blue.opacity(0.07))
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
