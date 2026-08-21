@@ -108,6 +108,16 @@ public struct TranslationHUDView: View {
             
             Spacer()
             
+            Button(action: {
+                SettingsWindowController.shared.showSettings()
+            }) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary.opacity(0.75))
+            }
+            .buttonStyle(.plain)
+            .help("Cài đặt (Settings)")
+            
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 13))

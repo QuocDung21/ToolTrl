@@ -31,8 +31,9 @@ public final class SpeechService: NSObject, ObservableObject, AVSpeechSynthesize
         guard !trimmed.isEmpty else { return }
         
         let utterance = AVSpeechUtterance(string: trimmed)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
-        utterance.pitchMultiplier = 1.0
+        let rate = Float(AppSettings.shared.speechRate)
+        utterance.rate = min(max(rate, 0.2), 0.8)
+        utterance.pitchMultiplier = Float(AppSettings.shared.speechPitch)
         
         if let lang = languageCode {
             utterance.voice = AVSpeechSynthesisVoice(language: lang)

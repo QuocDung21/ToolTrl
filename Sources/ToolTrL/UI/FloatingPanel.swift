@@ -84,8 +84,10 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     private func startOutsideClickMonitor() {
         stopOutsideClickMonitor()
+        guard AppSettings.shared.clickOutsideDismiss else { return }
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
             guard let self = self, self.isVisible else { return }
+            guard AppSettings.shared.clickOutsideDismiss else { return }
             let clickLocation = NSEvent.mouseLocation
             if !NSMouseInRect(clickLocation, self.frame, false) {
                 DispatchQueue.main.async {

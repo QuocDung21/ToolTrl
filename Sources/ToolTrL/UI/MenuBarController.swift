@@ -68,6 +68,10 @@ public final class MenuBarController: NSObject {
         axItem.target = self
         menu.addItem(axItem)
         
+        let settingsItem = NSMenuItem(title: "Cài đặt...", action: #selector(handleOpenSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         let quitItem = NSMenuItem(title: "Thoát ToolTrL", action: #selector(handleQuit), keyEquivalent: "q")
@@ -94,6 +98,10 @@ public final class MenuBarController: NSObject {
     
     @objc private func handleAccessibilityCheck() {
         _ = TextGrabber.isAccessibilityTrusted(prompt: true)
+    }
+    
+    @objc private func handleOpenSettings() {
+        SettingsWindowController.shared.showSettings()
     }
     
     @objc private func handleQuit() {
