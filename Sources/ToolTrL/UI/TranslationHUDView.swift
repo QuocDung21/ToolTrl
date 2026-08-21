@@ -5,6 +5,7 @@ import Translation
 
 public struct TranslationHUDView: View {
     @ObservedObject var viewModel: TranslationViewModel
+    @ObservedObject var speechService = SpeechService.shared
     var onClose: () -> Void
     
     @State private var manualInput: String = ""
@@ -124,23 +125,26 @@ public struct TranslationHUDView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Header: Word + Pronounce Button + Bookmark + Phonetic IPA
             HStack(alignment: .center, spacing: 8) {
-                Text(entry.word)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.primary)
+                LiveSpokenTextView(
+                    text: entry.word,
+                    speakerID: "original",
+                    font: .system(size: 17, weight: .bold),
+                    defaultColor: .primary
+                )
                 
-                // Pronounce Button
+                // Pronounce Button with active wave animation
                 Button(action: {
                     viewModel.speakOriginal()
                 }) {
                     HStack(spacing: 3) {
-                        Image(systemName: "speaker.wave.2.fill")
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 9.5))
-                        Text("Phát âm")
+                        Text((speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "Đang đọc" : "Phát âm")
                             .font(.system(size: 10, weight: .medium))
                     }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
-                    .background(Color.blue.opacity(0.12))
+                    .background((speechService.isSpeaking && speechService.currentSpeakerID == "original") ? Color.blue.opacity(0.25) : Color.blue.opacity(0.12))
                     .foregroundColor(.blue)
                     .cornerRadius(12)
                 }
@@ -170,11 +174,13 @@ public struct TranslationHUDView: View {
                 }
             }
             
-            // Main Vietnamese Translation
-            Text(entry.mainTranslation)
-                .font(.system(size: 14.5, weight: .bold))
-                .foregroundColor(.blue)
-                .textSelection(.enabled)
+            // Main Vietnamese Translation with speech highlight
+            LiveSpokenTextView(
+                text: entry.mainTranslation,
+                speakerID: "translated",
+                font: .system(size: 14.5, weight: .bold),
+                defaultColor: .blue
+            )
             
             // Meaning Groups
             ForEach(entry.meanings) { group in
@@ -204,33 +210,69 @@ public struct TranslationHUDView: View {
                         ForEach(Array(group.definitions.enumerated()), id: \.offset) { index, item in
                             VStack(alignment: .leading, spacing: 2.5) {
                                 // English Definition
-                                Text("\(index + 1). \(item.definitionEn)")
-                                    .font(.system(size: 11.5, weight: .semibold))
-                                    .foregroundColor(.primary.opacity(0.88))
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .textSelection(.enabled)
+                                HStack(alignment: .top, spacing: 3) {
+                                    Text("\(index + 1).")
+                                        .font(.system(size: 11.5, weight: .bold))
+                                        .foregroundColor(.primary.opacity(0.88))
+                                    
+                                    LiveSpokenTextView(
+                                        text: item.definitionEn,
+                                        speakerID: "def_\(group.partOfSpeech)_\(index)",
+                                        font: .system(size: 11.5, weight: .semibold),
+                                        defaultColor: .primary.opacity(0.88)
+                                    )
+                                    
+                                    Button(action: {
+                                        viewModel.speakCustom(text: item.definitionEn, languageCode: "en-US", speakerID: "def_\(group.partOfSpeech)_\(index)")
+                                    }) {
+                                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "def_\(group.partOfSpeech)_\(index)") ? "speaker.wave.3.fill" : "speaker.wave.1")
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.blue.opacity(0.8))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                                 
                                 // Vietnamese Translation
                                 if let vi = item.definitionVi, !vi.isEmpty {
                                     HStack(alignment: .top, spacing: 3) {
                                         Text("👉")
                                             .font(.system(size: 10.5))
-                                        Text(vi)
-                                            .font(.system(size: 11, weight: .medium))
-                                            .foregroundColor(.blue)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                            .textSelection(.enabled)
+                                        LiveSpokenTextView(
+                                            text: vi,
+                                            speakerID: "def_vi_\(group.partOfSpeech)_\(index)",
+                                            font: .system(size: 11, weight: .medium),
+                                            defaultColor: .blue
+                                        )
                                     }
                                 }
                                 
                                 // Example in English
                                 if let exEn = item.exampleEn, !exEn.isEmpty {
-                                    Text("\"\(exEn)\"")
-                                        .font(.system(size: 10.5, design: .serif))
-                                        .italic()
-                                        .foregroundColor(.secondary)
-                                        .padding(.leading, 6)
-                                        .textSelection(.enabled)
+                                    HStack(alignment: .top, spacing: 4) {
+                                        Text("\"")
+                                            .font(.system(size: 10.5))
+                                            .foregroundColor(.secondary)
+                                        LiveSpokenTextView(
+                                            text: exEn,
+                                            speakerID: "ex_\(group.partOfSpeech)_\(index)",
+                                            font: .system(size: 10.5, design: .serif),
+                                            defaultColor: .secondary
+                                        )
+                                        Text("\"")
+                                            .font(.system(size: 10.5))
+                                            .foregroundColor(.secondary)
+                                        
+                                        Button(action: {
+                                            viewModel.speakCustom(text: exEn, languageCode: "en-US", speakerID: "ex_\(group.partOfSpeech)_\(index)")
+                                        }) {
+                                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "ex_\(group.partOfSpeech)_\(index)") ? "speaker.wave.3.fill" : "speaker.wave.1")
+                                                .font(.system(size: 8.5))
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    .italic()
+                                    .padding(.leading, 6)
                                 }
                                 
                                 // Example in Vietnamese
@@ -313,14 +355,17 @@ public struct TranslationHUDView: View {
     private var dictionaryFallbackView: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Text(viewModel.originalText.capitalized)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.primary)
+                LiveSpokenTextView(
+                    text: viewModel.originalText.capitalized,
+                    speakerID: "original",
+                    font: .system(size: 16, weight: .bold),
+                    defaultColor: .primary
+                )
                 
                 Button(action: {
                     viewModel.speakOriginal()
                 }) {
-                    Image(systemName: "speaker.wave.2.fill")
+                    Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
                         .font(.system(size: 11))
                         .foregroundColor(.blue)
                 }
@@ -329,10 +374,12 @@ public struct TranslationHUDView: View {
                 Spacer()
             }
             
-            Text(viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.blue)
-                .textSelection(.enabled)
+            LiveSpokenTextView(
+                text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                speakerID: "translated",
+                font: .system(size: 14, weight: .bold),
+                defaultColor: .blue
+            )
             
             if let def = viewModel.definition, !def.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
@@ -404,7 +451,7 @@ public struct TranslationHUDView: View {
                     Button(action: {
                         viewModel.speakOriginal()
                     }) {
-                        Image(systemName: "speaker.wave.2.fill")
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 10.5))
                             .foregroundColor(.blue)
                     }
@@ -412,12 +459,13 @@ public struct TranslationHUDView: View {
                     .help("Nghe phát âm")
                 }
                 
-                Text(viewModel.originalText)
-                    .font(.system(size: 12))
-                    .lineSpacing(3.5)
-                    .foregroundColor(.primary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
+                LiveSpokenTextView(
+                    text: viewModel.originalText,
+                    speakerID: "original",
+                    font: .system(size: 12),
+                    defaultColor: .primary,
+                    lineSpacing: 3.5
+                )
             }
             .padding(10)
             .background(Color.primary.opacity(0.03))
@@ -441,7 +489,7 @@ public struct TranslationHUDView: View {
                     Button(action: {
                         viewModel.speakTranslated()
                     }) {
-                        Image(systemName: "speaker.wave.2.fill")
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 10.5))
                             .foregroundColor(.blue)
                     }
@@ -479,12 +527,13 @@ public struct TranslationHUDView: View {
                     }
                     .padding(.vertical, 4)
                 } else {
-                    Text(viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText)
-                        .font(.system(size: 12.5, weight: .regular))
-                        .lineSpacing(4)
-                        .foregroundColor(.primary)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
+                    LiveSpokenTextView(
+                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                        speakerID: "translated",
+                        font: .system(size: 12.5, weight: .regular),
+                        defaultColor: .primary,
+                        lineSpacing: 4
+                    )
                 }
             }
             .padding(11)
@@ -550,6 +599,43 @@ public struct TranslationHUDView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(Color.primary.opacity(0.02))
+    }
+}
+
+// MARK: - Live Spoken Text View with Real-time Word Highlight
+struct LiveSpokenTextView: View {
+    let text: String
+    let speakerID: String
+    @ObservedObject var speechService = SpeechService.shared
+    var font: Font = .system(size: 12)
+    var defaultColor: Color = .primary
+    var lineSpacing: CGFloat = 3.5
+    
+    var body: some View {
+        Text(attributedText)
+            .font(font)
+            .lineSpacing(lineSpacing)
+            .textSelection(.enabled)
+            .fixedSize(horizontal: false, vertical: true)
+            .animation(.easeInOut(duration: 0.08), value: speechService.spokenRange)
+    }
+    
+    private var attributedText: AttributedString {
+        var attr = AttributedString(text)
+        attr.foregroundColor = defaultColor
+        
+        if speechService.isSpeaking && speechService.currentSpeakerID == speakerID,
+           let nsRange = speechService.spokenRange,
+           let swiftRange = Range(nsRange, in: text) {
+            
+            if let lower = AttributedString.Index(swiftRange.lowerBound, within: attr),
+               let upper = AttributedString.Index(swiftRange.upperBound, within: attr) {
+                attr[lower..<upper].backgroundColor = Color.blue.opacity(0.3)
+                attr[lower..<upper].foregroundColor = Color.blue
+                attr[lower..<upper].inlinePresentationIntent = .stronglyEmphasized
+            }
+        }
+        return attr
     }
 }
 

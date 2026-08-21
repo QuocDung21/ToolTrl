@@ -44,6 +44,8 @@ public final class TranslationViewModel: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         
+        SpeechService.shared.stop()
+        
         self.originalText = trimmed
         self.translatedText = ""
         self.definition = nil
@@ -91,12 +93,11 @@ public final class TranslationViewModel: ObservableObject {
         if #available(macOS 15.0, *) {
             let source = Locale.Language(identifier: detectedLanguage)
             let target = Locale.Language(identifier: targetLanguage.rawValue)
-            // Trigger native Apple TranslationTask
             self.translationConfig = TranslationSession.Configuration(source: source, target: target)
         }
         #endif
         
-        // Fallback watchdog: If Apple Translation doesn't respond in 1.8s, run fallback
+        // Fallback watchdog
         Task {
             try? await Task.sleep(nanoseconds: 1_800_000_000)
             guard self.translationTaskID == currentID else { return }
@@ -129,12 +130,16 @@ public final class TranslationViewModel: ObservableObject {
     
     public func speakOriginal() {
         let voiceCode = detectedLanguage == "vi" ? "vi-VN" : (detectedLanguage == "ja" ? "ja-JP" : (detectedLanguage == "zh" ? "zh-CN" : "en-US"))
-        SpeechService.shared.speak(text: originalText, languageCode: voiceCode)
+        SpeechService.shared.speak(text: originalText, languageCode: voiceCode, speakerID: "original")
     }
     
     public func speakTranslated() {
         let voiceCode = targetLanguage == .vietnamese ? "vi-VN" : (targetLanguage == .japanese ? "ja-JP" : (targetLanguage == .chinese ? "zh-CN" : "en-US"))
-        SpeechService.shared.speak(text: translatedText, languageCode: voiceCode)
+        SpeechService.shared.speak(text: translatedText, languageCode: voiceCode, speakerID: "translated")
+    }
+    
+    public func speakCustom(text: String, languageCode: String? = nil, speakerID: String) {
+        SpeechService.shared.speak(text: text, languageCode: languageCode, speakerID: speakerID)
     }
     
     public func copyTranslation() {

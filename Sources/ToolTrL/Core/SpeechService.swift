@@ -2,34 +2,47 @@ import Foundation
 import AVFoundation
 
 @MainActor
-public final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
+public final class SpeechService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     public static let shared = SpeechService()
     
     private let synthesizer = AVSpeechSynthesizer()
-    private var isSpeaking = false
+    
+    @Published public var isSpeaking: Bool = false
+    @Published public var spokenRange: NSRange? = nil
+    @Published public var currentSpeakerID: String? = nil
     
     private override init() {
         super.init()
         synthesizer.delegate = self
     }
     
-    public func speak(text: String, languageCode: String? = nil) {
+    public func speak(text: String, languageCode: String? = nil, speakerID: String = "default") {
         if synthesizer.isSpeaking {
+            let wasSpeakingSame = (currentSpeakerID == speakerID)
             synthesizer.stopSpeaking(at: .immediate)
+            spokenRange = nil
+            isSpeaking = false
+            currentSpeakerID = nil
+            // If user clicked the same speaker button that is currently playing -> Toggle stop!
+            if wasSpeakingSame { return }
         }
         
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
         
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.95
+        let utterance = AVSpeechUtterance(string: trimmed)
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.92
         utterance.pitchMultiplier = 1.0
         
         if let lang = languageCode {
             utterance.voice = AVSpeechSynthesisVoice(language: lang)
         } else {
-            // Default to system or en-US
             utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         }
+        
+        self.currentSpeakerID = speakerID
+        self.isSpeaking = true
+        self.spokenRange = nil
         
         synthesizer.speak(utterance)
     }
@@ -37,6 +50,38 @@ public final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
     public func stop() {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
+        }
+        isSpeaking = false
+        spokenRange = nil
+        currentSpeakerID = nil
+    }
+    
+    // MARK: - AVSpeechSynthesizerDelegate
+    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, willSpeakRangeOfSpeechString characterRange: NSRange, utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.spokenRange = characterRange
+        }
+    }
+    
+    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didStart utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.isSpeaking = true
+        }
+    }
+    
+    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.isSpeaking = false
+            self.spokenRange = nil
+            self.currentSpeakerID = nil
+        }
+    }
+    
+    public nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.isSpeaking = false
+            self.spokenRange = nil
+            self.currentSpeakerID = nil
         }
     }
 }
