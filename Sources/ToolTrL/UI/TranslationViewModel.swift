@@ -29,6 +29,7 @@ public final class TranslationViewModel: ObservableObject {
     @Published public var wordGlosses: [WordGloss] = []
     @Published public var isLoading: Bool = false
     @Published public var isBookmarked: Bool = false
+    @Published public var activeEngineBadge: String = "⚡ Apple Neural AI"
     @Published public var targetLanguage: TargetLanguage {
         didSet {
             UserDefaults.standard.set(targetLanguage.rawValue, forKey: "target_language")
@@ -69,6 +70,9 @@ public final class TranslationViewModel: ObservableObject {
         self.isLoading = true
         self.isBookmarked = VocabularyService.shared.isWordSaved(trimmed)
         
+        // Update active engine badge
+        updateEngineBadge()
+        
         // 1. Detect source language
         let detected = TranslationService.shared.detectLanguage(for: trimmed)
         self.detectedLanguage = detected
@@ -103,8 +107,21 @@ public final class TranslationViewModel: ObservableObject {
             fetchWordGlosses(for: trimmed)
         }
         
-        // 4. Trigger Apple Neural AI Translation
+        // 4. Trigger AI Translation
         updateTranslation()
+    }
+    
+    public func updateEngineBadge() {
+        switch AppSettings.shared.aiTranslationEngine {
+        case .appleNeural:
+            self.activeEngineBadge = "⚡ Apple Neural AI"
+        case .huggingFaceLocal:
+            let model = LocalModelService.shared.activeModelName
+            self.activeEngineBadge = "🤗 \(model)"
+        case .ollamaLocal:
+            let model = LocalModelService.shared.ollamaModelName
+            self.activeEngineBadge = "🦙 Ollama: \(model)"
+        }
     }
     
     public func updateTranslation() {
@@ -113,19 +130,33 @@ public final class TranslationViewModel: ObservableObject {
         let currentID = UUID()
         self.translationTaskID = currentID
         
-        #if canImport(Translation)
-        if #available(macOS 15.0, *) {
-            let source = Locale.Language(identifier: detectedLanguage)
-            let target = Locale.Language(identifier: targetLanguage.rawValue)
-            self.translationConfig = TranslationSession.Configuration(source: source, target: target)
-        }
-        #endif
+        updateEngineBadge()
         
-        // Fallback watchdog
-        Task {
-            try? await Task.sleep(nanoseconds: 1_800_000_000)
-            guard self.translationTaskID == currentID else { return }
-            if self.translatedText.isEmpty && self.isLoading {
+        // If Apple Neural AI is chosen -> Use Apple Translation framework if available
+        if AppSettings.shared.aiTranslationEngine == .appleNeural {
+            #if canImport(Translation)
+            if #available(macOS 15.0, *) {
+                let source = Locale.Language(identifier: detectedLanguage)
+                let target = Locale.Language(identifier: targetLanguage.rawValue)
+                self.translationConfig = TranslationSession.Configuration(source: source, target: target)
+            }
+            #endif
+            
+            // Watchdog fallback
+            Task {
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+                guard self.translationTaskID == currentID else { return }
+                if self.translatedText.isEmpty && self.isLoading {
+                    await self.runFallbackTranslation()
+                }
+            }
+        } else {
+            // If Local Model / Ollama is chosen -> Bypass Apple Translation and run local model directly
+            #if canImport(Translation)
+            self.translationConfig = nil
+            #endif
+            
+            Task {
                 await self.runFallbackTranslation()
             }
         }
@@ -203,7 +234,7 @@ public final class TranslationViewModel: ObservableObject {
             from: self.detectedLanguage,
             to: self.targetLanguage.rawValue
         ) {
-            if self.translatedText.isEmpty {
+            if self.translatedText.isEmpty || AppSettings.shared.aiTranslationEngine != .appleNeural {
                 self.translatedText = fallback
             }
         }

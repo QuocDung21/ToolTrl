@@ -314,6 +314,58 @@ public struct SettingsView: View {
                         }
                     }
                 }
+                
+                // 5. Storage Cleanup & Management Card
+                settingCard(title: "Dọn Dẹp Bộ Nhớ & Dung Lượng", icon: "trash.circle.fill") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Dung lượng Model & Cache đang dùng:")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                Text(localModelService.totalStorageUsedFormatted)
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                localModelService.cleanTempFilesAndCache()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                    Text("Dọn cache & File rác")
+                                }
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .background(Color.primary.opacity(0.06))
+                                .foregroundColor(.primary)
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            if !localModelService.installedModels.isEmpty {
+                                Button(action: {
+                                    localModelService.cleanAllModels()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "trash.fill")
+                                        Text("Xóa hết Model")
+                                    }
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 9)
+                                    .padding(.vertical, 5)
+                                    .background(Color.red.opacity(0.12))
+                                    .foregroundColor(.red)
+                                    .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

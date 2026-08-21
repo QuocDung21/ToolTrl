@@ -7,6 +7,7 @@ public struct LocalModelInfo: Identifiable, Codable, Equatable, Sendable {
     public let name: String
     public let filename: String
     public let fileSizeFormatted: String
+    public let fileSizeBytes: Int64
     public let dateAdded: Date
     public var isSelected: Bool
     
@@ -15,6 +16,7 @@ public struct LocalModelInfo: Identifiable, Codable, Equatable, Sendable {
         name: String,
         filename: String,
         fileSizeFormatted: String,
+        fileSizeBytes: Int64 = 0,
         dateAdded: Date = Date(),
         isSelected: Bool = false
     ) {
@@ -22,6 +24,7 @@ public struct LocalModelInfo: Identifiable, Codable, Equatable, Sendable {
         self.name = name
         self.filename = filename
         self.fileSizeFormatted = fileSizeFormatted
+        self.fileSizeBytes = fileSizeBytes
         self.dateAdded = dateAdded
         self.isSelected = isSelected
     }
@@ -50,6 +53,14 @@ public enum AITranslationEngine: String, CaseIterable, Identifiable, Sendable {
     
     public var id: String { rawValue }
     
+    public var shortName: String {
+        switch self {
+        case .appleNeural: return "Apple Neural AI"
+        case .huggingFaceLocal: return "Hugging Face Local"
+        case .ollamaLocal: return "Ollama Local"
+        }
+    }
+    
     public var icon: String {
         switch self {
         case .appleNeural: return "apple.logo"
@@ -64,6 +75,7 @@ public final class LocalModelService: NSObject, ObservableObject {
     public static let shared = LocalModelService()
     
     @Published public var installedModels: [LocalModelInfo] = []
+    @Published public var totalStorageUsedFormatted: String = "0 MB"
     @Published public var isDownloading: Bool = false
     @Published public var downloadProgress: Double = 0.0
     @Published public var downloadStatusText: String = ""
@@ -71,6 +83,7 @@ public final class LocalModelService: NSObject, ObservableObject {
     @Published public var ollamaEndpoint: String = "http://localhost:11434"
     @Published public var ollamaModelName: String = "qwen2.5:0.5b"
     @Published public var isOllamaAvailable: Bool = false
+    @Published public var activeModelName: String = "Chưa chọn model"
     
     public let presets: [HuggingFaceModelPreset] = [
         HuggingFaceModelPreset(
@@ -97,12 +110,14 @@ public final class LocalModelService: NSObject, ObservableObject {
     ]
     
     private var downloadTask: URLSessionDownloadTask?
+    private var tempDownloadLocation: URL?
+    
     private lazy var urlSession: URLSession = {
         let config = URLSessionConfiguration.default
         return URLSession(configuration: config, delegate: self, delegateQueue: .main)
     }()
     
-    private var modelsDirectory: URL {
+    public var modelsDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent("ToolTrL/Models", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -119,29 +134,42 @@ public final class LocalModelService: NSObject, ObservableObject {
         let dir = modelsDirectory
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey]) else {
             self.installedModels = []
+            self.totalStorageUsedFormatted = "0 MB"
+            self.activeModelName = "Chưa có model"
             return
         }
         
         var list: [LocalModelInfo] = []
+        var totalBytes: Int64 = 0
         let selectedFilename = UserDefaults.standard.string(forKey: "selected_local_model_filename")
         
         for file in files where file.pathExtension.lowercased() == "gguf" || file.pathExtension.lowercased() == "bin" {
             let name = file.deletingPathExtension().lastPathComponent
-            let size = (try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            let size = Int64((try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
             let date = (try? file.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()
             
+            totalBytes += size
             let isSel = (file.lastPathComponent == selectedFilename) || (list.isEmpty && selectedFilename == nil)
+            if isSel {
+                self.activeModelName = name
+            }
             
             let item = LocalModelInfo(
                 name: name,
                 filename: file.lastPathComponent,
-                fileSizeFormatted: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file),
+                fileSizeFormatted: ByteCountFormatter.string(fromByteCount: size, countStyle: .file),
+                fileSizeBytes: size,
                 dateAdded: date,
                 isSelected: isSel
             )
             list.append(item)
         }
+        
         self.installedModels = list
+        self.totalStorageUsedFormatted = ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+        if list.isEmpty {
+            self.activeModelName = "Chưa có model"
+        }
     }
     
     public func importModelFile() {
@@ -166,6 +194,7 @@ public final class LocalModelService: NSObject, ObservableObject {
     public func selectModel(id: UUID) {
         if let item = installedModels.first(where: { $0.id == id }) {
             UserDefaults.standard.set(item.filename, forKey: "selected_local_model_filename")
+            self.activeModelName = item.name
             for i in 0..<installedModels.count {
                 installedModels[i].isSelected = (installedModels[i].id == id)
             }
@@ -178,6 +207,39 @@ public final class LocalModelService: NSObject, ObservableObject {
             try? FileManager.default.removeItem(at: fileURL)
             scanInstalledModels()
         }
+    }
+    
+    // MARK: - Storage Cleanup Actions
+    public func cleanAllModels() {
+        let dir = modelsDirectory
+        if let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+        UserDefaults.standard.removeObject(forKey: "selected_local_model_filename")
+        scanInstalledModels()
+    }
+    
+    public func cleanTempFilesAndCache() {
+        // 1. Clear in-memory translation cache
+        TranslationCache.shared.clearAll()
+        
+        // 2. Clean any lingering temp files in models directory
+        let dir = modelsDirectory
+        if let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+            for file in files where file.pathExtension.lowercased() == "tmp" || file.lastPathComponent.hasPrefix(".") {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+        
+        // 3. Clean system Caches folder for ToolTrL
+        if let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            let appCache = cacheDir.appendingPathComponent("ToolTrL")
+            try? FileManager.default.removeItem(at: appCache)
+        }
+        
+        scanInstalledModels()
     }
     
     public func startDownload(preset: HuggingFaceModelPreset) {
@@ -209,6 +271,9 @@ public final class LocalModelService: NSObject, ObservableObject {
         downloadTask = nil
         isDownloading = false
         downloadStatusText = ""
+        
+        // Auto-cleanup partial temporary files on cancel
+        cleanTempFilesAndCache()
     }
     
     public func checkOllamaConnection() {
@@ -233,7 +298,7 @@ public final class LocalModelService: NSObject, ObservableObject {
     public func translateViaOllama(text: String, to targetLang: String) async -> String? {
         guard let url = URL(string: "\(ollamaEndpoint)/api/generate") else { return nil }
         
-        let prompt = "You are a professional translator. Translate the following text into natural, fluent \(targetLang == "vi" ? "Vietnamese" : targetLang). Output ONLY the translated text without explanations or quotes:\n\n\(text)"
+        let prompt = "You are a professional AI translator. Translate the following text into natural, accurate, and fluent \(targetLang == "vi" ? "Vietnamese" : targetLang). Do NOT repeat the prompt. Output ONLY the translation directly:\n\n\(text)"
         
         let body: [String: Any] = [
             "model": ollamaModelName,
@@ -247,7 +312,7 @@ public final class LocalModelService: NSObject, ObservableObject {
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = httpBody
-        req.timeoutInterval = 10.0
+        req.timeoutInterval = 12.0
         
         guard let (data, res) = try? await URLSession.shared.data(for: req),
               (res as? HTTPURLResponse)?.statusCode == 200,
