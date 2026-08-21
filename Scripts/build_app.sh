@@ -24,11 +24,6 @@ if [ -f "Resources/AppIcon.icns" ]; then
     cp Resources/AppIcon.icns "$RESOURCES_DIR/AppIcon.icns"
 fi
 
-# Copy llama-runner
-if [ -d "Resources/llama-runner" ]; then
-    cp -R Resources/llama-runner "$RESOURCES_DIR/"
-fi
-
 # Create Info.plist
 cat << 'EOF' > "$CONTENTS_DIR/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>

@@ -58,13 +58,6 @@ public final class AppSettings: ObservableObject {
         }
     }
     
-    // Nguồn xử lý AI (Apple Neural AI / Hugging Face GGUF / Ollama)
-    @Published public var aiTranslationEngine: AITranslationEngine {
-        didSet {
-            UserDefaults.standard.set(aiTranslationEngine.rawValue, forKey: "ai_translation_engine")
-        }
-    }
-    
     // Chế độ hiển thị bản dịch (Từng từ tương ứng / Chỉ tiếng Việt / Tiêu chuẩn)
     @Published public var translationDisplayMode: TranslationDisplayMode {
         didSet {
@@ -115,10 +108,6 @@ public final class AppSettings: ObservableObject {
         }
         
         self.targetLanguage = UserDefaults.standard.string(forKey: "target_language") ?? TargetLanguage.vietnamese.rawValue
-        
-        // AI Engine
-        let savedEngine = UserDefaults.standard.string(forKey: "ai_translation_engine") ?? AITranslationEngine.appleNeural.rawValue
-        self.aiTranslationEngine = AITranslationEngine(rawValue: savedEngine) ?? .appleNeural
         
         // Display Mode initialization (Default to wordByWord)
         let savedMode = UserDefaults.standard.string(forKey: "translation_display_mode") ?? TranslationDisplayMode.wordByWord.rawValue

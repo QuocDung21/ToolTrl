@@ -68,36 +68,15 @@ public final class TranslationService {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         
-        let engineKey = AppSettings.shared.aiTranslationEngine.rawValue
-        let modelKey = LocalModelService.shared.activeModelName
-        let cacheKey = "\(engineKey)_\(modelKey)_\(sourceLang)_\(targetLang)_\(trimmed)"
+        let cacheKey = "\(sourceLang)_\(targetLang)_\(trimmed)"
         
         if let cached = TranslationCache.shared.getTranslation(key: cacheKey) {
             return cached
         }
         
-        // 1. Hugging Face Local GGUF Model Execution
-        if AppSettings.shared.aiTranslationEngine == .huggingFaceLocal {
-            let filename = UserDefaults.standard.string(forKey: "selected_local_model_filename") ?? ""
-            if !filename.isEmpty {
-                if let ggufRes = await LocalInferenceEngine.shared.translateWithGGUF(text: trimmed, modelFilename: filename, targetLang: targetLang), !ggufRes.isEmpty {
-                    TranslationCache.shared.setTranslation(key: cacheKey, value: ggufRes)
-                    return ggufRes
-                }
-            }
-        }
-        
-        // 2. Ollama Local Endpoint Execution
-        if AppSettings.shared.aiTranslationEngine == .ollamaLocal {
-            if let ollamaRes = await LocalModelService.shared.translateViaOllama(text: trimmed, to: targetLang), !ollamaRes.isEmpty {
-                TranslationCache.shared.setTranslation(key: cacheKey, value: ollamaRes)
-                return ollamaRes
-            }
-        }
-        
         var result: String? = nil
         
-        // 3. Neural POST Cloud Engine (Fallback)
+        // Attempt 1: Neural POST Engine
         if let res = await translateViaNeuralPost(text: trimmed, from: sourceLang, to: targetLang), !res.isEmpty {
             result = res
         } else if let res = await translateViaSecondaryEngine(text: trimmed, from: sourceLang, to: targetLang), !res.isEmpty {
@@ -117,7 +96,7 @@ public final class TranslationService {
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.timeoutInterval = 8.0
+        request.timeoutInterval = 6.0
         request.setValue("application/x-www-form-urlencoded;charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)", forHTTPHeaderField: "User-Agent")
         
@@ -165,7 +144,7 @@ public final class TranslationService {
         }
         
         var request = URLRequest(url: url)
-        request.timeoutInterval = 5.0
+        request.timeoutInterval = 4.0
         
         do {
             let (data, response) = try await URLSession.shared.data(for: request)

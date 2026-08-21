@@ -103,23 +103,8 @@ public struct TranslationHUDView: View {
             }
             .labelsHidden()
             .pickerStyle(.menu)
-            .frame(width: 120)
+            .frame(width: 125)
             .scaleEffect(0.9, anchor: .leading)
-            
-            // Active AI Engine Badge
-            Button(action: {
-                SettingsWindowController.shared.showSettings()
-            }) {
-                Text(viewModel.activeEngineBadge)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.primary.opacity(0.05))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .help("Model AI đang xử lý - Bấm để đổi trong Cài đặt")
             
             Spacer()
             

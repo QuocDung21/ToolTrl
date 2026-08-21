@@ -4,7 +4,6 @@ public enum SettingsTab: String, CaseIterable, Identifiable {
     case vocabulary = "Sổ từ vựng"
     case display = "Hiển thị"
     case speech = "Âm thanh"
-    case aiModel = "Model AI (HF)"
     case general = "Chung"
     
     public var id: String { rawValue }
@@ -14,7 +13,6 @@ public enum SettingsTab: String, CaseIterable, Identifiable {
         case .vocabulary: return "character.book.closed.fill"
         case .display: return "text.viewfinder"
         case .speech: return "speaker.wave.3.fill"
-        case .aiModel: return "brain.head.profile"
         case .general: return "gearshape.fill"
         }
     }
@@ -24,11 +22,9 @@ public struct SettingsView: View {
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var vocabService = VocabularyService.shared
-    @ObservedObject var localModelService = LocalModelService.shared
     
-    @State private var selectedTab: SettingsTab = .aiModel
+    @State private var selectedTab: SettingsTab = .display
     @State private var searchVocabText: String = ""
-    @State private var customHuggingFaceURL: String = ""
     @State private var copiedVocab: Bool = false
     
     public init() {}
@@ -53,8 +49,6 @@ public struct SettingsView: View {
                     displayTab
                 case .speech:
                     speechTab
-                case .aiModel:
-                    aiModelTab
                 case .general:
                     generalTab
                 }
@@ -62,7 +56,7 @@ public struct SettingsView: View {
             .padding(16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: 580, height: 490)
+        .frame(width: 560, height: 460)
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
@@ -81,10 +75,10 @@ public struct SettingsView: View {
                         Image(systemName: tab.icon)
                             .font(.system(size: 11))
                         Text(tab.rawValue)
-                            .font(.system(size: 11.5, weight: selectedTab == tab ? .semibold : .regular))
+                            .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5.5)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .foregroundColor(selectedTab == tab ? .white : .primary.opacity(0.8))
                     .background(
                         selectedTab == tab ? Color.blue : Color.primary.opacity(0.04)
@@ -94,279 +88,6 @@ public struct SettingsView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-        }
-    }
-    
-    // MARK: - Tab 4: Model AI / Hugging Face Manager
-    private var aiModelTab: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                // 1. AI Engine Selector Card
-                settingCard(title: "Nguồn Xử Lý Dịch Thuật AI", icon: "cpu.fill") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Picker("", selection: $settings.aiTranslationEngine) {
-                            ForEach(AITranslationEngine.allCases) { engine in
-                                HStack {
-                                    Image(systemName: engine.icon)
-                                    Text(engine.rawValue)
-                                }
-                                .tag(engine)
-                            }
-                        }
-                        .pickerStyle(.radioGroup)
-                        .font(.system(size: 12))
-                        
-                        Text("💡 Model Cục bộ (.gguf) hoặc Apple Neural AI cho phép dịch hoàn toàn Offline 100% không gửi dữ liệu ra ngoài.")
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.secondary)
-                            .padding(.top, 2)
-                    }
-                }
-                
-                // 2. Hugging Face Import & Direct Download Card
-                settingCard(title: "Nạp Model từ Hugging Face", icon: "shippingbox.fill") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        // Direct File Import Button
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Import file .gguf từ máy Mac")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text("Tải file .gguf từ Hugging Face rồi chọn nạp vào app.")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                localModelService.importModelFile()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "square.and.arrow.down.fill")
-                                    Text("Chọn File .gguf...")
-                                }
-                                .font(.system(size: 11.5, weight: .medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        
-                        Divider().opacity(0.2)
-                        
-                        // Download from Hugging Face URL
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Hoặc dán Link tải trực tiếp từ Hugging Face:")
-                                .font(.system(size: 11, weight: .medium))
-                            
-                            HStack(spacing: 6) {
-                                TextField("https://huggingface.co/.../*.gguf", text: $customHuggingFaceURL)
-                                    .textFieldStyle(.plain)
-                                    .font(.system(size: 11.5))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 5)
-                                    .background(Color.primary.opacity(0.04))
-                                    .cornerRadius(6)
-                                
-                                Button(action: {
-                                    if !customHuggingFaceURL.isEmpty {
-                                        localModelService.startDownloadFromURLString(customHuggingFaceURL)
-                                        customHuggingFaceURL = ""
-                                    }
-                                }) {
-                                    Text("Tải về")
-                                        .font(.system(size: 11, weight: .medium))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(Color.primary.opacity(0.08))
-                                        .cornerRadius(6)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(customHuggingFaceURL.isEmpty || localModelService.isDownloading)
-                            }
-                        }
-                        
-                        // Download Progress Indicator
-                        if localModelService.isDownloading {
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text(localModelService.downloadStatusText)
-                                        .font(.system(size: 10.5))
-                                        .foregroundColor(.blue)
-                                    Spacer()
-                                    Button("Hủy") {
-                                        localModelService.cancelDownload()
-                                    }
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.red)
-                                    .buttonStyle(.plain)
-                                }
-                                ProgressView(value: localModelService.downloadProgress)
-                                    .progressViewStyle(.linear)
-                            }
-                            .padding(8)
-                            .background(Color.blue.opacity(0.06))
-                            .cornerRadius(6)
-                        }
-                    }
-                }
-                
-                // 3. Recommended Preset Models (1-Click Download)
-                settingCard(title: "Model Tuyển Chọn (1-Click Tải Nhanh)", icon: "sparkles") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(localModelService.presets) { preset in
-                            HStack(alignment: .center, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 6) {
-                                        Text(preset.title)
-                                            .font(.system(size: 12, weight: .bold))
-                                        Text(preset.size)
-                                            .font(.system(size: 9.5, weight: .medium))
-                                            .padding(.horizontal, 4)
-                                            .padding(.vertical, 1)
-                                            .background(Color.orange.opacity(0.15))
-                                            .foregroundColor(.orange)
-                                            .clipShape(Capsule())
-                                    }
-                                    Text(preset.description)
-                                        .font(.system(size: 10.5))
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    localModelService.startDownload(preset: preset)
-                                }) {
-                                    HStack(spacing: 3) {
-                                        Image(systemName: "arrow.down.circle.fill")
-                                        Text("Tải")
-                                    }
-                                    .font(.system(size: 11, weight: .medium))
-                                    .padding(.horizontal, 9)
-                                    .padding(.vertical, 4.5)
-                                    .background(Color.blue.opacity(0.12))
-                                    .foregroundColor(.blue)
-                                    .cornerRadius(6)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(localModelService.isDownloading)
-                            }
-                            .padding(.vertical, 4)
-                            
-                            if preset.id != localModelService.presets.last?.id {
-                                Divider().opacity(0.15)
-                            }
-                        }
-                    }
-                }
-                
-                // 4. Installed Models List
-                if !localModelService.installedModels.isEmpty {
-                    settingCard(title: "Model Đã Cài Đặt Trong Máy (\(localModelService.installedModels.count))", icon: "folder.fill") {
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(localModelService.installedModels) { model in
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 6) {
-                                            Text(model.name)
-                                                .font(.system(size: 12, weight: .semibold))
-                                            if model.isSelected {
-                                                Text("Đang dùng")
-                                                    .font(.system(size: 9, weight: .bold))
-                                                    .padding(.horizontal, 5)
-                                                    .padding(.vertical, 1)
-                                                    .background(Color.green)
-                                                    .foregroundColor(.white)
-                                                    .clipShape(Capsule())
-                                            }
-                                        }
-                                        Text("\(model.fileSizeFormatted) • \(model.filename)")
-                                            .font(.system(size: 10.5))
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    if !model.isSelected {
-                                        Button("Kích hoạt") {
-                                            localModelService.selectModel(id: model.id)
-                                        }
-                                        .font(.system(size: 11))
-                                        .buttonStyle(.plain)
-                                        .foregroundColor(.blue)
-                                    }
-                                    
-                                    Button(action: {
-                                        localModelService.deleteModel(id: model.id)
-                                    }) {
-                                        Image(systemName: "trash")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.red.opacity(0.8))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(.vertical, 3)
-                            }
-                        }
-                    }
-                }
-                
-                // 5. Storage Cleanup & Management Card
-                settingCard(title: "Dọn Dẹp Bộ Nhớ & Dung Lượng", icon: "trash.circle.fill") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Dung lượng Model & Cache đang dùng:")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                                Text(localModelService.totalStorageUsedFormatted)
-                                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                                    .foregroundColor(.primary)
-                            }
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                localModelService.cleanTempFilesAndCache()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                    Text("Dọn cache & File rác")
-                                }
-                                .font(.system(size: 11, weight: .medium))
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 5)
-                                .background(Color.primary.opacity(0.06))
-                                .foregroundColor(.primary)
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            if !localModelService.installedModels.isEmpty {
-                                Button(action: {
-                                    localModelService.cleanAllModels()
-                                }) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "trash.fill")
-                                        Text("Xóa hết Model")
-                                    }
-                                    .font(.system(size: 11, weight: .medium))
-                                    .padding(.horizontal, 9)
-                                    .padding(.vertical, 5)
-                                    .background(Color.red.opacity(0.12))
-                                    .foregroundColor(.red)
-                                    .cornerRadius(6)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
     
@@ -381,10 +102,10 @@ public struct SettingsView: View {
                         Image(systemName: "book.pages.fill")
                         Text("Mở Sổ Tay Từ Vựng Chuyên Sâu (Cửa sổ lớn) ↗")
                     }
-                    .font(.system(size: 11.5, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
+                    .padding(.vertical, 8)
                     .background(Color.orange)
                     .cornerRadius(7)
                 }
@@ -566,7 +287,7 @@ public struct SettingsView: View {
         }
     }
     
-    // MARK: - Tab 5: Chung
+    // MARK: - Tab 4: Chung
     private var generalTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
