@@ -64,8 +64,20 @@ cat << 'EOF' > "$CONTENTS_DIR/Info.plist"
 </plist>
 EOF
 
-# Ad-hoc sign
-echo "🔏 Ký ứng dụng (Ad-hoc signature)..."
-codesign --force --deep --sign - "$APP_DIR"
+# Find signing identity in Keychain
+IDENTITY=$(security find-identity -p codesigning -v | grep "Apple Development" | head -n 1 | awk -F '"' '{print $2}' || true)
 
-echo "✅ Đóng gói hoàn tất: $APP_DIR"
+ENTITLEMENTS_FLAG=""
+if [ -f "Resources/ToolTrL.entitlements" ]; then
+    ENTITLEMENTS_FLAG="--entitlements Resources/ToolTrL.entitlements"
+fi
+
+if [ -n "$IDENTITY" ]; then
+    echo "🔏 Ký ứng dụng với chứng chỉ Developer: $IDENTITY..."
+    codesign --force --deep $ENTITLEMENTS_FLAG --sign "$IDENTITY" "$APP_DIR"
+else
+    echo "🔏 Ký ứng dụng với Ad-hoc signature (-)..."
+    codesign --force --deep $ENTITLEMENTS_FLAG --sign - "$APP_DIR"
+fi
+
+echo "✅ Đóng gói và ký mã nguồn hoàn tất: $APP_DIR"
