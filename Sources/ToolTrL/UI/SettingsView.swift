@@ -279,6 +279,18 @@ public struct SettingsView: View {
                     .font(.system(size: 12))
                 }
                 
+                settingCard(title: "Chế độ hiển thị bản dịch đoạn văn", icon: "rectangle.stack.badge.plus") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Picker("", selection: $settings.translationDisplayMode) {
+                            ForEach(TranslationDisplayMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.radioGroup)
+                        .font(.system(size: 12))
+                    }
+                }
+                
                 settingCard(title: "Tùy chọn hiển thị chi tiết trong từ điển", icon: "slider.horizontal.3") {
                     VStack(alignment: .leading, spacing: 10) {
                         Toggle("Hiển thị phiên âm quốc tế IPA (Phonetics)", isOn: $settings.showPhonetics)

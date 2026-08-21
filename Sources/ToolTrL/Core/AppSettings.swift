@@ -1,6 +1,30 @@
 import SwiftUI
 import ServiceManagement
 
+public enum TranslationDisplayMode: String, CaseIterable, Identifiable, Sendable {
+    case stacked = "Song ngữ gộp (Việt trên, Anh dưới)"
+    case onlyTarget = "Chỉ hiển thị tiếng Việt"
+    case standard = "Tiêu chuẩn (2 thẻ riêng biệt)"
+    
+    public var id: String { rawValue }
+    
+    public var shortName: String {
+        switch self {
+        case .stacked: return "Song ngữ"
+        case .onlyTarget: return "Chỉ dịch"
+        case .standard: return "Tiêu chuẩn"
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .stacked: return "text.badge.plus"
+        case .onlyTarget: return "text.alignleft"
+        case .standard: return "rectangle.split.2x1"
+        }
+    }
+}
+
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
     
@@ -31,6 +55,13 @@ public final class AppSettings: ObservableObject {
     @Published public var targetLanguage: String {
         didSet {
             UserDefaults.standard.set(targetLanguage, forKey: "target_language")
+        }
+    }
+    
+    // Chế độ hiển thị bản dịch (Song ngữ gộp / Chỉ tiếng Việt / Tiêu chuẩn)
+    @Published public var translationDisplayMode: TranslationDisplayMode {
+        didSet {
+            UserDefaults.standard.set(translationDisplayMode.rawValue, forKey: "translation_display_mode")
         }
     }
     
@@ -77,6 +108,10 @@ public final class AppSettings: ObservableObject {
         }
         
         self.targetLanguage = UserDefaults.standard.string(forKey: "target_language") ?? TargetLanguage.vietnamese.rawValue
+        
+        // Display Mode initialization (Default to stacked song ngữ)
+        let savedMode = UserDefaults.standard.string(forKey: "translation_display_mode") ?? TranslationDisplayMode.stacked.rawValue
+        self.translationDisplayMode = TranslationDisplayMode(rawValue: savedMode) ?? .stacked
         
         // Default display settings
         self.showPhonetics = UserDefaults.standard.object(forKey: "show_phonetics") == nil ? true : UserDefaults.standard.bool(forKey: "show_phonetics")

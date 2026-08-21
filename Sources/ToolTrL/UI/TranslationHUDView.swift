@@ -456,6 +456,259 @@ public struct TranslationHUDView: View {
     
     // MARK: - Sentence & Long Paragraph Translation View
     private var sentenceTranslationView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Mode Switcher Header
+            HStack {
+                // Mode Selector Chips
+                HStack(spacing: 4) {
+                    ForEach(TranslationDisplayMode.allCases) { mode in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                AppSettings.shared.translationDisplayMode = mode
+                            }
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: mode.icon)
+                                    .font(.system(size: 9))
+                                Text(mode.shortName)
+                                    .font(.system(size: 10, weight: AppSettings.shared.translationDisplayMode == mode ? .bold : .medium))
+                            }
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .foregroundColor(AppSettings.shared.translationDisplayMode == mode ? .white : .secondary)
+                            .background(
+                                AppSettings.shared.translationDisplayMode == mode ? Color.blue : Color.primary.opacity(0.04)
+                            )
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                
+                Spacer()
+                
+                Text("\(viewModel.originalText.split(separator: " ").count) từ")
+                    .font(.system(size: 9.5))
+                    .foregroundColor(.secondary.opacity(0.8))
+            }
+            .padding(.bottom, 2)
+            
+            // Content based on selected mode
+            switch AppSettings.shared.translationDisplayMode {
+            case .stacked:
+                stackedSentenceTranslationView
+            case .onlyTarget:
+                onlyTargetSentenceTranslationView
+            case .standard:
+                standardSentenceTranslationView
+            }
+        }
+    }
+    
+    // MARK: - Mode 1: Song Ngữ Gộp (Tiếng Việt trên - Tiếng Anh dưới)
+    private var stackedSentenceTranslationView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10))
+                        .foregroundColor(.blue)
+                    Text("SONG NGỮ GỘP (VIỆT - ANH)")
+                        .font(.system(size: 9.5, weight: .bold))
+                        .foregroundColor(.blue)
+                }
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.55)
+                        .frame(width: 10, height: 10)
+                }
+                
+                Spacer()
+                
+                // Audio Vietnamese
+                Button(action: {
+                    viewModel.speakTranslated()
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 9))
+                        Text("Đọc TV")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(Color.blue.opacity(0.1))
+                    .foregroundColor(.blue)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                .help("Nghe đọc tiếng Việt")
+                
+                // Audio English
+                Button(action: {
+                    viewModel.speakOriginal()
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 9))
+                        Text("Đọc TA")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(Color.primary.opacity(0.06))
+                    .foregroundColor(.secondary)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                .help("Nghe đọc tiếng Anh")
+                
+                // Copy Button
+                Button(action: {
+                    viewModel.copyTranslation()
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        copied = false
+                    }
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 9))
+                        Text(copied ? "Đã chép" : "Sao chép")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundColor(.blue)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                // Tiếng Việt ở trên (Vibrant & Bold)
+                if viewModel.translatedText.isEmpty && viewModel.isLoading {
+                    Text("Đang dịch thông minh bằng AI...")
+                        .font(.system(size: 12.5))
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .padding(.vertical, 2)
+                } else {
+                    LiveSpokenTextView(
+                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                        speakerID: "translated",
+                        font: .system(size: 13.5, weight: .semibold),
+                        defaultColor: .primary,
+                        lineSpacing: 4
+                    )
+                }
+                
+                Divider()
+                    .opacity(0.25)
+                
+                // Tiếng Anh ở dưới (Secondary & Elegant)
+                LiveSpokenTextView(
+                    text: viewModel.originalText,
+                    speakerID: "original",
+                    font: .system(size: 11.5),
+                    defaultColor: .secondary,
+                    lineSpacing: 3.5
+                )
+            }
+            .padding(11)
+            .background(Color.blue.opacity(0.06))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.blue.opacity(0.18), lineWidth: 1)
+            )
+        }
+    }
+    
+    // MARK: - Mode 2: Chỉ hiển thị Tiếng Việt
+    private var onlyTargetSentenceTranslationView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 10))
+                        .foregroundColor(.blue)
+                    Text("BẢN DỊCH TIẾNG VIỆT")
+                        .font(.system(size: 9.5, weight: .bold))
+                        .foregroundColor(.blue)
+                }
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.55)
+                        .frame(width: 10, height: 10)
+                }
+                
+                Spacer()
+                
+                Button(action: {
+                    viewModel.speakTranslated()
+                }) {
+                    Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                        .font(.system(size: 10.5))
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(.plain)
+                .help("Nghe bản dịch")
+                
+                Button(action: {
+                    viewModel.copyTranslation()
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        copied = false
+                    }
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 9))
+                        Text(copied ? "Đã chép" : "Sao chép")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundColor(.blue)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                if viewModel.translatedText.isEmpty && viewModel.isLoading {
+                    Text("Đang dịch thông minh bằng AI...")
+                        .font(.system(size: 12.5))
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .padding(.vertical, 4)
+                } else {
+                    LiveSpokenTextView(
+                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                        speakerID: "translated",
+                        font: .system(size: 13.5, weight: .medium),
+                        defaultColor: .primary,
+                        lineSpacing: 4.5
+                    )
+                }
+            }
+            .padding(12)
+            .background(Color.blue.opacity(0.07))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.blue.opacity(0.18), lineWidth: 1)
+            )
+        }
+    }
+    
+    // MARK: - Mode 3: Tiêu chuẩn (2 Thẻ Gốc & Dịch)
+    private var standardSentenceTranslationView: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Original Text Card
             VStack(alignment: .leading, spacing: 6) {
@@ -465,10 +718,6 @@ public struct TranslationHUDView: View {
                         .foregroundColor(.secondary)
                     
                     Spacer()
-                    
-                    Text("\(viewModel.originalText.split(separator: " ").count) từ")
-                        .font(.system(size: 9.5))
-                        .foregroundColor(.secondary.opacity(0.8))
                     
                     Button(action: {
                         viewModel.speakOriginal()
@@ -541,13 +790,11 @@ public struct TranslationHUDView: View {
                 }
                 
                 if viewModel.translatedText.isEmpty && viewModel.isLoading {
-                    HStack(spacing: 6) {
-                        Text("Đang dịch thông minh bằng AI...")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            .italic()
-                    }
-                    .padding(.vertical, 4)
+                    Text("Đang dịch thông minh bằng AI...")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .padding(.vertical, 4)
                 } else {
                     LiveSpokenTextView(
                         text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
