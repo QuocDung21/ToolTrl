@@ -99,7 +99,7 @@ public final class TranslationViewModel: ObservableObject {
                 }
             }
         } else {
-            // 3. Fetch Word-by-Word Glosses in Parallel
+            // 3. Fast Batch Word-by-Word Glosses for any length (no word limit)
             fetchWordGlosses(for: trimmed)
         }
         
@@ -131,10 +131,10 @@ public final class TranslationViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Parallel Word-by-Word Gloss Fetcher
+    // MARK: - Fast Batch Word-by-Word Gloss Fetcher
     private func fetchWordGlosses(for text: String) {
         let tokens = text.split(separator: " ").map { String($0) }
-        guard tokens.count >= 2 && tokens.count <= 50 else { return }
+        guard tokens.count >= 2 else { return }
         
         // Initial placeholder glosses
         self.wordGlosses = tokens.map { token in
@@ -144,36 +144,45 @@ public final class TranslationViewModel: ObservableObject {
         
         Task {
             let target = self.targetLanguage.rawValue
-            var results: [WordGloss] = []
             
-            await withTaskGroup(of: (Int, String, String, String).self) { group in
-                for (index, token) in tokens.enumerated() {
-                    let clean = token.trimmingCharacters(in: .punctuationCharacters)
-                    group.addTask {
-                        guard !clean.isEmpty else {
-                            return (index, token, "", clean)
+            // Extract unique clean words
+            let cleanWords = tokens.map { $0.trimmingCharacters(in: .punctuationCharacters).lowercased() }
+            let uniqueWords = Array(Set(cleanWords)).filter { !$0.isEmpty }
+            
+            var wordDict: [String: String] = [:]
+            var uncachedWords: [String] = []
+            
+            // Check cache first
+            for w in uniqueWords {
+                let cacheKey = "gloss_\(w)_\(target)"
+                if let cached = TranslationCache.shared.getTranslation(key: cacheKey) {
+                    wordDict[w] = cached
+                } else {
+                    uncachedWords.append(w)
+                }
+            }
+            
+            // Batch translate uncached words in a single request
+            if !uncachedWords.isEmpty {
+                let joined = uncachedWords.joined(separator: "\n")
+                if let batchResult = await TranslationService.shared.translateFallback(text: joined, from: "auto", to: target) {
+                    let lines = batchResult.components(separatedBy: "\n")
+                    for (i, w) in uncachedWords.enumerated() {
+                        if i < lines.count {
+                            let trans = lines[i].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                            wordDict[w] = trans
+                            TranslationCache.shared.setTranslation(key: "gloss_\(w)_\(target)", value: trans)
                         }
-                        
-                        let cacheKey = "gloss_\(clean.lowercased())_\(target)"
-                        if let cached = TranslationCache.shared.getTranslation(key: cacheKey) {
-                            return (index, token, cached, clean)
-                        }
-                        
-                        if let translated = await TranslationService.shared.translateFallback(text: clean, from: "auto", to: target) {
-                            let cleanTrans = translated.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                            TranslationCache.shared.setTranslation(key: cacheKey, value: cleanTrans)
-                            return (index, token, cleanTrans, clean)
-                        }
-                        return (index, token, clean.lowercased(), clean)
                     }
                 }
-                
-                var gathered: [(Int, String, String, String)] = []
-                for await item in group {
-                    gathered.append(item)
-                }
-                gathered.sort { $0.0 < $1.0 }
-                results = gathered.map { WordGloss(original: $0.1, gloss: $0.2, cleanWord: $0.3) }
+            }
+            
+            // Reconstruct glosses in exact original token order
+            var results: [WordGloss] = []
+            for token in tokens {
+                let clean = token.trimmingCharacters(in: .punctuationCharacters).lowercased()
+                let gloss = wordDict[clean] ?? ""
+                results.append(WordGloss(original: token, gloss: gloss, cleanWord: clean))
             }
             
             self.wordGlosses = results

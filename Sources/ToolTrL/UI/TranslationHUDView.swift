@@ -505,170 +505,159 @@ public struct TranslationHUDView: View {
         }
     }
     
-    // MARK: - Mode 1: Dịch Từng Từ Tương Ứng (Tiếng Anh trên - Tiếng Việt nhỏ dưới từng từ)
+    // MARK: - Mode 1: Dịch Từng Từ Tương Ứng (Tiếng Anh trên - Tiếng Việt nhỏ dưới từng từ - Gộp 1 khung duy nhất)
     private var wordByWordSentenceTranslationView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Interlinear Word Flow Box
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    HStack(spacing: 4) {
-                        Image(systemName: "character.bubble.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.blue)
-                        Text("TIẾNG ANH VỚI NGHĨA DƯỚI TỪNG TỪ")
-                            .font(.system(size: 9.5, weight: .bold))
-                            .foregroundColor(.blue)
+            // Header Bar
+            HStack {
+                HStack(spacing: 4) {
+                    Image(systemName: "character.bubble.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.blue)
+                    Text("DỊCH TỪNG TỪ TƯƠNG ỨNG")
+                        .font(.system(size: 9.5, weight: .bold))
+                        .foregroundColor(.blue)
+                }
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                        .scaleEffect(0.5)
+                        .frame(width: 10, height: 10)
+                }
+                
+                Spacer()
+                
+                Button(action: {
+                    viewModel.speakOriginal()
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 9))
+                        Text("Đọc TA")
+                            .font(.system(size: 9.5, weight: .medium))
                     }
-                    
-                    Spacer()
-                    
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(Color.primary.opacity(0.06))
+                    .foregroundColor(.secondary)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                .help("Nghe phát âm tiếng Anh")
+                
+                Button(action: {
+                    viewModel.speakTranslated()
+                }) {
+                    HStack(spacing: 2) {
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 9))
+                        Text("Đọc TV")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2.5)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundColor(.blue)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    viewModel.copyTranslation()
+                    copied = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        copied = false
+                    }
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 9))
+                        Text(copied ? "Đã chép" : "Sao chép")
+                            .font(.system(size: 9.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2.5)
+                    .background(Color.blue.opacity(0.12))
+                    .foregroundColor(.blue)
+                    .cornerRadius(4)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // 1. Continuous Interlinear Word Flow (English on top, Small Vietnamese directly below)
+            if !viewModel.wordGlosses.isEmpty {
+                WrappingHStack(models: viewModel.wordGlosses) { item in
                     Button(action: {
-                        viewModel.speakOriginal()
+                        viewModel.speakCustom(text: item.cleanWord, languageCode: "en-US", speakerID: "wbw_\(item.id)")
                     }) {
-                        HStack(spacing: 2) {
-                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
-                                .font(.system(size: 9))
-                            Text("Nghe câu TA")
+                        VStack(alignment: .center, spacing: 2) {
+                            // Chữ Tiếng Anh ở trên
+                            Text(item.original)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+                            
+                            // Nghĩa Tiếng Việt nhỏ ngay dưới
+                            Text(item.gloss.isEmpty ? " " : item.gloss)
                                 .font(.system(size: 9.5, weight: .medium))
+                                .foregroundColor(.blue)
+                                .lineLimit(1)
                         }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(Color.primary.opacity(0.06))
-                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 4.5)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.05))
                         .cornerRadius(4)
                     }
                     .buttonStyle(.plain)
-                    .help("Nghe phát âm cả câu tiếng Anh")
+                    .help("Bấm để nghe đọc từ [\(item.cleanWord)]")
+                }
+            } else {
+                LiveSpokenTextView(
+                    text: viewModel.originalText,
+                    speakerID: "original",
+                    font: .system(size: 12),
+                    defaultColor: .primary,
+                    lineSpacing: 3.5
+                )
+            }
+            
+            Divider()
+                .opacity(0.25)
+            
+            // 2. Full Natural Translation integrated into the bottom of the same card
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 9))
+                        .foregroundColor(.blue)
+                    Text("Bản dịch trọn vẹn:")
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundColor(.secondary)
                 }
                 
-                // Word-by-Word Interlinear Flow (English on top, Small Vietnamese directly below)
-                if !viewModel.wordGlosses.isEmpty {
-                    WrappingHStack(models: viewModel.wordGlosses) { item in
-                        Button(action: {
-                            viewModel.speakCustom(text: item.cleanWord, languageCode: "en-US", speakerID: "wbw_\(item.id)")
-                        }) {
-                            VStack(alignment: .center, spacing: 1.5) {
-                                // Chữ Tiếng Anh gốc ở trên
-                                Text(item.original)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                                
-                                // Nghĩa Tiếng Việt nhỏ trực tiếp dưới từ tương ứng
-                                Text(item.gloss.isEmpty ? " " : item.gloss)
-                                    .font(.system(size: 9.5, weight: .medium))
-                                    .foregroundColor(.blue)
-                                    .lineLimit(1)
-                            }
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2.5)
-                            .background(Color.blue.opacity(0.05))
-                            .cornerRadius(4)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.blue.opacity(0.12), lineWidth: 0.6)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .help("Bấm để nghe đọc từ [\(item.cleanWord)]")
-                    }
+                if viewModel.translatedText.isEmpty && viewModel.isLoading {
+                    Text("Đang dịch thông minh bằng AI...")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .italic()
                 } else {
                     LiveSpokenTextView(
-                        text: viewModel.originalText,
-                        speakerID: "original",
-                        font: .system(size: 12),
+                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                        speakerID: "translated",
+                        font: .system(size: 12.5, weight: .regular),
                         defaultColor: .primary,
                         lineSpacing: 3.5
                     )
                 }
             }
-            .padding(10)
-            .background(Color.primary.opacity(0.03))
-            .cornerRadius(8)
-            
-            // Full Natural AI Translation Card
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 9.5))
-                            .foregroundColor(.blue)
-                        Text("CÂU DỊCH HOÀN CHỈNH (AI)")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.blue)
-                    }
-                    
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.5)
-                            .frame(width: 10, height: 10)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        viewModel.speakTranslated()
-                    }) {
-                        HStack(spacing: 2) {
-                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "translated") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
-                                .font(.system(size: 9))
-                            Text("Nghe TV")
-                                .font(.system(size: 9.5, weight: .medium))
-                        }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(Color.blue.opacity(0.12))
-                        .foregroundColor(.blue)
-                        .cornerRadius(4)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Button(action: {
-                        viewModel.copyTranslation()
-                        copied = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            copied = false
-                        }
-                    }) {
-                        HStack(spacing: 3) {
-                            Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                                .font(.system(size: 9))
-                            Text(copied ? "Đã chép" : "Sao chép")
-                                .font(.system(size: 9.5, weight: .medium))
-                        }
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2.5)
-                        .background(Color.blue.opacity(0.12))
-                        .foregroundColor(.blue)
-                        .cornerRadius(4)
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                if viewModel.translatedText.isEmpty && viewModel.isLoading {
-                    Text("Đang dịch thông minh bằng AI...")
-                        .font(.system(size: 12.5))
-                        .foregroundColor(.secondary)
-                        .italic()
-                        .padding(.vertical, 2)
-                } else {
-                    LiveSpokenTextView(
-                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
-                        speakerID: "translated",
-                        font: .system(size: 13, weight: .medium),
-                        defaultColor: .primary,
-                        lineSpacing: 4
-                    )
-                }
-            }
-            .padding(11)
-            .background(Color.blue.opacity(0.07))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.blue.opacity(0.18), lineWidth: 1)
-            )
         }
+        .padding(12)
+        .background(Color.blue.opacity(0.06))
+        .cornerRadius(9)
+        .overlay(
+            RoundedRectangle(cornerRadius: 9)
+                .stroke(Color.blue.opacity(0.18), lineWidth: 1)
+        )
     }
     
     // MARK: - Mode 2: Chỉ hiển thị Tiếng Việt
