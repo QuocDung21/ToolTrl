@@ -592,40 +592,60 @@ public struct VocabularyNotebookView: View {
                 
                 Spacer()
                 
-                // Bottom Review Controls
-                HStack(spacing: 20) {
-                    Button(action: {
-                        nextCard()
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.counterclockwise")
-                            Text("Chưa nhớ (Ôn lại)")
+                // Bottom Review Controls with Shortcut Badges
+                VStack(spacing: 8) {
+                    HStack(spacing: 20) {
+                        Button(action: {
+                            nextCard()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "arrow.counterclockwise")
+                                Text("Chưa nhớ (Ôn lại)")
+                                Text("1 / ←")
+                                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.orange.opacity(0.2))
+                                    .cornerRadius(3)
+                            }
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundColor(.orange)
+                            .frame(width: 175, height: 38)
+                            .background(Color.orange.opacity(0.12))
+                            .cornerRadius(8)
                         }
-                        .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundColor(.orange)
-                        .frame(width: 160, height: 38)
-                        .background(Color.orange.opacity(0.12))
-                        .cornerRadius(8)
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("1", modifiers: [])
+                        
+                        Button(action: {
+                            vocabService.toggleMastered(id: currentWord.id)
+                            nextCard()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark")
+                                Text("Đã nhớ 👍")
+                                Text("2 / →")
+                                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.white.opacity(0.3))
+                                    .cornerRadius(3)
+                            }
+                            .font(.system(size: 12.5, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 175, height: 38)
+                            .background(Color.green)
+                            .cornerRadius(8)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut("2", modifiers: [])
                     }
-                    .buttonStyle(.plain)
                     
-                    Button(action: {
-                        vocabService.toggleMastered(id: currentWord.id)
-                        nextCard()
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark")
-                            Text("Đã nhớ 👍")
-                        }
-                        .font(.system(size: 12.5, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 160, height: 38)
-                        .background(Color.green)
-                        .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
+                    Text("💡 Mẹo: Bấm **Space** để lật thẻ • Bấm **1** (Ôn lại) • Bấm **2** (Đã nhớ)")
+                        .font(.system(size: 10.5))
+                        .foregroundColor(.secondary.opacity(0.8))
                 }
-                .padding(.bottom, 24)
+                .padding(.bottom, 20)
             }
         )
     }

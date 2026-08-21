@@ -28,10 +28,26 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func setupFloatingPanel() {
         let panel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 320),
+            contentRect: NSRect(x: 0, y: 0, width: 430, height: 340),
             backing: .buffered,
             defer: false
         )
+        
+        panel.onCopyRequested = { [weak self] in
+            self?.viewModel.copyTranslation()
+        }
+        panel.onSpeakRequested = { [weak self] in
+            self?.viewModel.speakTranslated()
+        }
+        panel.onBookmarkRequested = { [weak self] in
+            self?.viewModel.toggleBookmark()
+        }
+        panel.onOpenNotebookRequested = {
+            VocabularyWindowController.shared.showNotebook()
+        }
+        panel.onOpenSettingsRequested = {
+            SettingsWindowController.shared.showSettings()
+        }
         
         let hudView = TranslationHUDView(viewModel: viewModel) { [weak panel] in
             panel?.hidePanel()

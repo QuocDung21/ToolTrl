@@ -3,6 +3,13 @@ import AppKit
 
 public final class FloatingPanel: NSPanel, NSWindowDelegate {
     private var outsideClickMonitor: Any?
+    private var localKeyMonitor: Any?
+    
+    public var onCopyRequested: (() -> Void)?
+    public var onSpeakRequested: (() -> Void)?
+    public var onBookmarkRequested: (() -> Void)?
+    public var onOpenNotebookRequested: (() -> Void)?
+    public var onOpenSettingsRequested: (() -> Void)?
     
     public init(contentRect: NSRect, backing: NSPanel.BackingStoreType, defer flag: Bool) {
         super.init(
@@ -37,8 +44,16 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     public func hidePanel() {
         stopOutsideClickMonitor()
+        stopLocalKeyMonitor()
         SpeechService.shared.stop()
-        self.orderOut(nil)
+        
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.12
+            self.animator().alphaValue = 0.0
+        }, completionHandler: {
+            self.orderOut(nil)
+            self.alphaValue = 1.0
+        })
     }
     
     public func windowDidResignKey(_ notification: Notification) {
@@ -47,26 +62,29 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     public func showNearCursorOrCenter() {
         let mouseLoc = NSEvent.mouseLocation
-        let windowWidth: CGFloat = 400
-        let windowHeight: CGFloat = 320
+        let windowWidth: CGFloat = 430
+        let windowHeight: CGFloat = 340
         
         if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLoc, $0.frame, false) }) ?? NSScreen.main {
-            var x = mouseLoc.x + 10
-            var y = mouseLoc.y - windowHeight - 10
+            var x = mouseLoc.x + 8
+            var y = mouseLoc.y - windowHeight - 12
             
-            // Adjust if out of screen bounds
             let visibleFrame = screen.visibleFrame
-            if x + windowWidth > visibleFrame.maxX {
-                x = visibleFrame.maxX - windowWidth - 12
+            
+            // Smart clamping so popup never clips out of screen bounds
+            if x + windowWidth > visibleFrame.maxX - 16 {
+                x = visibleFrame.maxX - windowWidth - 16
             }
-            if x < visibleFrame.minX {
-                x = visibleFrame.minX + 12
+            if x < visibleFrame.minX + 16 {
+                x = visibleFrame.minX + 16
             }
-            if y < visibleFrame.minY {
-                y = mouseLoc.y + 20
+            
+            if y < visibleFrame.minY + 16 {
+                // If bottom overflow, flip to above the cursor
+                y = mouseLoc.y + 24
             }
-            if y + windowHeight > visibleFrame.maxY {
-                y = visibleFrame.maxY - windowHeight - 12
+            if y + windowHeight > visibleFrame.maxY - 16 {
+                y = visibleFrame.maxY - windowHeight - 16
             }
             
             self.setFrame(NSRect(x: x, y: y, width: windowWidth, height: windowHeight), display: true)
@@ -74,19 +92,26 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
             self.center()
         }
         
+        self.alphaValue = 0.0
         self.invalidateShadow()
         self.orderFrontRegardless()
         self.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         
-        // Start monitoring clicks outside the panel
+        // Smooth fade-in animation
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.15
+            self.animator().alphaValue = 1.0
+        }
+        
         startOutsideClickMonitor()
+        startLocalKeyMonitor()
     }
     
     private func startOutsideClickMonitor() {
         stopOutsideClickMonitor()
         guard AppSettings.shared.clickOutsideDismiss else { return }
-        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
             guard let self = self, self.isVisible else { return }
             guard AppSettings.shared.clickOutsideDismiss else { return }
             let clickLocation = NSEvent.mouseLocation
@@ -103,5 +128,54 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
             NSEvent.removeMonitor(monitor)
             outsideClickMonitor = nil
         }
+    }
+    
+    private func startLocalKeyMonitor() {
+        stopLocalKeyMonitor()
+        localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self = self else { return event }
+            
+            // ESC key -> Dismiss
+            if event.keyCode == 53 {
+                self.hidePanel()
+                return nil
+            }
+            
+            // Command key combinations
+            if event.modifierFlags.contains(.command) {
+                switch event.charactersIgnoringModifiers?.lowercased() {
+                case "c":
+                    self.onCopyRequested?()
+                    return nil
+                case "s":
+                    self.onSpeakRequested?()
+                    return nil
+                case "b":
+                    self.onBookmarkRequested?()
+                    return nil
+                case "v":
+                    self.onOpenNotebookRequested?()
+                    return nil
+                case ",":
+                    self.onOpenSettingsRequested?()
+                    return nil
+                default:
+                    break
+                }
+            }
+            return event
+        }
+    }
+    
+    private func stopLocalKeyMonitor() {
+        if let monitor = localKeyMonitor {
+            NSEvent.removeMonitor(monitor)
+            localKeyMonitor = nil
+        }
+    }
+    
+    deinit {
+        stopOutsideClickMonitor()
+        stopLocalKeyMonitor()
     }
 }
