@@ -8,6 +8,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private var lastTriggerTime: Date = .distantPast
     
+    public override init() {
+        super.init()
+    }
+    
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Run as background agent without Dock icon
         NSApp.setActivationPolicy(.accessory)

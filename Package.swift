@@ -10,14 +10,29 @@ let package = Package(
         .executable(
             name: "ToolTrL",
             targets: ["ToolTrL"]
+        ),
+        .library(
+            name: "ToolTrLKit",
+            targets: ["ToolTrLKit"]
         )
     ],
     dependencies: [],
     targets: [
-        .executableTarget(
-            name: "ToolTrL",
+        .target(
+            name: "ToolTrLKit",
             dependencies: [],
             path: "Sources/ToolTrL",
+            exclude: [
+                "App/ToolTrLApp.swift"
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
+            ]
+        ),
+        .executableTarget(
+            name: "ToolTrL",
+            dependencies: ["ToolTrLKit"],
+            path: "Sources/ToolTrLLauncher",
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
