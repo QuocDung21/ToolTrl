@@ -109,6 +109,16 @@ public struct TranslationHUDView: View {
             Spacer()
             
             Button(action: {
+                VocabularyWindowController.shared.showNotebook()
+            }) {
+                Image(systemName: "book.pages.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.orange.opacity(0.85))
+            }
+            .buttonStyle(.plain)
+            .help("Mở Sổ tay từ vựng")
+            
+            Button(action: {
                 SettingsWindowController.shared.showSettings()
             }) {
                 Image(systemName: "gearshape.fill")

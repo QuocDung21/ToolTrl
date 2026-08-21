@@ -47,6 +47,11 @@ public final class MenuBarController: NSObject {
         quickLookupItem.target = self
         menu.addItem(quickLookupItem)
         
+        let notebookItem = NSMenuItem(title: "Mở Sổ tay từ vựng...", action: #selector(handleOpenNotebook), keyEquivalent: "v")
+        notebookItem.keyEquivalentModifierMask = .option
+        notebookItem.target = self
+        menu.addItem(notebookItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         // Target Language Submenu
@@ -98,6 +103,10 @@ public final class MenuBarController: NSObject {
     
     @objc private func handleAccessibilityCheck() {
         _ = TextGrabber.isAccessibilityTrusted(prompt: true)
+    }
+    
+    @objc private func handleOpenNotebook() {
+        VocabularyWindowController.shared.showNotebook()
     }
     
     @objc private func handleOpenSettings() {

@@ -5,16 +5,32 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public let word: String
     public let phonetic: String?
     public let translation: String
+    public let exampleEn: String?
+    public let exampleVi: String?
     public let dateAdded: Date
     public var isFavorite: Bool
+    public var isMastered: Bool
     
-    public init(id: UUID = UUID(), word: String, phonetic: String?, translation: String, dateAdded: Date = Date(), isFavorite: Bool = true) {
+    public init(
+        id: UUID = UUID(),
+        word: String,
+        phonetic: String?,
+        translation: String,
+        exampleEn: String? = nil,
+        exampleVi: String? = nil,
+        dateAdded: Date = Date(),
+        isFavorite: Bool = false,
+        isMastered: Bool = false
+    ) {
         self.id = id
         self.word = word
         self.phonetic = phonetic
         self.translation = translation
+        self.exampleEn = exampleEn
+        self.exampleVi = exampleVi
         self.dateAdded = dateAdded
         self.isFavorite = isFavorite
+        self.isMastered = isMastered
     }
 }
 
@@ -22,7 +38,7 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
 public final class VocabularyService: ObservableObject {
     public static let shared = VocabularyService()
     
-    private let storageKey = "saved_vocabulary_items"
+    private let storageKey = "saved_vocabulary_items_v2"
     
     @Published public var savedWords: [SavedWordItem] = []
     
@@ -33,13 +49,20 @@ public final class VocabularyService: ObservableObject {
     public func loadWords() {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               let items = try? JSONDecoder().decode([SavedWordItem].self, from: data) else {
+            // Check legacy key
+            if let legacyData = UserDefaults.standard.data(forKey: "saved_vocabulary_items"),
+               let legacyItems = try? JSONDecoder().decode([SavedWordItem].self, from: legacyData) {
+                self.savedWords = legacyItems
+                saveWords()
+                return
+            }
             self.savedWords = []
             return
         }
         self.savedWords = items
     }
     
-    private func saveWords() {
+    public func saveWords() {
         if let data = try? JSONEncoder().encode(savedWords) {
             UserDefaults.standard.set(data, forKey: storageKey)
         }
@@ -50,7 +73,13 @@ public final class VocabularyService: ObservableObject {
         return savedWords.contains { $0.word.lowercased() == clean }
     }
     
-    public func toggleSaveWord(word: String, phonetic: String?, translation: String) {
+    public func toggleSaveWord(
+        word: String,
+        phonetic: String?,
+        translation: String,
+        exampleEn: String? = nil,
+        exampleVi: String? = nil
+    ) {
         let clean = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
         
@@ -60,11 +89,27 @@ public final class VocabularyService: ObservableObject {
             let newItem = SavedWordItem(
                 word: clean,
                 phonetic: phonetic,
-                translation: translation
+                translation: translation,
+                exampleEn: exampleEn,
+                exampleVi: exampleVi
             )
             savedWords.insert(newItem, at: 0)
         }
         saveWords()
+    }
+    
+    public func toggleFavorite(id: UUID) {
+        if let index = savedWords.firstIndex(where: { $0.id == id }) {
+            savedWords[index].isFavorite.toggle()
+            saveWords()
+        }
+    }
+    
+    public func toggleMastered(id: UUID) {
+        if let index = savedWords.firstIndex(where: { $0.id == id }) {
+            savedWords[index].isMastered.toggle()
+            saveWords()
+        }
     }
     
     public func removeWord(at offsets: IndexSet) {
