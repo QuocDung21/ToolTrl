@@ -106,4 +106,32 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             self.floatingPanel?.showNearCursorOrCenter()
         }
     }
+    
+    // MARK: - Handle Quit / Command + Q Confirmation
+    public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let alert = NSAlert()
+        alert.messageText = "Bạn có muốn tiếp tục chạy nền ToolTrL?"
+        alert.informativeText = "ToolTrL là ứng dụng tiện ích. Ứng dụng sẽ tiếp tục chạy ẩn trên thanh Menu Bar để bạn có thể sử dụng phím tắt Option + D (⌥D) tra cứu nhanh bất kỳ lúc nào."
+        alert.alertStyle = .informational
+        
+        // Button 1: Chạy nền (Ẩn vào Menu Bar) - Default
+        alert.addButton(withTitle: "Chạy nền (Khuyên dùng)")
+        // Button 2: Thoát hoàn toàn
+        alert.addButton(withTitle: "Thoát hoàn toàn")
+        
+        let icon = AppLogo.nsImage
+        alert.icon = icon
+        
+        NSApp.activate(ignoringOtherApps: true)
+        
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Chạy nền: Đóng popup nếu đang mở và hủy thao tác thoát
+            self.floatingPanel?.hidePanel()
+            return .terminateCancel
+        } else {
+            // Thoát hoàn toàn
+            return .terminateNow
+        }
+    }
 }
