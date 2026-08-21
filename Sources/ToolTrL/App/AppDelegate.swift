@@ -6,36 +6,37 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var floatingPanel: FloatingPanel?
     private var viewModel: TranslationViewModel!
     private var menuBarController: MenuBarController?
-
+    private var lastTriggerTime: Date = .distantPast
+    
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Run as background agent without Dock icon
         NSApp.setActivationPolicy(.accessory)
-
+        
         viewModel = TranslationViewModel()
-
+        
         setupFloatingPanel()
         setupMenuBar()
         setupHotKey()
-
+        
         // Prompt for Accessibility permission if not granted
         checkAccessibilityOnLaunch()
     }
-
+    
     private func setupFloatingPanel() {
         let panel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 340),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 320),
             backing: .buffered,
             defer: false
         )
-
+        
         let hudView = TranslationHUDView(viewModel: viewModel) { [weak panel] in
-            panel?.orderOut(nil)
+            panel?.hidePanel()
         }
-
+        
         panel.contentView = NSHostingView(rootView: hudView)
         self.floatingPanel = panel
     }
-
+    
     private func setupMenuBar() {
         menuBarController = MenuBarController(
             viewModel: viewModel,
@@ -47,30 +48,58 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
     }
-
+    
     private func setupHotKey() {
         HotKeyManager.shared.registerHotKey { [weak self] in
             self?.triggerTranslation()
         }
     }
-
+    
     private func checkAccessibilityOnLaunch() {
         if !TextGrabber.isAccessibilityTrusted(prompt: true) {
             print("⚠️ Quyền Trợ năng (Accessibility) chưa được cấp. Đã gửi yêu cầu cấp quyền.")
         }
     }
-
+    
     public func triggerTranslation() {
+        let now = Date()
+        // Debounce: Chống spam phím tắt dưới 250ms
+        guard now.timeIntervalSince(lastTriggerTime) > 0.25 else { return }
+        lastTriggerTime = now
+        
         Task { @MainActor in
             let text = await TextGrabber.shared.getSelectedText()
+            let isVisible = self.floatingPanel?.isVisible ?? false
+            
             if let selectedText = text, !selectedText.isEmpty {
+                // Nếu cửa sổ đang mở và người dùng bấm lại phím tắt trên đúng từ cũ -> Toggle đóng
+                if isVisible && selectedText == self.viewModel.originalText {
+                    self.floatingPanel?.hidePanel()
+                    return
+                }
+                
+                // Nếu chọn từ mới -> Cập nhật và hiển thị
                 self.viewModel.processText(selectedText)
+                self.floatingPanel?.showNearCursorOrCenter()
+            } else {
+                // Nếu không bôi đen từ nào:
+                if isVisible {
+                    // Đang mở -> Toggle đóng
+                    self.floatingPanel?.hidePanel()
+                } else {
+                    // Chưa mở -> Mở ô tìm kiếm thủ công
+                    self.floatingPanel?.showNearCursorOrCenter()
+                }
             }
-            self.floatingPanel?.showNearCursorOrCenter()
         }
     }
-
+    
     public func openQuickLookup() {
-        self.floatingPanel?.showNearCursorOrCenter()
+        let isVisible = self.floatingPanel?.isVisible ?? false
+        if isVisible {
+            self.floatingPanel?.hidePanel()
+        } else {
+            self.floatingPanel?.showNearCursorOrCenter()
+        }
     }
 }
