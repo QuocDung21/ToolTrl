@@ -34,11 +34,11 @@ public struct SettingsView: View {
             Section(header: Text("Tốc độ phát âm (Speech Rate)").font(.system(size: 12, weight: .bold))) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Chậm")
+                        Text("Rất chậm")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                         
-                        Slider(value: $settings.speechRate, in: 0.30...0.65, step: 0.02)
+                        Slider(value: $settings.speechRate, in: 0.15...0.65, step: 0.02)
                         
                         Text("Nhanh")
                             .font(.system(size: 11))
@@ -46,9 +46,16 @@ public struct SettingsView: View {
                     }
                     
                     HStack {
-                        Text("Tốc độ hiện tại: \(String(format: "%.2f", settings.speechRate)) (Mặc định chuẩn: 0.44)")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundColor(.secondary)
+                        let desc: String = {
+                            if settings.speechRate <= 0.25 { return "Rất chậm (0.5x)" }
+                            if settings.speechRate <= 0.35 { return "Chậm (0.7x)" }
+                            if settings.speechRate <= 0.45 { return "Vừa phải (1.0x - Chuẩn)" }
+                            if settings.speechRate <= 0.55 { return "Hơi nhanh (1.2x)" }
+                            return "Nhanh (1.5x)"
+                        }()
+                        Text("Tốc độ: \(String(format: "%.2f", settings.speechRate)) — \(desc)")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.blue)
                         
                         Spacer()
                     }
