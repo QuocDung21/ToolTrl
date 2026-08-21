@@ -68,17 +68,25 @@ public final class TranslationService {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         
+        let cacheKey = "\(sourceLang)_\(targetLang)_\(trimmed)"
+        if let cached = TranslationCache.shared.getTranslation(key: cacheKey) {
+            return cached
+        }
+        
+        var result: String? = nil
+        
         // Attempt 1: Neural POST Engine
         if let res = await translateViaNeuralPost(text: trimmed, from: sourceLang, to: targetLang), !res.isEmpty {
-            return res
+            result = res
+        } else if let res = await translateViaSecondaryEngine(text: trimmed, from: sourceLang, to: targetLang), !res.isEmpty {
+            result = res
         }
         
-        // Attempt 2: Secondary Engine
-        if let res = await translateViaSecondaryEngine(text: trimmed, from: sourceLang, to: targetLang), !res.isEmpty {
-            return res
+        if let finalResult = result {
+            TranslationCache.shared.setTranslation(key: cacheKey, value: finalResult)
         }
         
-        return nil
+        return result
     }
     
     // MARK: - Engine 1: Neural POST Engine

@@ -76,6 +76,10 @@ public final class TranslationViewModel: ObservableObject {
                 if self.definition == nil {
                     self.definition = DictionaryService.shared.lookup(term: trimmed)
                 }
+                
+                if AppSettings.shared.autoSpeakWord {
+                    self.speakOriginal()
+                }
             }
         }
         

@@ -37,6 +37,7 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     public func hidePanel() {
         stopOutsideClickMonitor()
+        SpeechService.shared.stop()
         self.orderOut(nil)
     }
     

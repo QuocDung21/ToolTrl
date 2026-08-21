@@ -70,6 +70,11 @@ public final class SmartDictionaryService {
         let cleanWord = rawWord.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !cleanWord.isEmpty else { return nil }
         
+        let cacheKey = "\(cleanWord)_\(targetLanguage)"
+        if let cached = TranslationCache.shared.getDictionaryEntry(key: cacheKey) {
+            return cached
+        }
+        
         guard let encoded = cleanWord.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
               let url = URL(string: "https://api.dictionaryapi.dev/api/v2/entries/en/\(encoded)") else {
             return nil
@@ -164,7 +169,7 @@ public final class SmartDictionaryService {
                 }
             }
             
-            return RichWordEntry(
+            let richEntry = RichWordEntry(
                 word: firstEntry.word.capitalized,
                 phonetic: firstEntry.phonetic,
                 mainTranslation: mainTranslation,
@@ -172,6 +177,8 @@ public final class SmartDictionaryService {
                 allSynonyms: Array(allSyns),
                 allAntonyms: Array(allAnts)
             )
+            TranslationCache.shared.setDictionaryEntry(key: cacheKey, entry: richEntry)
+            return richEntry
         } catch {
             print("SmartDictionaryService error: \(error)")
             return nil
