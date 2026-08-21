@@ -164,16 +164,17 @@ public struct TranslationHUDView: View {
                 
                 // Bookmark Icon
                 Button(action: {
-                    viewModel.isBookmarked.toggle()
+                    viewModel.toggleBookmark()
                 }) {
                     Image(systemName: viewModel.isBookmarked ? "bookmark.fill" : "bookmark")
                         .font(.system(size: 12))
                         .foregroundColor(viewModel.isBookmarked ? .blue : .secondary.opacity(0.7))
                 }
                 .buttonStyle(.plain)
+                .help(viewModel.isBookmarked ? "Bỏ lưu từ này" : "Lưu vào sổ từ vựng")
                 
                 // Phonetic Tag Box
-                if let phonetic = entry.phonetic, !phonetic.isEmpty {
+                if AppSettings.shared.showPhonetics, let phonetic = entry.phonetic, !phonetic.isEmpty {
                     Text(phonetic)
                         .font(.system(size: 10.5, weight: .medium, design: .serif))
                         .foregroundColor(.primary.opacity(0.75))
@@ -256,49 +257,50 @@ public struct TranslationHUDView: View {
                                     }
                                 }
                                 
-                                // Example in English
-                                if let exEn = item.exampleEn, !exEn.isEmpty {
-                                    HStack(alignment: .top, spacing: 4) {
-                                        Text("\"")
-                                            .font(.system(size: 10.5))
-                                            .foregroundColor(.secondary)
-                                        LiveSpokenTextView(
-                                            text: exEn,
-                                            speakerID: "ex_\(group.partOfSpeech)_\(index)",
-                                            font: .system(size: 10.5, design: .serif),
-                                            defaultColor: .secondary
-                                        )
-                                        Text("\"")
-                                            .font(.system(size: 10.5))
-                                            .foregroundColor(.secondary)
-                                        
-                                        Button(action: {
-                                            viewModel.speakCustom(text: exEn, languageCode: "en-US", speakerID: "ex_\(group.partOfSpeech)_\(index)")
-                                        }) {
-                                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "ex_\(group.partOfSpeech)_\(index)") ? "speaker.wave.3.fill" : "speaker.wave.1")
-                                                .font(.system(size: 8.5))
+                                // Example in English & Vietnamese
+                                if AppSettings.shared.showExamples {
+                                    if let exEn = item.exampleEn, !exEn.isEmpty {
+                                        HStack(alignment: .top, spacing: 4) {
+                                            Text("\"")
+                                                .font(.system(size: 10.5))
                                                 .foregroundColor(.secondary)
+                                            LiveSpokenTextView(
+                                                text: exEn,
+                                                speakerID: "ex_\(group.partOfSpeech)_\(index)",
+                                                font: .system(size: 10.5, design: .serif),
+                                                defaultColor: .secondary
+                                            )
+                                            Text("\"")
+                                                .font(.system(size: 10.5))
+                                                .foregroundColor(.secondary)
+                                            
+                                            Button(action: {
+                                                viewModel.speakCustom(text: exEn, languageCode: "en-US", speakerID: "ex_\(group.partOfSpeech)_\(index)")
+                                            }) {
+                                                Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "ex_\(group.partOfSpeech)_\(index)") ? "speaker.wave.3.fill" : "speaker.wave.1")
+                                                    .font(.system(size: 8.5))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .buttonStyle(.plain)
                                         }
-                                        .buttonStyle(.plain)
-                                    }
-                                    .italic()
-                                    .padding(.leading, 6)
-                                }
-                                
-                                // Example in Vietnamese
-                                if let exVi = item.exampleVi, !exVi.isEmpty {
-                                    Text("= \(exVi)")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .italic()
                                         .padding(.leading, 6)
-                                        .textSelection(.enabled)
+                                    }
+                                    
+                                    if let exVi = item.exampleVi, !exVi.isEmpty {
+                                        Text("= \(exVi)")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary.opacity(0.8))
+                                            .padding(.leading, 6)
+                                            .textSelection(.enabled)
+                                    }
                                 }
                             }
                         }
                     }
                     
                     // Group Synonyms Tags
-                    if !group.synonyms.isEmpty {
+                    if AppSettings.shared.showSynonyms && !group.synonyms.isEmpty {
                         synonymTagSection(title: "Từ đồng nghĩa:", tags: group.synonyms)
                     }
                 }
@@ -312,12 +314,12 @@ public struct TranslationHUDView: View {
             }
             
             // All Synonyms Section
-            if !entry.allSynonyms.isEmpty {
+            if AppSettings.shared.showSynonyms && !entry.allSynonyms.isEmpty {
                 synonymTagSection(title: "Từ đồng nghĩa (Synonyms):", tags: entry.allSynonyms)
             }
             
             // All Antonyms Section
-            if !entry.allAntonyms.isEmpty {
+            if AppSettings.shared.showSynonyms && !entry.allAntonyms.isEmpty {
                 synonymTagSection(title: "Từ trái nghĩa (Antonyms):", tags: entry.allAntonyms)
             }
         }
@@ -814,4 +816,5 @@ struct TranslationModifier: ViewModifier {
     
     TranslationHUDView(viewModel: vm, onClose: {})
         .padding()
+        .background(.white)
 }

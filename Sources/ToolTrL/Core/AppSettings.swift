@@ -34,11 +34,35 @@ public final class AppSettings: ObservableObject {
         }
     }
     
+    // Tùy chọn hiển thị từ điển
+    @Published public var showPhonetics: Bool {
+        didSet {
+            UserDefaults.standard.set(showPhonetics, forKey: "show_phonetics")
+        }
+    }
+    
+    @Published public var showExamples: Bool {
+        didSet {
+            UserDefaults.standard.set(showExamples, forKey: "show_examples")
+        }
+    }
+    
+    @Published public var showSynonyms: Bool {
+        didSet {
+            UserDefaults.standard.set(showSynonyms, forKey: "show_synonyms")
+        }
+    }
+    
+    @Published public var showOfflineDictionary: Bool {
+        didSet {
+            UserDefaults.standard.set(showOfflineDictionary, forKey: "show_offline_dict")
+        }
+    }
+    
     @Published public var launchAtLogin: Bool = false
     
     private init() {
         let savedRate = UserDefaults.standard.double(forKey: "speech_rate")
-        // Default to a comfortable reading pace (0.42)
         self.speechRate = savedRate > 0.05 ? savedRate : 0.42
         
         let savedPitch = UserDefaults.standard.double(forKey: "speech_pitch")
@@ -53,6 +77,12 @@ public final class AppSettings: ObservableObject {
         }
         
         self.targetLanguage = UserDefaults.standard.string(forKey: "target_language") ?? TargetLanguage.vietnamese.rawValue
+        
+        // Default display settings
+        self.showPhonetics = UserDefaults.standard.object(forKey: "show_phonetics") == nil ? true : UserDefaults.standard.bool(forKey: "show_phonetics")
+        self.showExamples = UserDefaults.standard.object(forKey: "show_examples") == nil ? true : UserDefaults.standard.bool(forKey: "show_examples")
+        self.showSynonyms = UserDefaults.standard.object(forKey: "show_synonyms") == nil ? true : UserDefaults.standard.bool(forKey: "show_synonyms")
+        self.showOfflineDictionary = UserDefaults.standard.object(forKey: "show_offline_dict") == nil ? true : UserDefaults.standard.bool(forKey: "show_offline_dict")
         
         if #available(macOS 13.0, *) {
             self.launchAtLogin = SMAppService.mainApp.status == .enabled

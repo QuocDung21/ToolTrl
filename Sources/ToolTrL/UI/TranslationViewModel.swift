@@ -51,6 +51,7 @@ public final class TranslationViewModel: ObservableObject {
         self.definition = nil
         self.richEntry = nil
         self.isLoading = true
+        self.isBookmarked = VocabularyService.shared.isWordSaved(trimmed)
         
         // 1. Detect source language
         let detected = TranslationService.shared.detectLanguage(for: trimmed)
@@ -150,5 +151,16 @@ public final class TranslationViewModel: ObservableObject {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(translatedText, forType: .string)
+    }
+    
+    public func toggleBookmark() {
+        guard !originalText.isEmpty else { return }
+        let meaning = !translatedText.isEmpty ? translatedText : (richEntry?.mainTranslation ?? "")
+        VocabularyService.shared.toggleSaveWord(
+            word: originalText,
+            phonetic: richEntry?.phonetic,
+            translation: meaning
+        )
+        self.isBookmarked = VocabularyService.shared.isWordSaved(originalText)
     }
 }
