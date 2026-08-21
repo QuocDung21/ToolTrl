@@ -1,0 +1,21 @@
+# Xcode and SPM
+.build/
+build/
+Packages/
+Package.resolved
+.swiftpm/
+xcuserdata/
+*.xcworkspace
+*.xcodeproj
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Temporary files
+*.swp
+*~
