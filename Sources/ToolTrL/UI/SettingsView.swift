@@ -145,3 +145,8 @@ public struct SettingsView: View {
         .formStyle(.grouped)
     }
 }
+
+// MARK: - SwiftUI Preview
+#Preview("Settings View") {
+    SettingsView()
+}

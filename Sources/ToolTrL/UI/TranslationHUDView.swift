@@ -754,3 +754,64 @@ struct TranslationModifier: ViewModifier {
     }
 }
 #endif
+
+// MARK: - SwiftUI Previews
+#Preview("Word Lookup Mode") {
+    let vm: TranslationViewModel = {
+        let v = TranslationViewModel()
+        v.originalText = "Serendipity"
+        v.detectedLanguage = "en"
+        v.translatedText = "Sự tình cờ may mắn"
+        v.richEntry = RichWordEntry(
+            word: "Serendipity",
+            phonetic: "/ˌser.ənˈdɪp.ə.t̬i/",
+            mainTranslation: "Sự tình cờ may mắn, khả năng tìm thấy những điều bất ngờ thú vị",
+            meanings: [
+                MeaningGroup(
+                    partOfSpeech: "noun",
+                    definitions: [
+                        DefinitionItem(
+                            definitionEn: "The occurrence and development of events by chance in a happy or beneficial way.",
+                            definitionVi: "Sự xảy ra và phát triển của các sự việc một cách tình cờ theo chiều hướng may mắn hoặc có lợi.",
+                            exampleEn: "A fortunate stroke of serendipity brought them together.",
+                            exampleVi: "Một cơ duyên tình cờ may mắn đã đưa họ đến với nhau."
+                        )
+                    ],
+                    synonyms: ["chance", "fluke", "fortune"],
+                    antonyms: []
+                )
+            ],
+            allSynonyms: ["chance", "coincidence", "fortune", "luck", "providence"],
+            allAntonyms: ["misfortune", "bad luck"]
+        )
+        return v
+    }()
+    
+    TranslationHUDView(viewModel: vm, onClose: {})
+        .padding()
+}
+
+#Preview("Sentence Translation Mode") {
+    let vm: TranslationViewModel = {
+        let v = TranslationViewModel()
+        v.originalText = "Artificial intelligence is transforming how people work and learn every day."
+        v.detectedLanguage = "en"
+        v.translatedText = "Trí tuệ nhân tạo đang thay đổi cách mọi người làm việc và học tập mỗi ngày."
+        return v
+    }()
+    
+    TranslationHUDView(viewModel: vm, onClose: {})
+        .padding()
+}
+
+#Preview("Loading State") {
+    let vm: TranslationViewModel = {
+        let v = TranslationViewModel()
+        v.originalText = "Innovation"
+        v.isLoading = true
+        return v
+    }()
+    
+    TranslationHUDView(viewModel: vm, onClose: {})
+        .padding()
+}
