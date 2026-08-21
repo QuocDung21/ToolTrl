@@ -505,17 +505,17 @@ public struct TranslationHUDView: View {
         }
     }
     
-    // MARK: - Mode 1: Dịch Từng Từ Tương Ứng (Interlinear Ruby: Việt trên - Anh dưới)
+    // MARK: - Mode 1: Dịch Từng Từ Tương Ứng (Tiếng Anh trên - Tiếng Việt nhỏ dưới từng từ)
     private var wordByWordSentenceTranslationView: some View {
         VStack(alignment: .leading, spacing: 10) {
             // Interlinear Word Flow Box
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     HStack(spacing: 4) {
                         Image(systemName: "character.bubble.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.blue)
-                        Text("DỊCH TỪNG TỪ TƯƠNG ỨNG (RUBY)")
+                        Text("TIẾNG ANH VỚI NGHĨA DƯỚI TỪNG TỪ")
                             .font(.system(size: 9.5, weight: .bold))
                             .foregroundColor(.blue)
                     }
@@ -528,7 +528,7 @@ public struct TranslationHUDView: View {
                         HStack(spacing: 2) {
                             Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "original") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
                                 .font(.system(size: 9))
-                            Text("Nghe TA")
+                            Text("Nghe câu TA")
                                 .font(.system(size: 9.5, weight: .medium))
                         }
                         .padding(.horizontal, 6)
@@ -541,32 +541,32 @@ public struct TranslationHUDView: View {
                     .help("Nghe phát âm cả câu tiếng Anh")
                 }
                 
-                // Word-by-Word Interlinear Flow
+                // Word-by-Word Interlinear Flow (English on top, Small Vietnamese directly below)
                 if !viewModel.wordGlosses.isEmpty {
                     WrappingHStack(models: viewModel.wordGlosses) { item in
                         Button(action: {
                             viewModel.speakCustom(text: item.cleanWord, languageCode: "en-US", speakerID: "wbw_\(item.id)")
                         }) {
-                            VStack(spacing: 2) {
-                                // Tiếng Việt ở trên
-                                Text(item.gloss.isEmpty ? "—" : item.gloss)
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.blue)
-                                    .lineLimit(1)
-                                
-                                // Tiếng Anh ở dưới
+                            VStack(alignment: .center, spacing: 1.5) {
+                                // Chữ Tiếng Anh gốc ở trên
                                 Text(item.original)
-                                    .font(.system(size: 12.5, weight: .medium))
+                                    .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.primary)
                                     .lineLimit(1)
+                                
+                                // Nghĩa Tiếng Việt nhỏ trực tiếp dưới từ tương ứng
+                                Text(item.gloss.isEmpty ? " " : item.gloss)
+                                    .font(.system(size: 9.5, weight: .medium))
+                                    .foregroundColor(.blue)
+                                    .lineLimit(1)
                             }
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3.5)
-                            .background(Color.blue.opacity(0.06))
-                            .cornerRadius(5)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2.5)
+                            .background(Color.blue.opacity(0.05))
+                            .cornerRadius(4)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 5)
-                                    .stroke(Color.blue.opacity(0.18), lineWidth: 0.8)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.blue.opacity(0.12), lineWidth: 0.6)
                             )
                         }
                         .buttonStyle(.plain)
