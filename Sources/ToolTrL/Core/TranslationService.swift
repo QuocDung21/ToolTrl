@@ -73,6 +73,14 @@ public final class TranslationService {
             return cached
         }
         
+        // Attempt 0: Local AI Engine (Ollama / Local LLM) if enabled
+        if AppSettings.shared.aiTranslationEngine == .ollamaLocal || AppSettings.shared.aiTranslationEngine == .huggingFaceLocal {
+            if let localRes = await LocalModelService.shared.translateViaOllama(text: trimmed, to: targetLang), !localRes.isEmpty {
+                TranslationCache.shared.setTranslation(key: cacheKey, value: localRes)
+                return localRes
+            }
+        }
+        
         var result: String? = nil
         
         // Attempt 1: Neural POST Engine
