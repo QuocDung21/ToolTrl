@@ -40,7 +40,7 @@ public struct VocabularyNotebookView: View {
                 mainNotebookView
             }
         }
-        .frame(minWidth: 780, minHeight: 520)
+        .frame(minWidth: 840, minHeight: 540)
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
@@ -56,12 +56,12 @@ public struct VocabularyNotebookView: View {
         HStack(spacing: 0) {
             // LEFT COLUMN: Binder & Word List
             sidebarView
-                .frame(width: 300)
+                .frame(width: 320)
             
             Divider()
-                .opacity(0.3)
+                .opacity(0.35)
             
-            // RIGHT COLUMN: Beautiful Journal Page
+            // RIGHT COLUMN: Journal Detail Page
             detailPageView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -70,19 +70,14 @@ public struct VocabularyNotebookView: View {
     // MARK: - Left Sidebar: Word List & Stats
     private var sidebarView: some View {
         VStack(spacing: 0) {
-            // Header Notebook Title & Flashcard Button
-            HStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "character.book.closed.fill")
-                        .font(.system(size: 14))
-                        .foregroundColor(.orange)
-                    Text("Sổ Tay Từ Vựng")
-                        .font(.system(size: 13.5, weight: .bold))
-                }
+            // 1. Top Window Clearance Bar (Leaves space for macOS Traffic Lights)
+            HStack {
+                Spacer()
+                    .frame(width: 68) // Clearance for Red/Yellow/Green window buttons
                 
                 Spacer()
                 
-                // Flashcard Button
+                // Flashcard Quick Action Button
                 Button(action: {
                     if !filteredWords.isEmpty {
                         flashcardIndex = 0
@@ -94,29 +89,53 @@ public struct VocabularyNotebookView: View {
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "rectangle.portrait.on.rectangle.portrait.angled.fill")
-                            .font(.system(size: 10))
+                            .font(.system(size: 10.5))
                         Text("Flashcard")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.system(size: 11, weight: .semibold))
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4.5)
-                    .background(Color.orange.opacity(0.18))
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.16))
                     .foregroundColor(.orange)
-                    .cornerRadius(6)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.orange.opacity(0.25), lineWidth: 0.8)
+                    )
                 }
                 .buttonStyle(.plain)
                 .disabled(filteredWords.isEmpty)
-                .help("Luyện tập ghi nhớ từ vựng với Flashcard")
+                .help("Ôn luyện từ vựng dạng thẻ Flashcard")
             }
             .padding(.horizontal, 14)
             .padding(.top, 14)
+            .padding(.bottom, 6)
+            
+            // 2. Notebook Title & Total Count
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("Sổ Tay Từ Vựng")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text("\(vocabService.savedWords.count) từ")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1.5)
+                    .background(Color.primary.opacity(0.06))
+                    .clipShape(Capsule())
+                
+                Spacer()
+            }
+            .padding(.horizontal, 14)
             .padding(.bottom, 10)
             
-            // Search Bar
+            // 3. Search Bar
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
                     .font(.system(size: 11))
+                
                 TextField("Tìm từ tiếng Anh hoặc nghĩa...", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: 11.5))
@@ -124,63 +143,82 @@ public struct VocabularyNotebookView: View {
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.secondary.opacity(0.8))
                             .font(.system(size: 11))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 8)
-            .padding(.vertical, 5.5)
+            .padding(.vertical, 6)
             .background(Color.primary.opacity(0.04))
-            .cornerRadius(6)
+            .cornerRadius(7)
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
+                    .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
+            )
             .padding(.horizontal, 14)
-            .padding(.bottom, 8)
+            .padding(.bottom, 10)
             
-            // Filter Segmented Chips
-            HStack(spacing: 4) {
-                ForEach(NotebookFilter.allCases) { filter in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            selectedFilter = filter
-                            if let first = filteredWords.first {
-                                selectedWordID = first.id
+            // 4. Single-line Filter Bar (No Text Wrapping!)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(NotebookFilter.allCases) { filter in
+                        let count = countForFilter(filter)
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                selectedFilter = filter
+                                if let first = filteredWords.first {
+                                    selectedWordID = first.id
+                                }
                             }
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: filter.icon)
+                                    .font(.system(size: 9.5))
+                                
+                                Text(filter.rawValue)
+                                    .font(.system(size: 11, weight: selectedFilter == filter ? .bold : .medium))
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
+                                
+                                if count > 0 {
+                                    Text("\(count)")
+                                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 1)
+                                        .background(selectedFilter == filter ? Color.white.opacity(0.3) : Color.primary.opacity(0.08))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 5)
+                            .foregroundColor(selectedFilter == filter ? .white : .primary.opacity(0.75))
+                            .background(
+                                selectedFilter == filter ? Color.orange : Color.primary.opacity(0.05)
+                            )
+                            .clipShape(Capsule())
                         }
-                    }) {
-                        HStack(spacing: 3) {
-                            Image(systemName: filter.icon)
-                                .font(.system(size: 9))
-                            Text(filter.rawValue)
-                                .font(.system(size: 10.5, weight: selectedFilter == filter ? .bold : .medium))
-                        }
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 4)
-                        .foregroundColor(selectedFilter == filter ? .white : .primary.opacity(0.7))
-                        .background(
-                            selectedFilter == filter ? Color.orange : Color.primary.opacity(0.04)
-                        )
-                        .cornerRadius(5)
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 14)
             }
-            .padding(.horizontal, 14)
             .padding(.bottom, 10)
             
             Divider()
                 .opacity(0.2)
             
-            // Words List
+            // 5. Words List
             let words = filteredWords
             if words.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: 10) {
                     Spacer()
-                    Image(systemName: "book.closed")
-                        .font(.system(size: 28))
-                        .foregroundColor(.secondary.opacity(0.35))
-                    Text(vocabService.savedWords.isEmpty ? "Chưa có từ nào trong sổ." : "Không có từ phù hợp.")
-                        .font(.system(size: 12))
+                    Image(systemName: "books.vertical")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary.opacity(0.3))
+                    Text(vocabService.savedWords.isEmpty ? "Chưa có từ nào trong sổ." : "Không tìm thấy từ khớp.")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                 }
@@ -200,11 +238,11 @@ public struct VocabularyNotebookView: View {
             }
             
             Divider()
-                .opacity(0.2)
+                .opacity(0.25)
             
-            // Bottom Stats Bar
+            // 6. Bottom Stats & Export Bar
             HStack {
-                Text("Tổng cộng: **\(vocabService.savedWords.count)** từ")
+                Text("\(words.count) từ hiển thị")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                 
@@ -215,24 +253,34 @@ public struct VocabularyNotebookView: View {
                         Image(systemName: copied ? "checkmark" : "square.and.arrow.up")
                         Text(copied ? "Đã sao chép" : "Xuất từ")
                     }
-                    .font(.system(size: 10.5, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.blue)
                 }
                 .buttonStyle(.plain)
+                .disabled(vocabService.savedWords.isEmpty)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.vertical, 9)
         }
         .background(Color.primary.opacity(0.015))
+    }
+    
+    private func countForFilter(_ filter: NotebookFilter) -> Int {
+        switch filter {
+        case .all: return vocabService.savedWords.count
+        case .learning: return vocabService.savedWords.filter { !$0.isMastered }.count
+        case .mastered: return vocabService.savedWords.filter { $0.isMastered }.count
+        case .favorite: return vocabService.savedWords.filter { $0.isFavorite }.count
+        }
     }
     
     // MARK: - Word Row Item in Sidebar
     private func wordRowItem(item: SavedWordItem, isSelected: Bool) -> some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     Text(item.word)
-                        .font(.system(size: 12.5, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(isSelected ? .white : .primary)
                     
                     if item.isMastered {
@@ -243,7 +291,7 @@ public struct VocabularyNotebookView: View {
                     
                     if item.isFavorite {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 9))
+                            .font(.system(size: 9.5))
                             .foregroundColor(isSelected ? .yellow : .orange)
                     }
                 }
@@ -266,15 +314,15 @@ public struct VocabularyNotebookView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.vertical, 7.5)
         .background(
-            RoundedRectangle(cornerRadius: 7)
+            RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.orange : Color.clear)
         )
         .contentShape(Rectangle())
     }
     
-    // MARK: - Right Detail: The Aesthetic Journal Page
+    // MARK: - Right Detail: Aesthetic Journal Page
     private var detailPageView: some View {
         Group {
             if let selectedID = selectedWordID,
@@ -282,23 +330,23 @@ public struct VocabularyNotebookView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        // Top Word Bar & Navigation
+                        // Top Header Bar
                         HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 5) {
                                 Text(word.word)
-                                    .font(.system(size: 28, weight: .heavy, design: .serif))
+                                    .font(.system(size: 30, weight: .heavy, design: .serif))
                                     .foregroundColor(.primary)
                                 
                                 if let ph = word.phonetic, !ph.isEmpty {
                                     Text(ph)
-                                        .font(.system(size: 14, weight: .medium, design: .serif))
+                                        .font(.system(size: 14.5, weight: .medium, design: .serif))
                                         .foregroundColor(.orange)
                                 }
                             }
                             
                             Spacer()
                             
-                            // Audio Speaker Large Button
+                            // Pronounce Button
                             Button(action: {
                                 SpeechService.shared.speak(text: word.word, languageCode: "en-US", speakerID: "detail_\(word.id.uuidString)")
                             }) {
@@ -308,7 +356,7 @@ public struct VocabularyNotebookView: View {
                                     Text("Phát âm")
                                         .font(.system(size: 12, weight: .semibold))
                                 }
-                                .padding(.horizontal, 12)
+                                .padding(.horizontal, 13)
                                 .padding(.vertical, 7)
                                 .background(Color.blue.opacity(0.12))
                                 .foregroundColor(.blue)
@@ -318,16 +366,16 @@ public struct VocabularyNotebookView: View {
                         }
                         
                         Divider()
-                            .opacity(0.3)
+                            .opacity(0.25)
                         
                         // Translation Meaning Card
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 7) {
                             HStack {
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 11))
                                     .foregroundColor(.orange)
                                 Text("Ý NGHĨA TIẾNG VIỆT")
-                                    .font(.system(size: 10.5, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.secondary)
                             }
                             
@@ -345,8 +393,8 @@ public struct VocabularyNotebookView: View {
                                 .stroke(Color.orange.opacity(0.18), lineWidth: 1)
                         )
                         
-                        // Action Buttons Bar (Mastered, Favorite, Delete)
-                        HStack(spacing: 12) {
+                        // Action Buttons Bar
+                        HStack(spacing: 10) {
                             Button(action: {
                                 vocabService.toggleMastered(id: word.id)
                             }) {
@@ -357,9 +405,9 @@ public struct VocabularyNotebookView: View {
                                         .font(.system(size: 12, weight: .medium))
                                 }
                                 .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.vertical, 6.5)
                                 .background(word.isMastered ? Color.green.opacity(0.12) : Color.primary.opacity(0.04))
-                                .cornerRadius(6)
+                                .cornerRadius(7)
                             }
                             .buttonStyle(.plain)
                             
@@ -373,9 +421,9 @@ public struct VocabularyNotebookView: View {
                                         .font(.system(size: 12, weight: .medium))
                                 }
                                 .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
+                                .padding(.vertical, 6.5)
                                 .background(word.isFavorite ? Color.orange.opacity(0.12) : Color.primary.opacity(0.04))
-                                .cornerRadius(6)
+                                .cornerRadius(7)
                             }
                             .buttonStyle(.plain)
                             
@@ -409,15 +457,15 @@ public struct VocabularyNotebookView: View {
                                 .font(.system(size: 11))
                         }
                         .foregroundColor(.secondary.opacity(0.7))
-                        .padding(.top, 10)
+                        .padding(.top, 8)
                     }
-                    .padding(24)
+                    .padding(26)
                 }
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "hand.tap")
                         .font(.system(size: 32))
-                        .foregroundColor(.secondary.opacity(0.4))
+                        .foregroundColor(.secondary.opacity(0.35))
                     Text("Chọn một từ vựng bên trái để mở trang sổ chi tiết")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.secondary)
@@ -466,14 +514,13 @@ public struct VocabularyNotebookView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 16)
+                .padding(.top, 18)
                 
                 Spacer()
                 
                 // 3D Flip Card
                 ZStack {
                     if !isCardFlipped {
-                        // FRONT OF CARD: English Word + Pronounce
                         VStack(spacing: 12) {
                             Text("TIẾNG ANH")
                                 .font(.system(size: 10, weight: .bold))
@@ -508,7 +555,6 @@ public struct VocabularyNotebookView: View {
                                 .padding(.top, 10)
                         }
                     } else {
-                        // BACK OF CARD: Vietnamese Meaning
                         VStack(spacing: 12) {
                             Text("Ý NGHĨA")
                                 .font(.system(size: 10, weight: .bold))
@@ -546,7 +592,7 @@ public struct VocabularyNotebookView: View {
                 
                 Spacer()
                 
-                // Bottom Review Controls (Remembered / Need Review)
+                // Bottom Review Controls
                 HStack(spacing: 20) {
                     Button(action: {
                         nextCard()
