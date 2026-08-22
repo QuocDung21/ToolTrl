@@ -261,6 +261,30 @@ public struct SettingsView: View {
     // MARK: - 4. Appearance Settings Form
     private var appearanceSettingsForm: some View {
         Form {
+            Section(header: Text("KÍCH THƯỚC CHỮ (FONT SIZE)")) {
+                Picker("Cỡ chữ hiển thị:", selection: $settings.appFontSize) {
+                    ForEach(AppFontSize.allCases) { (size: AppFontSize) in
+                        Text(size.rawValue).tag(size)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Xem trước cỡ chữ:")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    
+                    Text("The quick brown fox jumps over the lazy dog — ToolTrL")
+                        .font(.system(size: settings.appFontSize.baseSize))
+                        .foregroundColor(.primary)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.primary.opacity(0.04))
+                        .cornerRadius(6)
+                }
+                .padding(.vertical, 4)
+            }
+            
             Section(header: Text("BIỂU TƯỢNG MENU BAR & ỨNG DỤNG")) {
                 Picker("Bộ Icon:", selection: $iconService.selectedType) {
                     ForEach(AppIconType.allCases) { (type: AppIconType) in

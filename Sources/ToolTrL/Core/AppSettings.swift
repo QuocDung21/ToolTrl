@@ -25,8 +25,41 @@ public enum TranslationDisplayMode: String, CaseIterable, Identifiable, Sendable
     }
 }
 
+public enum AppFontSize: String, CaseIterable, Identifiable, Sendable {
+    case small = "Nhỏ"
+    case medium = "Vừa (Mặc định)"
+    case large = "Lớn"
+    case extraLarge = "Rất lớn"
+    
+    public var id: String { rawValue }
+    
+    public var baseSize: CGFloat {
+        switch self {
+        case .small: return 12.5
+        case .medium: return 14.0
+        case .large: return 16.0
+        case .extraLarge: return 18.0
+        }
+    }
+    
+    public var scaleDelta: CGFloat {
+        switch self {
+        case .small: return -1.5
+        case .medium: return 0.0
+        case .large: return 2.0
+        case .extraLarge: return 4.0
+        }
+    }
+}
+
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
+    
+    @Published public var appFontSize: AppFontSize {
+        didSet {
+            UserDefaults.standard.set(appFontSize.rawValue, forKey: "app_font_size")
+        }
+    }
     
     @Published public var speechRate: Double {
         didSet {
@@ -93,6 +126,9 @@ public final class AppSettings: ObservableObject {
     @Published public var launchAtLogin: Bool = false
     
     private init() {
+        let savedFontSize = UserDefaults.standard.string(forKey: "app_font_size") ?? AppFontSize.medium.rawValue
+        self.appFontSize = AppFontSize(rawValue: savedFontSize) ?? .medium
+        
         let savedRate = UserDefaults.standard.double(forKey: "speech_rate")
         self.speechRate = savedRate > 0.05 ? savedRate : 0.42
         
