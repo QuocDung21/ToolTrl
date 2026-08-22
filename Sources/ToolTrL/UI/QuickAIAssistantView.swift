@@ -150,7 +150,7 @@ public struct QuickAIAssistantView: View {
                     .foregroundColor(.secondary)
                     .padding(.leading, 14)
                 
-                ForEach(promptService.prompts) { item in
+                ForEach(promptService.activePrompts) { item in
                     let rendered = promptService.renderPrompt(for: item, text: currentPrompt)
                     promptChip(title: "\(item.icon) \(item.title)", prompt: rendered)
                 }

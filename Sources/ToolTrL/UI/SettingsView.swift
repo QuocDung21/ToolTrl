@@ -339,18 +339,32 @@ public struct SettingsView: View {
                 // Mẫu Câu Hỏi Nhanh AI (Custom AI Prompts)
                 settingCard(title: "Mẫu Câu Hỏi Nhanh Cho AI (Custom Prompts)", icon: "sparkles.rectangle.stack.fill") {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Tùy chỉnh các mẫu câu hỏi nhanh xuất hiện trên thanh công cụ của Trợ lý AI (Option + A):")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+                        HStack {
+                            Text("Tùy chỉnh các mẫu câu hỏi xuất hiện trên Trợ lý AI (Option + A):")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(promptService.activePrompts.count) / \(promptService.prompts.count) đang bật")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.purple)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1.5)
+                                .background(Color.purple.opacity(0.1))
+                                .clipShape(Capsule())
+                        }
                         
                         VStack(spacing: 5) {
                             ForEach(promptService.prompts.prefix(4)) { item in
                                 HStack(spacing: 6) {
+                                    Image(systemName: item.isEnabled ? "eye.fill" : "eye.slash")
+                                        .font(.system(size: 9.5))
+                                        .foregroundColor(item.isEnabled ? .blue : .secondary.opacity(0.4))
+                                    
                                     Text(item.icon)
                                         .font(.system(size: 12))
                                     Text(item.title)
                                         .font(.system(size: 11.5, weight: .semibold))
-                                        .foregroundColor(.primary)
+                                        .foregroundColor(item.isEnabled ? .primary : .secondary)
                                     Text("• \(item.template)")
                                         .font(.system(size: 10.5))
                                         .foregroundColor(.secondary)
@@ -361,6 +375,7 @@ public struct SettingsView: View {
                                 .padding(.vertical, 4.5)
                                 .background(Color.primary.opacity(0.025))
                                 .cornerRadius(5)
+                                .opacity(item.isEnabled ? 1.0 : 0.6)
                             }
                         }
                         
@@ -370,7 +385,7 @@ public struct SettingsView: View {
                             }) {
                                 HStack(spacing: 4) {
                                     Image(systemName: "slider.horizontal.3")
-                                    Text("Quản lý & Thêm mẫu mới...")
+                                    Text("Quản lý, Sắp xếp & Thêm mẫu...")
                                 }
                                 .font(.system(size: 11, weight: .semibold))
                                 .padding(.horizontal, 10)

@@ -10,6 +10,7 @@ public struct QuickPromptManagerSheet: View {
     @State private var inputIcon: String = "💡"
     @State private var inputTitle: String = ""
     @State private var inputTemplate: String = ""
+    @State private var inputIsEnabled: Bool = true
     
     public init() {}
     
@@ -20,7 +21,7 @@ public struct QuickPromptManagerSheet: View {
                 HStack(spacing: 6) {
                     Image(systemName: "sparkles.rectangle.stack.fill")
                         .foregroundColor(.purple)
-                    Text("Tùy Chỉnh Mẫu Câu Hỏi Nhanh (AI Prompts)")
+                    Text("Tùy Chỉnh & Sắp Xếp Mẫu Câu Hỏi Nhanh (AI Prompts)")
                         .font(.system(size: 13, weight: .bold))
                 }
                 
@@ -41,7 +42,7 @@ public struct QuickPromptManagerSheet: View {
             
             // Content
             HStack(spacing: 0) {
-                // Left List
+                // Left List with Sort & Visibility Toggles
                 VStack(spacing: 8) {
                     HStack {
                         Text("Danh sách mẫu (\(promptService.prompts.count))")
@@ -52,6 +53,7 @@ public struct QuickPromptManagerSheet: View {
                             inputIcon = "💡"
                             inputTitle = ""
                             inputTemplate = "Hãy phân tích đoạn sau:\n\n{text}"
+                            inputIsEnabled = true
                             editingPrompt = nil
                             isCreatingNew = true
                         }) {
@@ -69,53 +71,96 @@ public struct QuickPromptManagerSheet: View {
                     
                     ScrollView {
                         LazyVStack(spacing: 5) {
-                            ForEach(promptService.prompts) { item in
-                                Button(action: {
-                                    editingPrompt = item
-                                    isCreatingNew = false
-                                    inputIcon = item.icon
-                                    inputTitle = item.title
-                                    inputTemplate = item.template
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Text(item.icon)
-                                            .font(.system(size: 14))
-                                        
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(item.title)
-                                                .font(.system(size: 11.5, weight: .semibold))
-                                                .foregroundColor(.primary)
-                                            Text(item.template)
-                                                .font(.system(size: 10))
-                                                .foregroundColor(.secondary)
-                                                .lineLimit(1)
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        if promptService.prompts.count > 1 {
-                                            Button(action: {
-                                                promptService.deletePrompt(id: item.id)
-                                                if editingPrompt?.id == item.id {
-                                                    editingPrompt = nil
-                                                    isCreatingNew = false
-                                                }
-                                            }) {
-                                                Image(systemName: "trash")
-                                                    .font(.system(size: 10.5))
-                                                    .foregroundColor(.red.opacity(0.7))
+                            ForEach(Array(promptService.prompts.enumerated()), id: \.element.id) { index, item in
+                                HStack(spacing: 6) {
+                                    // 1. Visibility Toggle Button (Ẩn / Hiện)
+                                    Button(action: {
+                                        promptService.toggleEnabled(id: item.id)
+                                    }) {
+                                        Image(systemName: item.isEnabled ? "eye.fill" : "eye.slash")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(item.isEnabled ? .blue : .secondary.opacity(0.4))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help(item.isEnabled ? "Đang hiện trên thanh công cụ (Bấm để ẩn)" : "Đang ẩn (Bấm để hiện)")
+                                    
+                                    // 2. Select & Edit Area
+                                    Button(action: {
+                                        editingPrompt = item
+                                        isCreatingNew = false
+                                        inputIcon = item.icon
+                                        inputTitle = item.title
+                                        inputTemplate = item.template
+                                        inputIsEnabled = item.isEnabled
+                                    }) {
+                                        HStack(spacing: 6) {
+                                            Text(item.icon)
+                                                .font(.system(size: 13))
+                                            
+                                            VStack(alignment: .leading, spacing: 1) {
+                                                Text(item.title)
+                                                    .font(.system(size: 11, weight: .semibold))
+                                                    .foregroundColor(item.isEnabled ? .primary : .secondary)
+                                                Text(item.template)
+                                                    .font(.system(size: 9.5))
+                                                    .foregroundColor(.secondary)
+                                                    .lineLimit(1)
                                             }
-                                            .buttonStyle(.plain)
+                                            
+                                            Spacer()
                                         }
                                     }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 7)
-                                    .background(
-                                        editingPrompt?.id == item.id ? Color.blue.opacity(0.12) : Color.primary.opacity(0.025)
-                                    )
-                                    .cornerRadius(6)
+                                    .buttonStyle(.plain)
+                                    
+                                    // 3. Sort Up / Down Buttons
+                                    HStack(spacing: 2) {
+                                        Button(action: {
+                                            promptService.moveUp(id: item.id)
+                                        }) {
+                                            Image(systemName: "chevron.up")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(index > 0 ? .secondary : .secondary.opacity(0.2))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(index == 0)
+                                        .help("Di chuyển lên")
+                                        
+                                        Button(action: {
+                                            promptService.moveDown(id: item.id)
+                                        }) {
+                                            Image(systemName: "chevron.down")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(index < promptService.prompts.count - 1 ? .secondary : .secondary.opacity(0.2))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .disabled(index == promptService.prompts.count - 1)
+                                        .help("Di chuyển xuống")
+                                    }
+                                    
+                                    // 4. Delete Button
+                                    if promptService.prompts.count > 1 {
+                                        Button(action: {
+                                            promptService.deletePrompt(id: item.id)
+                                            if editingPrompt?.id == item.id {
+                                                editingPrompt = nil
+                                                isCreatingNew = false
+                                            }
+                                        }) {
+                                            Image(systemName: "trash")
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.red.opacity(0.65))
+                                        }
+                                        .buttonStyle(.plain)
+                                        .help("Xóa mẫu")
+                                    }
                                 }
-                                .buttonStyle(.plain)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(
+                                    editingPrompt?.id == item.id ? Color.blue.opacity(0.12) : (item.isEnabled ? Color.primary.opacity(0.025) : Color.primary.opacity(0.01))
+                                )
+                                .cornerRadius(6)
+                                .opacity(item.isEnabled ? 1.0 : 0.6)
                             }
                         }
                         .padding(.horizontal, 10)
@@ -138,7 +183,7 @@ public struct QuickPromptManagerSheet: View {
                     .buttonStyle(.plain)
                     .padding(.bottom, 8)
                 }
-                .frame(width: 260)
+                .frame(width: 290)
                 .background(Color.primary.opacity(0.015))
                 
                 Divider().opacity(0.3)
@@ -176,7 +221,7 @@ public struct QuickPromptManagerSheet: View {
                                     .font(.system(size: 10.5))
                                     .foregroundColor(.secondary)
                                 Spacer()
-                                Text("Sử dụng {text} làm vị trí đoạn văn")
+                                Text("Dùng {text} làm vị trí đoạn văn")
                                     .font(.system(size: 9.5))
                                     .foregroundColor(.blue)
                             }
@@ -186,8 +231,11 @@ public struct QuickPromptManagerSheet: View {
                                 .padding(4)
                                 .background(Color.primary.opacity(0.04))
                                 .cornerRadius(6)
-                                .frame(height: 110)
+                                .frame(height: 100)
                         }
+                        
+                        Toggle("Hiển thị mẫu này trên thanh câu hỏi nhanh", isOn: $inputIsEnabled)
+                            .font(.system(size: 11))
                         
                         HStack {
                             Spacer()
@@ -197,7 +245,7 @@ public struct QuickPromptManagerSheet: View {
                                     if isCreatingNew {
                                         promptService.addPrompt(icon: inputIcon, title: inputTitle, template: inputTemplate)
                                     } else if let cur = editingPrompt {
-                                        promptService.updatePrompt(id: cur.id, icon: inputIcon, title: inputTitle, template: inputTemplate)
+                                        promptService.updatePrompt(id: cur.id, icon: inputIcon, title: inputTitle, template: inputTemplate, isEnabled: inputIsEnabled)
                                     }
                                     isCreatingNew = false
                                     editingPrompt = nil
@@ -225,9 +273,11 @@ public struct QuickPromptManagerSheet: View {
                             Image(systemName: "hand.tap")
                                 .font(.system(size: 28))
                                 .foregroundColor(.secondary.opacity(0.4))
-                            Text("Chọn một mẫu bên trái để chỉnh sửa hoặc bấm 'Thêm mới'")
+                            Text("Chọn một mẫu bên trái để sửa, bấm 👁️ để ẩn/hiện, hoặc ⬆️⬇️ để đổi thứ tự")
                                 .font(.system(size: 11.5))
                                 .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
                             Spacer()
                         }
                         .frame(maxWidth: .infinity)
@@ -237,7 +287,7 @@ public struct QuickPromptManagerSheet: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .frame(width: 580, height: 360)
+        .frame(width: 620, height: 380)
         .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
     }
 }
