@@ -51,6 +51,7 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
 
 public enum NotebookSortOption: String, CaseIterable, Identifiable {
     case aiPriority = "Mức độ quan trọng (AI)"
+    case thematicGenre = "Theo thể loại / chủ đề (AI)"
     case aiPartOfSpeech = "Theo từ loại (AI)"
     case newestFirst = "Mới lưu nhất"
     case oldestFirst = "Cũ nhất"
@@ -64,6 +65,7 @@ public enum NotebookSortOption: String, CaseIterable, Identifiable {
     public var icon: String {
         switch self {
         case .aiPriority: return "list.bullet.indent"
+        case .thematicGenre: return "folder.badge.gearshape"
         case .aiPartOfSpeech: return "tag"
         case .newestFirst: return "clock.arrow.circlepath"
         case .oldestFirst: return "clock"
@@ -118,7 +120,7 @@ public struct VocabularyNotebookView: View {
             ToolbarItemGroup(placement: .primaryAction) {
                 // Sorting Menu
                 Menu {
-                    Section("PHÂN LOẠI DANH MỤC") {
+                    Section("PHÂN LOẠI THEO AI") {
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 sortOption = .aiPriority
@@ -128,6 +130,18 @@ public struct VocabularyNotebookView: View {
                                 Label("Mức độ quan trọng (AI)", systemImage: "checkmark")
                             } else {
                                 Label("Mức độ quan trọng (AI)", systemImage: "list.bullet.indent")
+                            }
+                        }
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                sortOption = .thematicGenre
+                            }
+                        }) {
+                            if sortOption == .thematicGenre {
+                                Label("Theo thể loại / chủ đề (AI)", systemImage: "checkmark")
+                            } else {
+                                Label("Theo thể loại / chủ đề (AI)", systemImage: "folder.badge.gearshape")
                             }
                         }
                         
@@ -255,6 +269,14 @@ public struct VocabularyNotebookView: View {
                             }
                         }
                         
+                        Button(action: { withAnimation { sortOption = .thematicGenre } }) {
+                            if sortOption == .thematicGenre {
+                                Label("Theo thể loại / chủ đề (AI)", systemImage: "checkmark")
+                            } else {
+                                Label("Theo thể loại / chủ đề (AI)", systemImage: "folder.badge.gearshape")
+                            }
+                        }
+                        
                         Button(action: { withAnimation { sortOption = .aiPartOfSpeech } }) {
                             if sortOption == .aiPartOfSpeech {
                                 Label("Theo từ loại (AI)", systemImage: "checkmark")
@@ -336,6 +358,34 @@ public struct VocabularyNotebookView: View {
                                 } header: {
                                     HStack {
                                         Text(priority.rawValue.uppercased())
+                                            .font(.system(size: 10.5, weight: .bold))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("\(group.count)")
+                                            .font(.system(size: 9.5, weight: .bold))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1)
+                                            .background(Color.secondary.opacity(0.12))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                            }
+                        }
+                        
+                    case .thematicGenre:
+                        // Group by Thematic Genre (Chủ đề / Thể loại)
+                        ForEach(ItemThematicGenre.allCases) { genre in
+                            let group = filteredItems
+                                .filter { $0.aiThematicGenre == genre }
+                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
+                            if !group.isEmpty {
+                                Section {
+                                    ForEach(group) { item in
+                                        itemRowLink(item: item)
+                                    }
+                                } header: {
+                                    HStack {
+                                        Text(genre.rawValue.uppercased())
                                             .font(.system(size: 10.5, weight: .bold))
                                             .foregroundColor(.secondary)
                                         Spacer()
@@ -816,7 +866,7 @@ public struct VocabularyNotebookView: View {
         
         // Apply Sorting
         switch sortOption {
-        case .aiPriority, .aiPartOfSpeech:
+        case .aiPriority, .thematicGenre, .aiPartOfSpeech:
             // Section-based grouping handles sorting within sections
             break
         case .newestFirst:
