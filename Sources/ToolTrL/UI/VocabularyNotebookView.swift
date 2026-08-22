@@ -711,22 +711,24 @@ public struct VocabularyNotebookView: View {
                 
                 Button(action: {
                     QuickAIWindowController.shared.showAI(
-                        prompt: "Hãy phân tích chuyên sâu từ vựng '\(item.cleanTitle)':\n1. Định nghĩa chi tiết theo từng từ loại (Noun, Verb, Adj, Adv).\n2. Cụm từ hay gặp (Collocations) & Thành ngữ (Idioms).\n3. Họ từ (Word Family: Danh từ, Động từ, Tính từ, Trạng từ tương ứng).\n4. Từ đồng nghĩa & Trái nghĩa.\n5. Các câu ví dụ ngữ cảnh thực tế."
+                        prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                        targetWordId: item.id,
+                        targetWordTitle: item.cleanTitle
                     )
                 }) {
                     HStack(spacing: 3) {
-                        Image(systemName: "bubble.left.and.text.bubble.right")
-                        Text("Hỏi AI")
+                        Image(systemName: "sparkles")
+                        Text("Phân tích AI")
                     }
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.purple)
-                    .padding(.horizontal, 7)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 3.5)
-                    .background(Color.purple.opacity(0.1))
+                    .background(Color.purple.opacity(0.12))
                     .cornerRadius(5)
                 }
                 .buttonStyle(.plain)
-                .help("Mở Trợ lý AI để phân tích sâu hơn nữa")
+                .help("Mở Trợ lý AI (ChatGPT/Gemini) để phân tích chuyên sâu cấu trúc và lưu vào mục này")
             }
         }
     }
@@ -809,7 +811,81 @@ public struct VocabularyNotebookView: View {
                 }
             }
             
-            // 3. AI Rich Dictionary Definitions by Part of Speech
+            // 3. AI Deep Structured Analysis (Saved or Prompt Banner)
+            if let deepAnalysis = item.aiDetailedAnalysis, !deepAnalysis.isEmpty {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Label("PHÂN TÍCH CHUYÊN SÂU TỪ AI (ĐÃ LƯU)", systemImage: "sparkles")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.purple)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                QuickAIWindowController.shared.showAI(
+                                    prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                                    targetWordId: item.id,
+                                    targetWordTitle: item.cleanTitle
+                                )
+                            }) {
+                                Label("Cập nhật với AI", systemImage: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 10.5))
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        Text(deepAnalysis)
+                            .font(.system(size: 12.5))
+                            .foregroundColor(.primary.opacity(0.9))
+                            .lineSpacing(3)
+                            .textSelection(.enabled)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                }
+            } else {
+                // Callout Banner to prompt user to analyze with structured AI
+                Button(action: {
+                    QuickAIWindowController.shared.showAI(
+                        prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                        targetWordId: item.id,
+                        targetWordTitle: item.cleanTitle
+                    )
+                }) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "sparkles.square.filled.on.square")
+                            .font(.system(size: 22))
+                            .foregroundColor(.purple)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Phân tích chuyên sâu với AI (Họ từ, Collocations, Sắc thái)")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.primary)
+                            Text("Bấm để hỏi ChatGPT/Gemini theo mẫu chuẩn và lưu trực tiếp vào mục này")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.purple)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(Color.purple.opacity(0.06))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.purple.opacity(0.18), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // 4. AI Rich Dictionary Definitions by Part of Speech (Local Dictionary)
             if isLoadingDictionary {
                 HStack(spacing: 8) {
                     ProgressView()

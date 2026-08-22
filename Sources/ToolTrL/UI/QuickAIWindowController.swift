@@ -14,9 +14,18 @@ public final class QuickAIWindowController: NSObject, ObservableObject, NSWindow
         super.init()
     }
     
-    public func showAI(prompt: String? = nil, provider: AIProvider = .chatgpt) {
+    public func showAI(
+        prompt: String? = nil,
+        targetWordId: UUID? = nil,
+        targetWordTitle: String? = nil,
+        provider: AIProvider = .chatgpt
+    ) {
         if let existing = window {
-            let aiView = QuickAIAssistantView(initialPrompt: prompt) { [weak self] in
+            let aiView = QuickAIAssistantView(
+                initialPrompt: prompt,
+                targetWordId: targetWordId,
+                targetWordTitle: targetWordTitle
+            ) { [weak self] in
                 self?.closeWindow()
             }
             existing.contentView = NSHostingView(rootView: aiView)
@@ -26,7 +35,7 @@ public final class QuickAIWindowController: NSObject, ObservableObject, NSWindow
         }
         
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 700, height: 640),
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 650),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -48,7 +57,11 @@ public final class QuickAIWindowController: NSObject, ObservableObject, NSWindow
             win.titlebarSeparatorStyle = .none
         }
         
-        let aiView = QuickAIAssistantView(initialPrompt: prompt) { [weak self] in
+        let aiView = QuickAIAssistantView(
+            initialPrompt: prompt,
+            targetWordId: targetWordId,
+            targetWordTitle: targetWordTitle
+        ) { [weak self] in
             self?.closeWindow()
         }
         
@@ -59,42 +72,40 @@ public final class QuickAIWindowController: NSObject, ObservableObject, NSWindow
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         
-        startLocalKeyMonitor()
+        setupKeyMonitor()
     }
     
     public func togglePin() {
         isPinned.toggle()
-        if let win = window {
-            win.level = isPinned ? .statusBar : .floating
-        }
+        window?.level = isPinned ? .statusBar : .floating
     }
     
     public func closeWindow() {
-        stopLocalKeyMonitor()
         window?.orderOut(nil)
+        removeKeyMonitor()
     }
     
-    public func windowWillClose(_ notification: Notification) {
-        stopLocalKeyMonitor()
-    }
-    
-    private func startLocalKeyMonitor() {
-        stopLocalKeyMonitor()
+    private func setupKeyMonitor() {
+        guard localKeyMonitor == nil else { return }
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard let self = self else { return event }
-            // If pinned, don't dismiss on ESC unless user explicitly clicks close
-            if event.keyCode == 53 && !self.isPinned { // ESC
-                self.closeWindow()
-                return nil
+            if event.keyCode == 53 { // ESC key
+                if self?.isPinned == false {
+                    self?.closeWindow()
+                    return nil
+                }
             }
             return event
         }
     }
     
-    private func stopLocalKeyMonitor() {
+    private func removeKeyMonitor() {
         if let monitor = localKeyMonitor {
             NSEvent.removeMonitor(monitor)
             localKeyMonitor = nil
         }
+    }
+    
+    public func windowWillClose(_ notification: Notification) {
+        removeKeyMonitor()
     }
 }

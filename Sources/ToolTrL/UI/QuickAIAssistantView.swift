@@ -3,6 +3,7 @@ import WebKit
 
 public struct QuickAIAssistantView: View {
     @ObservedObject var promptService = QuickPromptService.shared
+    @ObservedObject var vocabService = VocabularyService.shared
     
     @State private var selectedProvider: AIProvider = .chatgpt
     @State private var webView: WKWebView?
@@ -10,16 +11,26 @@ public struct QuickAIAssistantView: View {
     @State private var currentPrompt: String = ""
     @State private var injectedPrompt: String? = nil
     @State private var showPromptManager: Bool = false
+    @State private var saveSuccessToast: String? = nil
     
     public let initialPrompt: String?
+    public let targetWordId: UUID?
+    public let targetWordTitle: String?
     public let onClose: () -> Void
     
-    public init(initialPrompt: String? = nil, onClose: @escaping () -> Void) {
+    public init(
+        initialPrompt: String? = nil,
+        targetWordId: UUID? = nil,
+        targetWordTitle: String? = nil,
+        onClose: @escaping () -> Void
+    ) {
         self.initialPrompt = initialPrompt
+        self.targetWordId = targetWordId
+        self.targetWordTitle = targetWordTitle
         self.onClose = onClose
         if let initial = initialPrompt, !initial.isEmpty {
             _currentPrompt = State(initialValue: initial)
-            _injectedPrompt = State(initialValue: "Hãy giải thích chi tiết, dịch và phân tích ngữ pháp đoạn sau:\n\n\(initial)")
+            _injectedPrompt = State(initialValue: initial)
         }
     }
     
@@ -31,8 +42,14 @@ public struct QuickAIAssistantView: View {
             Divider()
                 .opacity(0.18)
             
-            // Dynamic Quick Prompt Suggestion Bar (if text is present)
-            if !currentPrompt.isEmpty {
+            // Target Word Banner (if specific word is being deeply analyzed)
+            if let word = targetWordTitle {
+                targetWordBanner(word: word)
+                Divider().opacity(0.12)
+            }
+            
+            // Dynamic Quick Prompt Suggestion Bar (if text is present and no target word)
+            if !currentPrompt.isEmpty && targetWordTitle == nil {
                 quickPromptBar
                 Divider().opacity(0.12)
             }
@@ -59,10 +76,31 @@ public struct QuickAIAssistantView: View {
                     .padding(.top, 24)
                     .transition(.opacity)
                 }
+                
+                // Toast notification
+                if let toast = saveSuccessToast {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text(toast)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.primary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow))
+                        .cornerRadius(20)
+                        .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
+                        .padding(.bottom, 24)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 680, minHeight: 600)
+        .frame(minWidth: 700, minHeight: 620)
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
@@ -72,10 +110,48 @@ public struct QuickAIAssistantView: View {
         }
     }
     
+    // MARK: - Target Word Banner
+    private func targetWordBanner(word: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 11))
+                .foregroundColor(.purple)
+            
+            Text("Đang phân tích chuyên sâu cho: ")
+                .font(.system(size: 11.5))
+                .foregroundColor(.secondary) +
+            Text("\"\(word)\"")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Button(action: {
+                saveAnalysisToTargetWord()
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                    Text("Lưu vào Chi Tiết Từ")
+                }
+                .font(.system(size: 11, weight: .bold))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4.5)
+                .background(Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(5)
+            }
+            .buttonStyle(.plain)
+            .help("Lưu kết quả phân tích cấu trúc của ChatGPT/Gemini vào phần chi tiết của từ '\(word)' trong Sổ Tay")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 7)
+        .background(Color.purple.opacity(0.08))
+    }
+    
     // MARK: - Unified Single-Row Header Bar
     private var headerBar: some View {
         HStack(alignment: .center, spacing: 8) {
-            // Traffic Light Clearance on the exact same row (68px)
+            // Traffic Light Clearance
             Spacer()
                 .frame(width: 72)
             
@@ -110,23 +186,43 @@ public struct QuickAIAssistantView: View {
             // Right Action Buttons
             HStack(spacing: 6) {
                 // Extract into Vocabulary Notebook Button
-                Button(action: {
-                    extractAndAnalyzeAIResponse()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "square.and.arrow.down.on.square")
-                            .font(.system(size: 10.5))
-                        Text("Bóc tách vào Sổ Tay")
-                            .font(.system(size: 11, weight: .semibold))
+                if targetWordTitle != nil {
+                    Button(action: {
+                        saveAnalysisToTargetWord()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.down.on.square")
+                                .font(.system(size: 10.5))
+                            Text("Lưu vào Chi Tiết")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4.5)
+                        .background(Color.green.opacity(0.15))
+                        .foregroundColor(.green)
+                        .cornerRadius(5)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4.5)
-                    .background(Color.green.opacity(0.12))
-                    .foregroundColor(.green)
-                    .cornerRadius(5)
+                    .buttonStyle(.plain)
+                    .help("Lưu câu trả lời của AI vào chi tiết từ trong Sổ Tay")
+                } else {
+                    Button(action: {
+                        extractAndAnalyzeAIResponse()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.arrow.down.on.square")
+                                .font(.system(size: 10.5))
+                            Text("Bóc tách vào Sổ Tay")
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4.5)
+                        .background(Color.green.opacity(0.12))
+                        .foregroundColor(.green)
+                        .cornerRadius(5)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Dùng AI On-Device để tinh lọc câu trả lời của ChatGPT/Gemini thành từ vựng & ngữ pháp lưu vào Sổ Tay")
                 }
-                .buttonStyle(.plain)
-                .help("Dùng AI On-Device để tinh lọc câu trả lời của ChatGPT/Gemini thành từ vựng & ngữ pháp lưu vào Sổ Tay")
                 
                 // Pin Window Button
                 Button(action: {
@@ -176,7 +272,58 @@ public struct QuickAIAssistantView: View {
         .background(Color.primary.opacity(0.03))
     }
     
-    // MARK: - Extract and Analyze AI Response with Local AI
+    // MARK: - Save Analysis Specifically to Target Word
+    private func saveAnalysisToTargetWord() {
+        guard let wv = webView else { return }
+        
+        let js = """
+        (function() {
+            let sel = window.getSelection().toString().trim();
+            if (sel.length > 0) return sel;
+            
+            let gptMsgs = document.querySelectorAll('[data-message-author-role="assistant"]');
+            if (gptMsgs.length > 0) {
+                return gptMsgs[gptMsgs.length - 1].innerText.trim();
+            }
+            
+            let geminiMsgs = document.querySelectorAll('.model-response-text, message-content, [data-test-id="model-response-text"]');
+            if (geminiMsgs.length > 0) {
+                return geminiMsgs[geminiMsgs.length - 1].innerText.trim();
+            }
+            
+            let markdowns = document.querySelectorAll('.font-claude-message, .prose, .markdown');
+            if (markdowns.length > 0) {
+                return markdowns[markdowns.length - 1].innerText.trim();
+            }
+            
+            return document.body.innerText.trim();
+        })();
+        """
+        
+        wv.evaluateJavaScript(js) { result, error in
+            guard let text = (result as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else {
+                return
+            }
+            
+            if let wordId = targetWordId {
+                vocabService.updateAIDetailedAnalysis(wordId: wordId, analysis: text)
+            } else if let wordTitle = targetWordTitle {
+                vocabService.updateAIDetailedAnalysis(wordTitle: wordTitle, analysis: text)
+            }
+            
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                saveSuccessToast = "Đã lưu phân tích chi tiết vào Sổ Tay!"
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    saveSuccessToast = nil
+                }
+            }
+        }
+    }
+    
+    // MARK: - Extract and Analyze AI Response with Local AI (General Mode)
     private func extractAndAnalyzeAIResponse() {
         guard let wv = webView else {
             TextAnalysisWindowController.shared.showAnalysis(text: currentPrompt)
@@ -255,36 +402,12 @@ public struct QuickAIAssistantView: View {
     private func promptChip(title: String, prompt: String) -> some View {
         Button(action: {
             injectedPrompt = prompt
-            if let wv = webView {
-                let escaped = prompt
-                    .replacingOccurrences(of: "\\", with: "\\\\")
-                    .replacingOccurrences(of: "\"", with: "\\\"")
-                    .replacingOccurrences(of: "\n", with: "\\n")
-                    .replacingOccurrences(of: "\r", with: "")
-                
-                let js = """
-                (function() {
-                    let el = document.querySelector('#prompt-textarea') || document.querySelector('.ql-editor') || document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea');
-                    if (el) {
-                        el.focus();
-                        if (el.tagName === 'TEXTAREA') {
-                            el.value = "\(escaped)";
-                        } else {
-                            el.innerText = "\(escaped)";
-                        }
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                })();
-                """
-                wv.evaluateJavaScript(js, completionHandler: nil)
-            }
         }) {
             Text(title)
-                .font(.system(size: 10.5, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3.5)
-                .background(Color.blue.opacity(0.09))
-                .foregroundColor(.blue)
+                .font(.system(size: 11, weight: .medium))
+                .padding(.horizontal, 9)
+                .padding(.vertical, 4)
+                .background(Color.primary.opacity(0.05))
                 .cornerRadius(5)
         }
         .buttonStyle(.plain)

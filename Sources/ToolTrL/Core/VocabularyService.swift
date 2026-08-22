@@ -11,6 +11,7 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public let dateAdded: Date
     public var isFavorite: Bool
     public var isMastered: Bool
+    public var aiDetailedAnalysis: String?
     
     public init(
         id: UUID = UUID(),
@@ -21,7 +22,8 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         exampleVi: String? = nil,
         dateAdded: Date = Date(),
         isFavorite: Bool = false,
-        isMastered: Bool = false
+        isMastered: Bool = false,
+        aiDetailedAnalysis: String? = nil
     ) {
         self.id = id
         self.word = word
@@ -32,6 +34,34 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         self.dateAdded = dateAdded
         self.isFavorite = isFavorite
         self.isMastered = isMastered
+        self.aiDetailedAnalysis = aiDetailedAnalysis
+    }
+    
+    public static func buildStructuredWordPrompt(for word: String) -> String {
+        return """
+        Hãy phân tích từ vựng/cấu trúc '\(word)' thành một mục từ điển chuyên sâu theo đúng cấu trúc chuẩn sau để lưu vào Sổ Tay:
+
+        ### 1. 🏷️ TỪ LOẠI & TẦNG NGHĨA CHÍNH
+        - Liệt kê các nghĩa quan trọng nhất kèm giải thích tiếng Việt ngắn gọn.
+
+        ### 2. 🌿 HỌ TỪ (WORD FAMILY)
+        - Danh từ (Noun): ...
+        - Động từ (Verb): ...
+        - Tính từ (Adjective): ...
+        - Trạng từ (Adverb): ...
+
+        ### 3. 💡 COLLOCATIONS & THÀNH NGỮ
+        - Liệt kê 3-4 cụm từ cố định hay đi kèm (Collocations) kèm ví dụ ngắn.
+
+        ### 4. ⚖️ SẮC THÁI & PHÂN BIỆT (NUANCES)
+        - Phân biệt với các từ dễ nhầm lẫn hoặc lưu ý quan trọng khi dùng.
+
+        ### 5. 📖 VÍ DỤ MINH HỌA
+        - 2 câu ví dụ tự nhiên (kèm dịch nghĩa).
+
+        ### 6. 🧠 MẸO GHI NHỚ (MNEMONIC & ETYMOLOGY)
+        - Gốc từ hoặc mẹo liên tưởng dễ nhớ.
+        """
     }
     
     public var isGrammarFormula: Bool {
@@ -244,6 +274,21 @@ public final class VocabularyService: ObservableObject {
     public func toggleMastered(id: UUID) {
         if let index = savedWords.firstIndex(where: { $0.id == id }) {
             savedWords[index].isMastered.toggle()
+            saveWords()
+        }
+    }
+    
+    public func updateAIDetailedAnalysis(wordId: UUID, analysis: String) {
+        if let index = savedWords.firstIndex(where: { $0.id == wordId }) {
+            savedWords[index].aiDetailedAnalysis = analysis
+            saveWords()
+        }
+    }
+    
+    public func updateAIDetailedAnalysis(wordTitle: String, analysis: String) {
+        let clean = wordTitle.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if let index = savedWords.firstIndex(where: { $0.cleanTitle.lowercased() == clean }) {
+            savedWords[index].aiDetailedAnalysis = analysis
             saveWords()
         }
     }
