@@ -36,6 +36,14 @@ let package = Package(
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
+        ),
+        .testTarget(
+            name: "ToolTrLTests",
+            dependencies: ["ToolTrLKit"],
+            path: "Tests/ToolTrLTests",
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
+            ]
         )
     ]
 )
