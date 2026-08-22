@@ -169,9 +169,15 @@ public struct TranslationHUDView: View {
                 .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
                 
                 Button(action: {
-                    ScreenOCRService.shared.captureAndRecognize { text in
-                        guard let recognized = text, !recognized.isEmpty else { return }
-                        viewModel.processText(recognized)
+                    onClose()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        ScreenOCRService.shared.captureAndRecognize { text in
+                            guard let recognized = text, !recognized.isEmpty else { return }
+                            viewModel.processText(recognized)
+                            if let appDelegate = NSApp.delegate as? AppDelegate {
+                                appDelegate.floatingPanel?.showNearCursorOrCenter()
+                            }
+                        }
                     }
                 }) {
                     Image(systemName: "camera.viewfinder")

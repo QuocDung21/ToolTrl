@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var floatingPanel: FloatingPanel?
+    public var floatingPanel: FloatingPanel?
     private var viewModel: TranslationViewModel!
     private var menuBarController: MenuBarController?
     private var lastTriggerTime: Date = .distantPast
@@ -96,6 +96,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     public func triggerOCR() {
+        floatingPanel?.hidePanel()
         ScreenOCRService.shared.captureAndRecognize { [weak self] recognizedText in
             guard let text = recognizedText, !text.isEmpty else { return }
             self?.viewModel.processText(text)

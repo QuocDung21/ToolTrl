@@ -1,5 +1,5 @@
 import Foundation
-import Vision
+@preconcurrency import Vision
 import AppKit
 
 @MainActor
@@ -11,47 +11,11 @@ public final class ScreenOCRService: ObservableObject {
     
     private init() {}
     
-    /// Trigger interactive area screen capture and recognize text
+    /// Trigger interactive area screen snip and recognize text
     public func captureAndRecognize(completion: @escaping (String?) -> Void) {
-        guard !isCapturing else { return }
-        isCapturing = true
-        
-        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("tooltrl_ocr_\(UUID().uuidString).png")
-        
-        // Use macOS native interactive screencapture CLI (-i interactive, -s selection only, -x no sound)
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-i", "-s", "-x", tempURL.path]
-        
-        process.terminationHandler = { [weak self] proc in
-            Task { @MainActor in
-                self?.isCapturing = false
-                
-                guard proc.terminationStatus == 0,
-                      FileManager.default.fileExists(atPath: tempURL.path),
-                      let image = NSImage(contentsOf: tempURL),
-                      let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                    // User canceled via ESC or no file was created
-                    try? FileManager.default.removeItem(at: tempURL)
-                    completion(nil)
-                    return
-                }
-                
-                self?.isRecognizing = true
-                let text = await self?.recognizeText(from: cgImage)
-                self?.isRecognizing = false
-                
-                // Cleanup temp file
-                try? FileManager.default.removeItem(at: tempURL)
-                completion(text)
-            }
-        }
-        
-        do {
-            try process.run()
-        } catch {
-            isCapturing = false
-            completion(nil)
+        ScreenSnipController.shared.startSnip { [weak self] recognizedText in
+            self?.isCapturing = false
+            completion(recognizedText)
         }
     }
     
