@@ -1,80 +1,93 @@
-# Hướng Dẫn Kiến Trúc & Quy Chuẩn Phát Triển Cho AI (AGENTS.md)
+# AI AGENT INSTRUCTIONS & ARCHITECTURAL SPECIFICATION (AGENTS.md)
 
-Tài liệu này mô tả chi tiết kiến trúc, cấu trúc thư mục, quy chuẩn lập trình và hướng dẫn mở rộng dự án **ToolTrL** dành cho các AI Agent (Antigravity, Cursor, Copilot, ChatGPT, Claude...) khi tham gia phát triển và bảo trì mã nguồn.
-
----
-
-## 📌 1. Tổng Quan Dự Án (Project Overview)
-
-**ToolTrL** là ứng dụng macOS Native chuyên biệt hỗ trợ học ngôn ngữ toàn diện:
-- **Dịch tức thì (Quick Translate & Overlay HUD)**: Phím tắt toàn cục dịch đoạn văn bản được bôi đen hoặc chụp ảnh màn hình (OCR).
-- **Trợ lý AI Tích hợp (Quick AI Assistant WebView)**: Tích hợp ChatGPT, Google Gemini, Claude, Perplexity vào giao diện nổi, tự động paste prompt và bóc tách kết quả bằng JavaScript injection.
-- **Sổ Tay Từ Vựng & Ngữ Pháp (Vocabulary & Grammar Notebook)**: Giao diện 3 cột chuẩn macOS HIG hoặc dạng Bảng (Table), phân loại theo AI (Mức độ quan trọng, Chủ đề, Từ loại), hỗ trợ Flashcard và Quick Look (phím Space).
-- **Trình Sinh & Bóc Tách Ngữ Pháp Chuyên Sâu**: Tự động ép prompt AI trả về 5 khối dữ liệu chuẩn (Công thức toán học, Ý nghĩa, Ví dụ 3 thể +, -, ?, Bẫy đề thi TOEIC/IELTS, Mẹo nhớ).
+This document defines the strict architectural contracts, domain models, system invariants, and coding standards for Autonomous AI Agents (Antigravity, Cursor, Copilot, Claude, GPT) operating on the **ToolTrL** codebase.
 
 ---
 
-## 🏛️ 2. Cấu Trúc Thư Mục & Trách Nhiệm (Directory Structure)
+## 1. PROJECT SPECIFICATION
+
+- **Application Name**: `ToolTrL`
+- **Target OS**: `macOS 13.0+ (Ventura, Sonoma, Sequoia)`
+- **Core Frameworks**: `SwiftUI`, `AppKit`, `WebKit`, `NaturalLanguage`, `Vision`, `AVFoundation`, `Carbon`
+- **Language & Runtime**: `Swift 5.9+ / Swift 6 Sendable Mode`
+- **Architecture Pattern**: `Clean Modular Architecture (MVVM + Service Layer + Centralized Prompt Factory)`
+
+---
+
+## 2. CODEBASE TOPOLOGY & FILE CONTRACTS
 
 ```
 Sources/ToolTrL/
 ├── App/
-│   ├── AppDelegate.swift          # Vòng đời ứng dụng, khởi tạo MenuBar, HotKey toàn cục, quản lý Window.
-│   └── ToolTrLApp.swift           # Entry point chính của ứng dụng SwiftUI / AppKit.
+│   ├── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), Global Event Monitor / HotKeys, Window Controllers.
+│   └── ToolTrLApp.swift             # SwiftUI Application entry point.
 │
 ├── Core/
-│   ├── AIPromptBuilder.swift      # [QUAN TRỌNG] Nơi tập trung TẤT CẢ các Prompt Template và Schema ép cấu trúc AI.
-│   ├── AIAnalysisParser.swift     # [QUAN TRỌNG] Bộ bóc tách văn bản thô từ AI thành Model có cấu trúc (ParsedAIAnalysis).
-│   ├── VocabularyService.swift    # Quản lý dữ liệu lưu trữ Sổ Tay (SavedWordItem), phân loại AI, lưu file JSON.
-│   ├── SmartDictionaryService.swift # Tích hợp API Từ điển miễn phí (DictionaryAPI) tra cứu nghĩa Anh - Anh và ví dụ.
-│   ├── SpeechService.swift        # Quản lý phát âm âm thanh (AVSpeechSynthesizer) đa ngôn ngữ.
-│   ├── TranslationService.swift   # Dịch thuật qua Google Translate / MyMemory API với bộ nhớ đệm (Cache).
-│   ├── HotKeyManager.swift        # Lắng nghe và đăng ký phím tắt toàn hệ thống (Carbon / EventTap).
-│   ├── ScreenOCRService.swift     # Nhận diện chữ trên màn hình bằng Vision Framework của macOS.
-│   ├── TextAnalysisService.swift  # Bóc tách từ vựng & cấu trúc ngữ pháp từ văn bản dài bằng NaturalLanguage.
-│   └── QuickPromptService.swift   # Quản lý danh sách các mẫu prompt hỏi nhanh của người dùng.
+│   ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] All LLM Prompt Templates & Schema Enforcement strings.
+│   ├── AIAnalysisParser.swift       # Multiline regex-based LLM Text Parser -> ParsedAIAnalysis struct.
+│   ├── VocabularyService.swift      # Persistence Engine (JSON), domain mutations, AI classification (Priority, Genre, POS).
+│   ├── SmartDictionaryService.swift # Async REST client for Free Dictionary API (definitions, phonetics, audio URLs).
+│   ├── SpeechService.swift          # Text-To-Speech (AVSpeechSynthesizer) with dynamic speakerID state tracking.
+│   ├── TranslationService.swift     # Google Translate / MyMemory API client with LRU TranslationCache.
+│   ├── HotKeyManager.swift          # Carbon RegisterEventHotKey global keyboard shortcut listener.
+│   ├── ScreenOCRService.swift       # Vision framework VNRecognizeTextRequest screen capture OCR.
+│   ├── TextAnalysisService.swift    # NaturalLanguage NLTokenizer sentence and token breakdown.
+│   └── QuickPromptService.swift     # User customizable dynamic quick prompt template management.
 │
 └── UI/
-    ├── VocabularyNotebookView.swift # Giao diện Sổ Tay trung tâm (Sidebar, Content List, Search, Table Mode, Quick Look).
-    ├── GrammarDetailView.swift    # [MODULAR] Giao diện chi tiết nguyên khối cho Cấu Trúc Ngữ Pháp & Công Thức.
-    ├── AddGrammarSheet.swift      # [MODULAR] Modal cho phép người dùng nhập ngữ pháp và kích hoạt AI ép prompt.
-    ├── QuickAIAssistantView.swift # Cửa sổ Web Trợ lý AI (ChatGPT / Gemini / Claude) với thanh công cụ điều khiển.
-    ├── AIWebView.swift            # WKWebView tích hợp vòng lặp Polling chủ động và Auto-Injection prompt.
-    ├── TranslationHUDView.swift   # Cửa sổ nổi hiển thị bản dịch nhanh khi bấm phím tắt.
-    ├── SmartTextAnalysisSheet.swift # Modal bóc tách từ vựng từ văn bản dài.
-    └── FlashcardStudyView...      # Chế độ ôn tập Flashcard lật thẻ 3D.
+    ├── VocabularyNotebookView.swift # 3-Pane NavigationSplitView & Table mode notebook, search, filter, QuickLook spacebar.
+    ├── GrammarDetailView.swift      # [MODULAR COMPONENT] Standalone 5-section Grammar Document view.
+    ├── AddGrammarSheet.swift        # [MODULAR COMPONENT] Modal sheet to input grammar rule and auto-trigger AI Prompt Enforcement.
+    ├── QuickAIAssistantView.swift   # Multi-provider Floating AI Assistant (ChatGPT, Gemini, Claude, Perplexity).
+    ├── AIWebView.swift              # WKWebView with SPA polling retry loop and synthetic DOM event prompt injection.
+    ├── TranslationHUDView.swift     # Global floating HUD panel showing instant translation.
+    ├── SmartTextAnalysisSheet.swift # Paragraph extraction & vocabulary breakdown modal.
+    └── FlashcardStudyView...        # 3D interactive flip-card study mode.
 ```
 
 ---
 
-## 🎯 3. Các Nguyên Tắc & Quy Chuẩn Bắt Buộc Khi Code
+## 3. DOMAIN INVARIANTS & STRICT RULES
 
-### 1. Nguyên Tắc Phân Tách Từ Vựng & Ngữ Pháp (Strict Domain Separation)
-- **Từ Vựng (`SavedWordItem.isGrammarFormula == false`)**:
-  - Giao diện hiển thị theo 2 tab: `[ 📖 Từ điển & Ghi chú ]` và `[ ✨ Phân tích AI ]`.
-  - Không chèn các nút sinh ngữ pháp làm rối phần từ điển gốc.
-- **Ngữ Pháp (`SavedWordItem.isGrammarFormula == true` hoặc bắt đầu bằng `📐`)**:
-  - **Không hiển thị tab Từ Điển** (vì ngữ pháp không phải là mục từ điển đơn).
-  - Sử dụng component `GrammarDetailView(item: item)` để hiển thị tài liệu ngữ pháp 5 phần liền mạch.
+### RULE 1: STRICT DOMAIN SEPARATION (Grammar vs. Vocabulary)
+```swift
+// SavedWordItem.isGrammarFormula determines rendering pipeline:
+if item.isGrammarFormula {
+    // 1. MUST render GrammarDetailView(item: item)
+    // 2. MUST NEVER render dictionary tabs or offline API meanings
+    // 3. Formula MUST be stored in `item.phonetic` and rendered in monospaced font
+} else {
+    // 1. MUST render 2-tab layout: [ 📖 Từ điển & Ghi chú ] and [ ✨ Phân tích AI ]
+    // 2. MUST NOT display grammar generator callouts inside the dictionary tab
+}
+```
 
-### 2. Quản Lý Prompt Tập Trung (`AIPromptBuilder.swift`)
-- **TUYỆT ĐỐI KHÔNG** hardcode chuỗi prompt AI rải rác trong các View.
-- Khi cần tạo prompt mới hoặc sửa đổi khuôn mẫu hỏi ChatGPT/Gemini, hãy định nghĩa phương thức trong `AIPromptBuilder.swift`.
+### RULE 2: CENTRALIZED PROMPT FACTORY (`AIPromptBuilder.swift`)
+- **NEVER** write inline raw prompt strings inside SwiftUI Views or Controller classes.
+- All prompts must be static methods in `AIPromptBuilder`:
+  - `AIPromptBuilder.structuredWordPrompt(for:)`
+  - `AIPromptBuilder.grammarFormulaPrompt(for:context:)`
+  - `AIPromptBuilder.wordGrammarPatternsPrompt(for:context:)`
+  - `AIPromptBuilder.strictEnforcedGrammarPrompt(title:context:customNote:)`
 
-### 3. Nguyên Tắc Bóc Tách Dữ Liệu AI (`AIAnalysisParser.swift`)
-- Luôn sử dụng `AIAnalysisParser.parse(rawText)` để chuyển đổi văn bản từ LLM thành struct `ParsedAIAnalysis`.
-- Khi cần mở rộng các mục mới (ví dụ: `quizzes`, `idioms`), chỉ cần thêm trường vào `ParsedAIAnalysis` và cập nhật `switch currentSection` trong parser.
+### RULE 3: MULTILINE STREAM PARSING (`AIAnalysisParser.swift`)
+- LLM outputs must be parsed through `AIAnalysisParser.parse(rawText)`.
+- When extending new sections (e.g. `quizzes`, `idioms`), add the property to `ParsedAIAnalysis` and handle its header detection in `AIAnalysisParser.swift`.
+- Formula parsing (`case 7`) must accumulate **all lines** into a multiline formula string until the next header is reached.
 
-### 4. Giao Diện Native macOS (Apple HIG)
-- Ưu tiên sử dụng `GroupBox`, `VisualEffectBackground(.hudWindow / .sidebar)`, `NavigationSplitView`.
-- Font chữ: Tiêu đề in đậm, Công thức dùng `design: .monospaced`, Ví dụ câu dùng `design: .serif, italic`.
-- Hạn chế các màu sắc chói; dùng `Color.blue`, `Color.purple`, `Color.orange`, `Color.green` với opacity nhẹ làm nền.
+### RULE 4: NATIVE macOS HUMAN INTERFACE GUIDELINES (HIG)
+- Window styling: Translucent backgrounds via `VisualEffectBackground(material: .sidebar / .hudWindow)`.
+- Layout: Use native `GroupBox`, `NavigationSplitView`, `Picker(style: .segmented)`.
+- Typography:
+  - Formulas: `.font(.system(size: 13.5, weight: .bold, design: .monospaced))` with blue tint.
+  - Examples: `.font(.system(size: 13, design: .serif)).italic()`.
+  - Badges & Tags: 10pt bold uppercase in subtle colored rounded pills.
 
 ---
 
-## 🚀 4. Lệnh Build, Đóng Gói & Kiểm Thử
+## 4. STANDARD BUILD & RUN PIPELINE
 
-Mỗi khi chỉnh sửa mã nguồn Swift, hãy chạy lệnh sau để build bản release, đóng gói `.app`, ký mã nguồn và khởi chạy:
+Always execute the following shell pipeline after code modifications:
 
 ```bash
 ./Scripts/build_app.sh && killall ToolTrL 2>/dev/null || true && sleep 1 && open build/ToolTrL.app
@@ -82,13 +95,14 @@ Mỗi khi chỉnh sửa mã nguồn Swift, hãy chạy lệnh sau để build b�
 
 ---
 
-## 💡 5. Hướng Dẫn Mở Rộng Tính Năng (How-to Guide for AIs)
+## 5. EXTENSION RECIPES FOR AI AGENTS
 
-### Trường hợp 1: Thêm một loại phân tích AI mới
-1. Mở `AIPromptBuilder.swift`, tạo hàm mới `public static func myNewPrompt(...) -> String`.
-2. Mở `AIAnalysisParser.swift`, thêm trường vào `ParsedAIAnalysis` và thêm case tương ứng trong `parse()`.
-3. Cập nhật UI trong `GrammarDetailView.swift` hoặc `VocabularyNotebookView.swift` để render card mới.
+### Recipe A: Adding a New AI Analysis Section
+1. **Update Model**: Add field `public var myField: [String] = []` to `ParsedAIAnalysis` in `Core/AIAnalysisParser.swift`.
+2. **Update Parser**: Add header keyword detection in `AIAnalysisParser.parse()` and append to `result.myField`.
+3. **Update Prompt**: Add corresponding markdown section header in `Core/AIPromptBuilder.swift`.
+4. **Update UI**: Render a new `GroupBox` inside `UI/GrammarDetailView.swift` or `UI/VocabularyNotebookView.swift`.
 
-### Trường hợp 2: Thêm một nhà cung cấp AI mới vào WebView
-1. Mở `QuickAIAssistantView.swift`, thêm case vào enum `AIProvider` (URL, Icon, Selector).
-2. Cập nhật JavaScript inject trong `AIWebView.swift` để hỗ trợ selector ô nhập liệu của nhà cung cấp đó.
+### Recipe B: Adding a New AI Provider to WebView
+1. **Enum Addition**: Add case in `enum AIProvider: String, CaseIterable, Identifiable` in `UI/QuickAIAssistantView.swift`.
+2. **Input Selector**: Add DOM selector & input handler in `AIWebView.swift` inside the JavaScript injection loop.

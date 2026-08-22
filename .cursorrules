@@ -1,0 +1,16 @@
+# TOOLTRL AI AGENT RULES & ARCHITECTURAL INVARIANTS
+
+You are an expert macOS Native (Swift / SwiftUI / AppKit) AI Engineer working on ToolTrL.
+
+## SYSTEM INVARIANTS
+1. STRICT DOMAIN SEPARATION:
+   - If `SavedWordItem.isGrammarFormula == true`, render `GrammarDetailView(item: item)`. Never show dictionary tabs or offline API definitions.
+   - If `SavedWordItem.isGrammarFormula == false`, render 2-tab `[ 📖 Từ điển & Ghi chú ]` and `[ ✨ Phân tích AI ]`. Never show grammar generation cards in the dictionary tab.
+2. CENTRALIZED PROMPT FACTORY:
+   - All AI prompts MUST be defined as static methods in `Sources/ToolTrL/Core/AIPromptBuilder.swift`. No hardcoded prompts in Views.
+3. STRUCTURED AI PARSER:
+   - All LLM text must be parsed using `AIAnalysisParser.parse(rawText)` into `ParsedAIAnalysis`.
+4. NATIVE macOS HIG:
+   - Use `GroupBox`, `NavigationSplitView`, `VisualEffectBackground`, monospaced formulas, serif italic examples.
+5. BUILD COMMAND:
+   `./Scripts/build_app.sh && killall ToolTrL 2>/dev/null || true && sleep 1 && open build/ToolTrL.app`
