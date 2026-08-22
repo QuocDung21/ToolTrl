@@ -813,36 +813,209 @@ public struct VocabularyNotebookView: View {
             
             // 3. AI Deep Structured Analysis (Saved or Prompt Banner)
             if let deepAnalysis = item.aiDetailedAnalysis, !deepAnalysis.isEmpty {
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Label("PHÂN TÍCH CHUYÊN SÂU TỪ AI (ĐÃ LƯU)", systemImage: "sparkles")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.purple)
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                QuickAIWindowController.shared.showAI(
-                                    prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
-                                    targetWordId: item.id,
-                                    targetWordTitle: item.cleanTitle
-                                )
-                            }) {
-                                Label("Cập nhật với AI", systemImage: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 10.5))
-                            }
-                            .buttonStyle(.borderless)
-                        }
+                let parsed = AIAnalysisParser.parse(deepAnalysis)
+                
+                VStack(alignment: .leading, spacing: 14) {
+                    // Header Status Bar
+                    HStack {
+                        Label("PHÂN TÍCH CHUYÊN SÂU TỪ AI", systemImage: "sparkles")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.purple)
                         
-                        Text(deepAnalysis)
-                            .font(.system(size: 12.5))
-                            .foregroundColor(.primary.opacity(0.9))
-                            .lineSpacing(3)
-                            .textSelection(.enabled)
+                        Spacer()
+                        
+                        Button(action: {
+                            QuickAIWindowController.shared.showAI(
+                                prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                                targetWordId: item.id,
+                                targetWordTitle: item.cleanTitle
+                            )
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text("Cập nhật lại")
+                            }
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(.purple)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(6)
+                    .padding(.top, 2)
+                    
+                    // Card 1: Tầng nghĩa & Định nghĩa
+                    if !parsed.meanings.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("Tầng nghĩa & Định nghĩa", systemImage: "text.book.closed")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.blue)
+                                
+                                ForEach(parsed.meanings, id: \.self) { m in
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("•")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.blue.opacity(0.8))
+                                        Text(m)
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.primary)
+                                            .lineSpacing(2)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
+                    // Card 2: Họ từ (Word Family)
+                    if !parsed.wordFamily.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("Họ từ (Word Family)", systemImage: "leaf.arrow.triangle.circlepath")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.green)
+                                
+                                ForEach(parsed.wordFamily) { item in
+                                    HStack(spacing: 8) {
+                                        Text(item.pos)
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.green)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.12))
+                                            .cornerRadius(4)
+                                        
+                                        Text(item.words)
+                                            .font(.system(size: 12.5))
+                                            .foregroundColor(.primary)
+                                        
+                                        Spacer()
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
+                    // Card 3: Collocations & Cụm từ hay gặp
+                    if !parsed.collocations.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("Cụm từ hay đi kèm (Collocations)", systemImage: "link")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.orange)
+                                
+                                ForEach(parsed.collocations) { col in
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("•")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.orange.opacity(0.8))
+                                        
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(col.phrase)
+                                                .font(.system(size: 12.5, weight: .semibold))
+                                                .foregroundColor(.primary)
+                                            
+                                            if !col.meaning.isEmpty {
+                                                Text(col.meaning)
+                                                    .font(.system(size: 11.5))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 1)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
+                    // Card 4: Sắc thái & Lưu ý khi dùng (Nuances)
+                    if !parsed.nuances.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("Sắc thái & Phân biệt", systemImage: "info.circle")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.indigo)
+                                
+                                ForEach(parsed.nuances, id: \.self) { n in
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("ℹ️")
+                                            .font(.system(size: 10))
+                                        Text(n)
+                                            .font(.system(size: 12.5))
+                                            .foregroundColor(.primary)
+                                            .lineSpacing(2)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
+                    // Card 5: Ví dụ thực tế
+                    if !parsed.examples.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label("Ví dụ minh họa", systemImage: "quote.bubble")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.blue)
+                                
+                                ForEach(Array(parsed.examples.enumerated()), id: \.offset) { _, ex in
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        HStack(alignment: .top) {
+                                            Text("\"\(ex.en)\"")
+                                                .font(.system(size: 13, design: .serif))
+                                                .italic()
+                                                .foregroundColor(.primary)
+                                            
+                                            Spacer()
+                                            
+                                            Button(action: {
+                                                speechService.speak(text: ex.en, languageCode: "en-US", speakerID: "ex_ai_\(item.id.uuidString)")
+                                            }) {
+                                                Image(systemName: "speaker.wave.2")
+                                                    .font(.system(size: 10))
+                                                    .foregroundColor(.blue)
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                        
+                                        if !ex.vi.isEmpty {
+                                            Text("➔ \(ex.vi)")
+                                                .font(.system(size: 11.5))
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
+                    // Card 6: Mẹo ghi nhớ & Gốc từ
+                    if let mnemonic = parsed.mnemonic, !mnemonic.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Label("Mẹo ghi nhớ & Gốc từ", systemImage: "lightbulb.fill")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.yellow)
+                                
+                                Text(mnemonic)
+                                    .font(.system(size: 12.5))
+                                    .foregroundColor(.primary)
+                                    .lineSpacing(2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
                 }
             } else {
                 // Callout Banner to prompt user to analyze with structured AI
@@ -855,7 +1028,7 @@ public struct VocabularyNotebookView: View {
                 }) {
                     HStack(spacing: 10) {
                         Image(systemName: "sparkles.square.filled.on.square")
-                            .font(.system(size: 22))
+                            .font(.system(size: 20))
                             .foregroundColor(.purple)
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -885,17 +1058,18 @@ public struct VocabularyNotebookView: View {
                 .buttonStyle(.plain)
             }
             
-            // 4. AI Rich Dictionary Definitions by Part of Speech (Local Dictionary)
-            if isLoadingDictionary {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                    Text("Đang phân tích từ điển chuyên sâu...")
-                        .font(.system(size: 11.5))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 8)
-            } else if let entry = richDictionaryEntry, !entry.meanings.isEmpty {
+            // 4. AI Rich Dictionary Definitions by Part of Speech (Local Dictionary - only when no detailed AI analysis exists)
+            if item.aiDetailedAnalysis == nil || item.aiDetailedAnalysis?.isEmpty == true {
+                if isLoadingDictionary {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                        Text("Đang phân tích từ điển chuyên sâu...")
+                            .font(.system(size: 11.5))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                } else if let entry = richDictionaryEntry, !entry.meanings.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Label("CÁC TẦNG NGHĨA THEO TỪ LOẠI (TỪ ĐIỂN AI)", systemImage: "books.vertical.fill")
@@ -969,6 +1143,7 @@ public struct VocabularyNotebookView: View {
                         }
                     }
                 }
+            }
             }
         }
     }
