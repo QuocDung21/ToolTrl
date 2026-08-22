@@ -1,0 +1,31 @@
+# AI Agent Ignore Rules - Files and Folders AI must NOT enter, read, or modify
+
+# Build artifacts & packages
+build/
+.build/
+.swiftpm/
+DerivedData/
+*.dmg
+*.pkg
+*.app
+
+# Source Control & IDE
+.git/
+.idea/
+.vscode/
+
+# Assets & Binaries
+Resources/AppIcon.icns
+Resources/AppIcon.iconset/
+Resources/*.png
+
+# Planning & Future Platform folders (Do not modify during macOS development)
+Windows/
+
+# System & Sensitive
+.DS_Store
+*.env*
+*.key
+*.p12
+*.pem
+*.cer

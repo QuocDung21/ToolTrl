@@ -12,5 +12,7 @@ You are an expert macOS Native (Swift / SwiftUI / AppKit) AI Engineer working on
    - All LLM text must be parsed using `AIAnalysisParser.parse(rawText)` into `ParsedAIAnalysis`.
 4. NATIVE macOS HIG:
    - Use `GroupBox`, `NavigationSplitView`, `VisualEffectBackground`, monospaced formulas, serif italic examples.
-5. BUILD COMMAND:
+5. RESTRICTED ZONES & NO-GO DIRECTORIES:
+   - AI MUST NEVER read, index, or modify files in: `build/`, `.build/`, `Windows/` (unless explicitly requested), `.git/`, binary assets, or sensitive keys.
+6. BUILD COMMAND:
    `./Scripts/build_app.sh && killall ToolTrL 2>/dev/null || true && sleep 1 && open build/ToolTrL.app`

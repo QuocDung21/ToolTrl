@@ -83,6 +83,13 @@ if item.isGrammarFormula {
   - Examples: `.font(.system(size: 13, design: .serif)).italic()`.
   - Badges & Tags: 10pt bold uppercase in subtle colored rounded pills.
 
+### RULE 5: STRICT RESTRICTED ZONES & NO-GO DIRECTORIES
+- **DO NOT TOUCH / DO NOT INDEX**:
+  - `build/`, `.build/`, `DerivedData/`, `*.dmg`, `*.app` (Build artifacts)
+  - `Windows/` (Future platform planning directory; do NOT modify or mix with macOS Swift codebase)
+  - `Resources/AppIcon.iconset/`, `Resources/*.png` (Binary assets)
+  - `.git/`, `.env*`, `*.key`, `*.p12`, `*.pem` (Credentials & VCS internals)
+
 ---
 
 ## 4. STANDARD BUILD & RUN PIPELINE
