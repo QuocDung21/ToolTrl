@@ -652,99 +652,86 @@ public struct VocabularyNotebookView: View {
         }
     }
     
-    // MARK: - Word Header View
+    // MARK: - Word Header View (Native macOS Style)
     private func wordHeaderView(item: SavedWordItem) -> some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                if item.isGrammarFormula {
-                    Text("CÔNG THỨC NGỮ PHÁP")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.blue)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
-                } else if let ph = item.phonetic, !ph.isEmpty {
-                    Text(ph)
-                        .font(.system(size: 14, weight: .medium, design: .serif))
-                        .foregroundColor(.orange)
+            VStack(alignment: .leading, spacing: 6) {
+                // Word Title + Phonetic + Audio button inline
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(item.cleanTitle)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    if item.isGrammarFormula {
+                        Text("CÔNG THỨC")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .foregroundColor(.blue)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1.5)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(4)
+                    } else if let ph = item.phonetic, !ph.isEmpty {
+                        Text(ph)
+                            .font(.system(size: 13.5, weight: .medium, design: .serif))
+                            .foregroundColor(.orange)
+                    }
+                    
+                    if !item.isGrammarFormula {
+                        Button(action: {
+                            speechService.speak(text: item.word, languageCode: "en-US", speakerID: "hdr_\(item.id.uuidString)")
+                        }) {
+                            Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "hdr_\(item.id.uuidString)") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Nghe phát âm chuẩn")
+                    }
                 }
-                
-                Text(item.cleanTitle)
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundColor(.primary)
                 
                 // Badges
                 HStack(spacing: 6) {
                     Label(item.aiThematicGenre.rawValue, systemImage: "folder")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2.5)
+                        .font(.system(size: 10, weight: .medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(Color.primary.opacity(0.04))
-                        .cornerRadius(5)
+                        .cornerRadius(4)
                     
                     Label(item.aiPartOfSpeech.rawValue, systemImage: "tag")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2.5)
+                        .font(.system(size: 10, weight: .medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(Color.primary.opacity(0.04))
-                        .cornerRadius(5)
+                        .cornerRadius(4)
                 }
-                .padding(.top, 2)
             }
             
             Spacer()
             
-            // Actions
-            HStack(spacing: 8) {
-                if !item.isGrammarFormula {
-                    Button(action: {
-                        speechService.speak(text: item.word, languageCode: "en-US", speakerID: "hdr_\(item.id.uuidString)")
-                    }) {
-                        Label("Phát âm", systemImage: (speechService.isSpeaking && speechService.currentSpeakerID == "hdr_\(item.id.uuidString)") ? "speaker.wave.3.fill" : "speaker.wave.2")
-                            .font(.system(size: 11))
-                    }
-                }
-                
+            // Native macOS Action Group (Top Right)
+            HStack(spacing: 10) {
                 Button(action: {
                     vocabService.toggleFavorite(id: item.id)
                 }) {
                     Image(systemName: item.isFavorite ? "star.fill" : "star")
+                        .font(.system(size: 13))
                         .foregroundColor(item.isFavorite ? .yellow : .secondary)
                 }
                 .buttonStyle(.plain)
-                .help(item.isFavorite ? "Bỏ yêu thích" : "Yêu thích")
+                .help(item.isFavorite ? "Bỏ yêu thích" : "Đánh dấu yêu thích")
                 
                 Button(action: {
                     vocabService.toggleMastered(id: item.id)
                 }) {
                     Image(systemName: item.isMastered ? "checkmark.seal.fill" : "checkmark.seal")
+                        .font(.system(size: 13))
                         .foregroundColor(item.isMastered ? .green : .secondary)
                 }
                 .buttonStyle(.plain)
                 .help(item.isMastered ? "Đánh dấu chưa thuộc" : "Đánh dấu đã thuộc")
-                
-                Button(action: {
-                    QuickAIWindowController.shared.showAI(
-                        prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
-                        targetWordId: item.id,
-                        targetWordTitle: item.cleanTitle
-                    )
-                }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "sparkles")
-                        Text("Phân tích AI")
-                    }
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.purple)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3.5)
-                    .background(Color.purple.opacity(0.12))
-                    .cornerRadius(5)
-                }
-                .buttonStyle(.plain)
-                .help("Mở Trợ lý AI (ChatGPT/Gemini) để phân tích chuyên sâu cấu trúc và lưu vào mục này")
             }
+            .padding(.top, 4)
         }
     }
     
@@ -752,28 +739,33 @@ public struct VocabularyNotebookView: View {
     @ViewBuilder
     private func segmentedDetailContentSection(item: SavedWordItem) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Segmented Picker Switcher
+            // Native Apple Segmented Switcher Bar
             HStack {
                 Picker("", selection: $selectedDetailTab) {
-                    Label("Từ điển & Ghi chú", systemImage: "book.closed").tag(WordDetailTab.original)
-                    Label("Phân tích AI", systemImage: "sparkles").tag(WordDetailTab.ai)
+                    Text("Từ điển & Ghi chú").tag(WordDetailTab.original)
+                    Text("Phân tích AI").tag(WordDetailTab.ai)
                 }
                 .pickerStyle(.segmented)
-                .frame(maxWidth: 320)
+                .frame(width: 250)
                 
                 Spacer()
                 
-                if selectedDetailTab == .original {
-                    Text("Nội dung gốc & từ điển tra cứu")
-                        .font(.system(size: 10.5))
-                        .foregroundColor(.secondary)
-                } else {
-                    Text("Phân tích chuyên sâu từ AI")
-                        .font(.system(size: 10.5))
-                        .foregroundColor(.purple)
+                if selectedDetailTab == .ai, let analysis = item.aiDetailedAnalysis, !analysis.isEmpty {
+                    Button(action: {
+                        QuickAIWindowController.shared.showAI(
+                            prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                            targetWordId: item.id,
+                            targetWordTitle: item.cleanTitle
+                        )
+                    }) {
+                        Label("Cập nhật AI", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.purple)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.bottom, 2)
+            .padding(.top, 2)
             
             if selectedDetailTab == .original {
                 originalContentSection(item: item)
@@ -957,31 +949,6 @@ public struct VocabularyNotebookView: View {
                 let parsed = AIAnalysisParser.parse(deepAnalysis)
                 
                 VStack(alignment: .leading, spacing: 12) {
-                    // Header Action Bar
-                    HStack {
-                        Label("KẾT QUẢ PHÂN TÍCH CHUYÊN SÂU TỪ AI", systemImage: "sparkles")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.purple)
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            QuickAIWindowController.shared.showAI(
-                                prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
-                                targetWordId: item.id,
-                                targetWordTitle: item.cleanTitle
-                            )
-                        }) {
-                            HStack(spacing: 3) {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                Text("Cập nhật lại")
-                            }
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundColor(.purple)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    
                     // Card 1: Tầng nghĩa & Định nghĩa
                     if !parsed.meanings.isEmpty {
                         GroupBox {
