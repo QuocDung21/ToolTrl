@@ -152,15 +152,19 @@ public struct VocabularyNotebookView: View {
             setupKeyMonitor()
             if selectedItemID == nil, let first = filteredItems.first {
                 selectedItemID = first.id
-                triggerDictionaryAnalysis(for: first.cleanTitle)
+                if !first.isGrammarFormula {
+                    triggerDictionaryAnalysis(for: first.cleanTitle)
+                }
             }
         }
         .onDisappear {
             removeKeyMonitor()
         }
-        .onChange(of: selectedItemID) { newID in
+        .onChange(of: selectedItemID) { _, newID in
             if let id = newID, let item = vocabService.savedWords.first(where: { $0.id == id }) {
-                triggerDictionaryAnalysis(for: item.cleanTitle)
+                if !item.isGrammarFormula {
+                    triggerDictionaryAnalysis(for: item.cleanTitle)
+                }
             }
         }
     }
