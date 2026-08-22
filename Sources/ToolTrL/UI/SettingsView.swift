@@ -1,19 +1,34 @@
 import SwiftUI
 
-public enum SettingsTab: String, CaseIterable, Identifiable {
-    case vocabulary = "Sổ từ vựng"
-    case display = "Hiển thị"
-    case speech = "Âm thanh"
+public enum SettingsSidebarSection: String, CaseIterable, Identifiable {
     case general = "Chung"
+    case shortcuts = "Phím tắt"
+    case speech = "Giọng đọc"
+    case appearance = "Giao diện & Icon"
+    case prompts = "Mẫu câu AI"
+    case about = "Giới thiệu"
     
     public var id: String { rawValue }
     
     public var icon: String {
         switch self {
-        case .vocabulary: return "character.book.closed.fill"
-        case .display: return "text.viewfinder"
-        case .speech: return "speaker.wave.3.fill"
-        case .general: return "gearshape.fill"
+        case .general: return "gearshape"
+        case .shortcuts: return "command"
+        case .speech: return "speaker.wave.2"
+        case .appearance: return "paintbrush"
+        case .prompts: return "sparkles"
+        case .about: return "info.circle"
+        }
+    }
+    
+    public var iconColor: Color {
+        switch self {
+        case .general: return .gray
+        case .shortcuts: return .orange
+        case .speech: return .blue
+        case .appearance: return .purple
+        case .prompts: return .pink
+        case .about: return .indigo
         }
     }
 }
@@ -26,578 +41,349 @@ public struct SettingsView: View {
     @ObservedObject var promptService = QuickPromptService.shared
     @ObservedObject var hotKeyManager = HotKeyManager.shared
     
-    @State private var selectedTab: SettingsTab = .display
-    @State private var searchVocabText: String = ""
-    @State private var copiedVocab: Bool = false
+    @State private var selectedSection: SettingsSidebarSection? = .general
     @State private var showPromptManagerSheet: Bool = false
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Top Modern macOS Segmented Navigation Bar
-            topNavigationBar
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 12)
-            
-            Divider()
-                .opacity(0.3)
-            
-            // Tab Content Container
-            ZStack {
-                switch selectedTab {
-                case .vocabulary:
-                    vocabularyTab
-                case .display:
-                    displayTab
-                case .speech:
-                    speechTab
-                case .general:
-                    generalTab
+        NavigationSplitView {
+            // Sidebar Navigation (Standard macOS System Settings)
+            List(selection: $selectedSection) {
+                ForEach(SettingsSidebarSection.allCases) { sec in
+                    NavigationLink(value: sec) {
+                        Label {
+                            Text(sec.rawValue)
+                                .font(.system(size: 13))
+                        } icon: {
+                            Image(systemName: sec.icon)
+                                .foregroundColor(sec.iconColor)
+                        }
+                    }
                 }
             }
-            .padding(16)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 230)
+        } detail: {
+            // Detail Form (macOS Grouped Form Style)
+            Group {
+                switch selectedSection {
+                case .general:
+                    generalSettingsForm
+                case .shortcuts:
+                    shortcutsSettingsForm
+                case .speech:
+                    speechSettingsForm
+                case .appearance:
+                    appearanceSettingsForm
+                case .prompts:
+                    promptsSettingsForm
+                case .about:
+                    aboutSettingsForm
+                case .none:
+                    generalSettingsForm
+                }
+            }
+            .navigationTitle(selectedSection?.rawValue ?? "Cài đặt")
         }
-        .frame(width: 560, height: 460)
-        .background(
-            VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
-        )
+        .frame(minWidth: 680, minHeight: 480)
         .sheet(isPresented: $showPromptManagerSheet) {
             QuickPromptManagerSheet()
         }
     }
     
-    // MARK: - Top Segmented Navigation Bar
-    private var topNavigationBar: some View {
-        HStack(spacing: 6) {
-            ForEach(SettingsTab.allCases) { tab in
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        selectedTab = tab
+    // MARK: - 1. General Settings Form
+    private var generalSettingsForm: some View {
+        Form {
+            Section(header: Text("KHỞI ĐỘNG & HỆ THỐNG")) {
+                Toggle("Tự động khởi chạy cùng macOS khi đăng nhập", isOn: Binding(
+                    get: { settings.launchAtLogin },
+                    set: { settings.setLaunchAtLogin($0) }
+                ))
+                
+                Toggle("Tự động ẩn cửa sổ dịch khi bấm chuột ra ngoài", isOn: $settings.clickOutsideDismiss)
+            }
+            
+            Section(header: Text("DỊCH THUẬT & NGÔN NGỮ")) {
+                Picker("Ngôn ngữ đích mặc định:", selection: $settings.targetLanguage) {
+                    ForEach(TargetLanguage.allCases) { lang in
+                        Text(lang.displayName).tag(lang.rawValue)
                     }
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 11))
-                        Text(tab.rawValue)
-                            .font(.system(size: 12, weight: selectedTab == tab ? .semibold : .regular))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .foregroundColor(selectedTab == tab ? .white : .primary.opacity(0.8))
-                    .background(
-                        selectedTab == tab ? Color.blue : Color.primary.opacity(0.04)
-                    )
-                    .cornerRadius(7)
                 }
-                .buttonStyle(.plain)
+                
+                Picker("Chế độ hiển thị bản dịch:", selection: $settings.translationDisplayMode) {
+                    ForEach(TranslationDisplayMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+            }
+            
+            Section(header: Text("BỘ NHỚ TẠM (CACHE)")) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Xóa bộ nhớ đệm dịch thuật")
+                            .font(.system(size: 13))
+                        Text("Làm sạch các bản dịch đã lưu trong RAM để giải phóng dung lượng.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Button("Xóa Cache") {
+                        TranslationCache.shared.clearAll()
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+    
+    // MARK: - 2. Shortcuts Settings Form
+    private var shortcutsSettingsForm: some View {
+        Form {
+            Section {
+                shortcutRow(
+                    title: "Dịch văn bản bôi đen",
+                    subtitle: "Mở popup dịch ngay tại vị trí con trỏ chuột.",
+                    shortcut: $hotKeyManager.translateShortcut,
+                    defaultShortcut: KeyShortcut.defaultTranslate
+                )
+                
+                shortcutRow(
+                    title: "Quét chữ trên màn hình (OCR)",
+                    subtitle: "Khoanh vùng ảnh màn hình để bóc tách chữ & dịch tức thì.",
+                    shortcut: $hotKeyManager.ocrShortcut,
+                    defaultShortcut: KeyShortcut.defaultOCR
+                )
+                
+                shortcutRow(
+                    title: "Mở nhanh Trợ lý AI",
+                    subtitle: "Mở cửa sổ trò chuyện với ChatGPT, Gemini, Claude.",
+                    shortcut: $hotKeyManager.aiShortcut,
+                    defaultShortcut: KeyShortcut.defaultAI
+                )
+                
+                shortcutRow(
+                    title: "Mở Sổ tay từ vựng & Flashcards",
+                    subtitle: "Xem lại từ vựng đã lưu và ôn tập thẻ ghi nhớ.",
+                    shortcut: $hotKeyManager.notebookShortcut,
+                    defaultShortcut: KeyShortcut.defaultNotebook
+                )
+            } header: {
+                Text("PHÍM TẮT TOÀN CẦU (GLOBAL SHORTCUTS)")
+            } footer: {
+                Text("Bấm vào ô phím tắt để ghi nhận tổ hợp phím mới trên bàn phím của bạn.")
+            }
+            
+            Section {
+                Button("Khôi phục toàn bộ phím tắt mặc định") {
+                    hotKeyManager.resetDefaults()
+                }
+                .foregroundColor(.orange)
+            }
+        }
+        .formStyle(.grouped)
+    }
+    
+    private func shortcutRow(
+        title: String,
+        subtitle: String,
+        shortcut: Binding<KeyShortcut>,
+        defaultShortcut: KeyShortcut
+    ) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                Text(subtitle)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
             }
             Spacer()
+            ShortcutRecorderView(
+                shortcut: shortcut,
+                defaultShortcut: defaultShortcut
+            )
         }
     }
     
-    // MARK: - Tab 1: Sổ từ vựng
-    private var vocabularyTab: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Button(action: {
-                    VocabularyWindowController.shared.showNotebook()
-                }) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "book.pages.fill")
-                        Text("Mở Sổ Tay Từ Vựng Chuyên Sâu (Cửa sổ lớn) ↗")
-                    }
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color.orange)
-                    .cornerRadius(7)
-                }
-                .buttonStyle(.plain)
+    // MARK: - 3. Speech Settings Form
+    private var speechSettingsForm: some View {
+        Form {
+            Section(header: Text("PHÁT ÂM TỰ NHIÊN (TEXT-TO-SPEECH)")) {
+                Toggle("Tự động phát âm khi tra từ đơn", isOn: $settings.autoSpeakWord)
             }
             
-            let filtered = filteredWords
-            if filtered.isEmpty {
-                VStack(spacing: 8) {
-                    Spacer()
-                    Image(systemName: "character.book.closed")
-                        .font(.system(size: 32))
-                        .foregroundColor(.secondary.opacity(0.4))
-                    Text(vocabService.savedWords.isEmpty ? "Chưa có từ vựng nào được lưu." : "Không tìm thấy từ khớp.")
-                        .font(.system(size: 12.5))
-                        .foregroundColor(.secondary)
-                    Spacer()
+            Section(header: Text("TÙY CHỈNH GIỌNG ĐỌC")) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Tốc độ đọc:")
+                        Spacer()
+                        Text(String(format: "%.2fx", settings.speechRate))
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 11, design: .monospaced))
+                    }
+                    
+                    Slider(value: $settings.speechRate, in: 0.2...0.8, step: 0.05)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 6) {
-                        ForEach(filtered) { item in
-                            HStack(alignment: .center, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 6) {
-                                        Text(item.word)
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(.primary)
-                                        
-                                        if let ph = item.phonetic, !ph.isEmpty {
-                                            Text(ph)
-                                                .font(.system(size: 10.5, design: .serif))
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-                                    
-                                    Text(item.translation)
-                                        .font(.system(size: 11.5))
-                                        .foregroundColor(.blue)
-                                        .lineLimit(2)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    SpeechService.shared.speak(text: item.word, languageCode: "en-US", speakerID: "vocab_\(item.id.uuidString)")
-                                }) {
-                                    Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "vocab_\(item.id.uuidString)") ? "speaker.wave.3.fill" : "speaker.wave.2.fill")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.blue)
-                                }
-                                .buttonStyle(.plain)
-                                
-                                Button(action: {
-                                    vocabService.removeWord(id: item.id)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.red.opacity(0.7))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.primary.opacity(0.03))
+                .padding(.vertical, 2)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Cao độ giọng đọc:")
+                        Spacer()
+                        Text(String(format: "%.2fx", settings.speechPitch))
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 11, design: .monospaced))
+                    }
+                    
+                    Slider(value: $settings.speechPitch, in: 0.5...1.5, step: 0.05)
+                }
+                .padding(.vertical, 2)
+            }
+            
+            Section {
+                Button(action: {
+                    speechService.speak(
+                        text: "Hello! ToolTrL helps you learn English effortlessly.",
+                        languageCode: "en-US",
+                        speakerID: "settings_test"
+                    )
+                }) {
+                    Label("Nghe thử giọng đọc mẫu", systemImage: "speaker.wave.2")
+                }
+            }
+        }
+        .formStyle(.grouped)
+    }
+    
+    // MARK: - 4. Appearance Settings Form
+    private var appearanceSettingsForm: some View {
+        Form {
+            Section(header: Text("BIỂU TƯỢNG MENU BAR & ỨNG DỤNG")) {
+                Picker("Bộ Icon:", selection: $iconService.selectedType) {
+                    ForEach(AppIconType.allCases) { (type: AppIconType) in
+                        Text(type.rawValue).tag(type)
+                    }
+                }
+                
+                if iconService.selectedType == .custom {
+                    HStack {
+                        iconService.currentImage
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 28, height: 28)
                             .cornerRadius(6)
+                        
+                        Button("Chọn ảnh từ máy...") {
+                            iconService.importCustomImage()
                         }
                     }
                 }
             }
-        }
-    }
-    
-    private var filteredWords: [SavedWordItem] {
-        let q = searchVocabText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if q.isEmpty { return vocabService.savedWords }
-        return vocabService.savedWords.filter {
-            $0.word.lowercased().contains(q) || $0.translation.lowercased().contains(q)
-        }
-    }
-    
-    // MARK: - Tab 2: Hiển thị từ dịch
-    private var displayTab: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                settingCard(title: "Ngôn ngữ đích mặc định", icon: "globe") {
-                    Picker("Dịch tự động sang:", selection: $settings.targetLanguage) {
-                        ForEach(TargetLanguage.allCases) { lang in
-                            Text(lang.displayName).tag(lang.rawValue)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .font(.system(size: 12))
-                }
-                
-                settingCard(title: "Chế độ hiển thị bản dịch đoạn văn", icon: "rectangle.stack.badge.plus") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Picker("", selection: $settings.translationDisplayMode) {
-                            ForEach(TranslationDisplayMode.allCases) { mode in
-                                Text(mode.rawValue).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.radioGroup)
-                        .font(.system(size: 12))
-                    }
-                }
-                
-                settingCard(title: "Tùy chọn hiển thị chi tiết trong từ điển", icon: "slider.horizontal.3") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Toggle("Hiển thị phiên âm quốc tế IPA (Phonetics)", isOn: $settings.showPhonetics)
-                            .font(.system(size: 12))
-                        
-                        Toggle("Hiển thị câu ví dụ mẫu thực tế (Examples)", isOn: $settings.showExamples)
-                            .font(.system(size: 12))
-                        
-                        Toggle("Hiển thị thẻ từ đồng nghĩa & trái nghĩa (Synonyms / Antonyms)", isOn: $settings.showSynonyms)
-                            .font(.system(size: 12))
-                        
-                        Toggle("Hiển thị từ điển hệ thống macOS khi offline", isOn: $settings.showOfflineDictionary)
-                            .font(.system(size: 12))
-                    }
-                }
-                
-                // Biểu Tượng Logo & Menu Bar (App Logo & Icons)
-                settingCard(title: "Biểu Tượng Logo & Menu Bar", icon: "app.badge.fill") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Chọn biểu tượng hiển thị trên Menu Bar và thanh công cụ ứng dụng:")
+            
+            Section(header: Text("XEM TRƯỚC BIỂU TƯỢNG")) {
+                HStack(spacing: 12) {
+                    iconService.currentImage
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 32, height: 32)
+                        .foregroundColor(iconService.selectedType.accentColor)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("ToolTrL Menu Bar Icon")
+                            .font(.system(size: 13, weight: .bold))
+                        Text(iconService.selectedType.rawValue)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
-                        
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
-                            ForEach(AppIconType.allCases) { iconType in
-                                Button(action: {
-                                    if iconType == .custom && iconService.customImageName == nil {
-                                        iconService.importCustomImage()
-                                    } else {
-                                        iconService.selectIcon(iconType)
-                                    }
-                                }) {
-                                    VStack(spacing: 5) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(iconService.selectedType == iconType ? iconType.accentColor.opacity(0.15) : Color.primary.opacity(0.04))
-                                                .frame(width: 34, height: 34)
-                                            
-                                            if iconType == .defaultCat {
-                                                AppLogo.image
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: 22, height: 22)
-                                            } else if iconType == .custom {
-                                                if iconService.customImageName != nil {
-                                                    iconService.currentImage
-                                                        .resizable()
-                                                        .scaledToFit()
-                                                        .frame(width: 22, height: 22)
-                                                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                                                } else {
-                                                    Image(systemName: "plus.circle.fill")
-                                                        .font(.system(size: 16))
-                                                        .foregroundColor(.green)
-                                                }
-                                            } else if let sym = iconType.sfSymbol {
-                                                Image(systemName: sym)
-                                                    .font(.system(size: 15, weight: .semibold))
-                                                    .foregroundColor(iconType.accentColor)
-                                            }
-                                        }
-                                        
-                                        Text(iconType.rawValue)
-                                            .font(.system(size: 10, weight: iconService.selectedType == iconType ? .bold : .regular))
-                                            .foregroundColor(iconService.selectedType == iconType ? .primary : .secondary)
-                                            .lineLimit(1)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 7)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(iconService.selectedType == iconType ? iconType.accentColor : Color.primary.opacity(0.08), lineWidth: iconService.selectedType == iconType ? 1.5 : 1)
-                                    )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                iconService.importCustomImage()
-                            }) {
-                                HStack(spacing: 5) {
-                                    Image(systemName: "folder.badge.plus")
-                                    Text(iconService.customImageName != nil ? "Đổi ảnh khác..." : "Tải ảnh từ máy (PNG/JPG)...")
-                                }
-                                .font(.system(size: 11, weight: .medium))
-                                .padding(.horizontal, 9)
-                                .padding(.vertical, 5)
-                                .background(Color.primary.opacity(0.06))
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            if iconService.selectedType != .defaultCat || iconService.customImageName != nil {
-                                Button(action: {
-                                    iconService.resetToDefault()
-                                }) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "arrow.counterclockwise")
-                                        Text("Khôi phục mặc định")
-                                    }
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundColor(.orange)
-                                    .padding(.horizontal, 9)
-                                    .padding(.vertical, 5)
-                                    .background(Color.orange.opacity(0.1))
-                                    .cornerRadius(6)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.top, 4)
                     }
                 }
-                
-                // Mẫu Câu Hỏi Nhanh AI (Custom AI Prompts)
-                settingCard(title: "Mẫu Câu Hỏi Nhanh Cho AI (Custom Prompts)", icon: "sparkles.rectangle.stack.fill") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Text("Tùy chỉnh các mẫu câu hỏi xuất hiện trên Trợ lý AI (Option + A):")
+                .padding(.vertical, 4)
+            }
+        }
+        .formStyle(.grouped)
+    }
+    
+    // MARK: - 5. Prompts Settings Form
+    private var promptsSettingsForm: some View {
+        Form {
+            Section {
+                ForEach(promptService.prompts) { prompt in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Text(prompt.icon)
+                                Text(prompt.title)
+                                    .font(.system(size: 13, weight: .semibold))
+                            }
+                            Text(prompt.template)
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
-                            Spacer()
-                            Text("\(promptService.activePrompts.count) / \(promptService.prompts.count) đang bật")
-                                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                .foregroundColor(.purple)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1.5)
-                                .background(Color.purple.opacity(0.1))
-                                .clipShape(Capsule())
+                                .lineLimit(1)
                         }
-                        
-                        VStack(spacing: 5) {
-                            ForEach(promptService.prompts.prefix(4)) { item in
-                                HStack(spacing: 6) {
-                                    Image(systemName: item.isEnabled ? "eye.fill" : "eye.slash")
-                                        .font(.system(size: 9.5))
-                                        .foregroundColor(item.isEnabled ? .blue : .secondary.opacity(0.4))
-                                    
-                                    Text(item.icon)
-                                        .font(.system(size: 12))
-                                    Text(item.title)
-                                        .font(.system(size: 11.5, weight: .semibold))
-                                        .foregroundColor(item.isEnabled ? .primary : .secondary)
-                                    Text("• \(item.template)")
-                                        .font(.system(size: 10.5))
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4.5)
-                                .background(Color.primary.opacity(0.025))
-                                .cornerRadius(5)
-                                .opacity(item.isEnabled ? 1.0 : 0.6)
-                            }
-                        }
-                        
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                showPromptManagerSheet = true
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "slider.horizontal.3")
-                                    Text("Quản lý, Sắp xếp & Thêm mẫu...")
-                                }
-                                .font(.system(size: 11, weight: .semibold))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.purple.opacity(0.12))
-                                .foregroundColor(.purple)
-                                .cornerRadius(6)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.top, 2)
+                        Spacer()
                     }
-                }
-            }
-        }
-    }
-    
-    // MARK: - Tab 3: Âm thanh
-    private var speechTab: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                settingCard(title: "Tốc độ phát âm (Speech Rate)", icon: "speedometer") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Rất chậm")
-                                .font(.system(size: 10.5))
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Text(String(format: "%.2fx (Chuẩn tự nhiên)", settings.speechRate))
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.blue)
-                            Spacer()
-                            Text("Nhanh")
-                                .font(.system(size: 10.5))
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Slider(value: $settings.speechRate, in: 0.15...0.65, step: 0.02)
-                            .accentColor(.blue)
-                        
-                        HStack(spacing: 8) {
-                            Button("Nghe thử TA") {
-                                SpeechService.shared.speak(
-                                    text: "Hello, this is a pronunciation test.",
-                                    languageCode: "en-US",
-                                    speakerID: "test_en"
-                                )
-                            }
-                            .font(.system(size: 11))
-                            
-                            Button("Nghe thử TV") {
-                                SpeechService.shared.speak(
-                                    text: "Xin chào, đây là giọng đọc thử nghiệm tiếng Việt.",
-                                    languageCode: "vi-VN",
-                                    speakerID: "test_vi"
-                                )
-                            }
-                            .font(.system(size: 11))
-                        }
-                        .padding(.top, 2)
-                    }
+                    .padding(.vertical, 2)
                 }
                 
-                settingCard(title: "Tùy chọn đọc tự động", icon: "speaker.wave.2") {
-                    Toggle("Tự động phát âm khi tra từ đơn tiếng Anh", isOn: $settings.autoSpeakWord)
-                        .font(.system(size: 12))
+                Button(action: {
+                    showPromptManagerSheet = true
+                }) {
+                    Label("Mở Trình Quản Lý Mẫu Câu Hỏi...", systemImage: "slider.horizontal.3")
                 }
+            } header: {
+                Text("QUẢN LÝ MẪU CÂU HỎI NHANH (PROMPTS)")
+            } footer: {
+                Text("Các mẫu câu hỏi sẽ hiển thị trong thanh menu Trợ lý AI khi bạn bôi đen văn bản.")
             }
         }
+        .formStyle(.grouped)
     }
     
-    // MARK: - Tab 4: Chung
-    private var generalTab: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                settingCard(title: "Phím tắt toàn hệ thống (Global Hotkeys)", icon: "command") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Bấm vào ô phím tắt và gõ tổ hợp phím mới để thay đổi:")
-                            .font(.system(size: 11))
+    // MARK: - 6. About Form
+    private var aboutSettingsForm: some View {
+        Form {
+            Section {
+                VStack(spacing: 12) {
+                    iconService.currentImage
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 56, height: 56)
+                        .foregroundColor(iconService.selectedType.accentColor)
+                    
+                    VStack(spacing: 4) {
+                        Text("ToolTrL")
+                            .font(.system(size: 20, weight: .bold))
+                        Text("Phiên bản 1.0.0 (macOS Native)")
+                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
-                        
-                        // 1. Dịch nhanh
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Dịch vùng chọn (Translate Selection)")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text("Bôi đen văn bản bất kỳ rồi bấm phím tắt để mở cửa sổ dịch.")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            ShortcutRecorderView(
-                                shortcut: $hotKeyManager.translateShortcut,
-                                defaultShortcut: KeyShortcut.defaultTranslate
-                            )
-                        }
-                        
-                        Divider().opacity(0.2)
-                        
-                        // 2. Trợ lý AI
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Hỏi nhanh Trợ lý AI (ChatGPT / Gemini)")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text("Mở cửa sổ chat AI với đoạn văn đang bôi đen.")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            ShortcutRecorderView(
-                                shortcut: $hotKeyManager.aiShortcut,
-                                defaultShortcut: KeyShortcut.defaultAI
-                            )
-                        }
-                        
-                        Divider().opacity(0.2)
-                        
-                        // 3. Sổ tay từ vựng
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Mở Sổ tay từ vựng & Flashcards")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text("Mở nhanh danh sách từ vựng đã lưu và thẻ ôn tập.")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            ShortcutRecorderView(
-                                shortcut: $hotKeyManager.notebookShortcut,
-                                defaultShortcut: KeyShortcut.defaultNotebook
-                            )
-                        }
-                        
-                        Divider().opacity(0.2)
-                        
-                        // 4. Quét chữ màn hình (OCR)
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Quét chữ trên màn hình (OCR Screen Snip)")
-                                    .font(.system(size: 12, weight: .semibold))
-                                Text("Kéo chuột chọn vùng ảnh chứa chữ trên màn hình để nhận diện & dịch.")
-                                    .font(.system(size: 10.5))
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            ShortcutRecorderView(
-                                shortcut: $hotKeyManager.ocrShortcut,
-                                defaultShortcut: KeyShortcut.defaultOCR
-                            )
-                        }
-                        
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                hotKeyManager.resetDefaults()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "arrow.counterclockwise")
-                                    Text("Khôi phục toàn bộ phím tắt mặc định")
-                                }
-                                .font(.system(size: 10.5, weight: .medium))
-                                .foregroundColor(.orange)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.top, 2)
                     }
-                }
-                
-                settingCard(title: "Hành vi cửa sổ", icon: "macwindow") {
-                    Toggle("Tự động ẩn cửa sổ dịch khi bấm ra ngoài", isOn: $settings.clickOutsideDismiss)
+                    
+                    Text("Ứng dụng tra từ điển, dịch thuật AI đa tầng, bóc tách ngữ pháp và ôn tập thẻ ghi nhớ tối ưu cho hệ điều hành macOS.")
                         .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
                 }
-                
-                settingCard(title: "Khởi động", icon: "power") {
-                    Toggle("Tự động khởi chạy cùng macOS khi đăng nhập", isOn: Binding(
-                        get: { settings.launchAtLogin },
-                        set: { settings.setLaunchAtLogin($0) }
-                    ))
-                    .font(.system(size: 12))
-                }
-            }
-        }
-    }
-    
-    // MARK: - Custom Card Container
-    private func settingCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                    .foregroundColor(.blue)
-                Text(title)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
             }
             
-            content()
+            Section(header: Text("THÔNG TIN MÃ NGUỒN & TÁC GIẢ")) {
+                LabeledContent("Tác giả", value: "Dũng Nguyễn Quốc (QuocDung21)")
+                LabeledContent("Bản quyền", value: "Giấy phép mã nguồn mở MIT")
+                
+                Link(destination: URL(string: "https://github.com/QuocDung21/ToolTrl.git")!) {
+                    HStack {
+                        Text("Kho mã nguồn GitHub")
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.app")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.primary.opacity(0.025))
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-        )
+        .formStyle(.grouped)
     }
-}
-
-// MARK: - SwiftUI Preview
-#Preview("Settings View") {
-    SettingsView()
 }
