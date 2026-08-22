@@ -142,68 +142,87 @@ public struct AIWebView: NSViewRepresentable {
         }
         
         public func injectPrompt(_ prompt: String, into webView: WKWebView, provider: AIProvider) {
+            // 1. Sync directly to Clipboard as instant guarantee
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(prompt, forType: .string)
+            
+            // 2. Escape text safely for JS injection
             let escapedPrompt = prompt
                 .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "\"", with: "\\\"")
+                .replacingOccurrences(of: "`", with: "\\`")
+                .replacingOccurrences(of: "$", with: "\\$")
                 .replacingOccurrences(of: "\n", with: "\\n")
                 .replacingOccurrences(of: "\r", with: "")
             
-            var jsCode = ""
-            
-            switch provider {
-            case .chatgpt:
-                jsCode = """
-                (function() {
-                    let el = document.querySelector('#prompt-textarea') || document.querySelector('div[contenteditable="true"]');
+            // 3. Bulletproof injection with active polling retry loop for dynamic SPAs
+            let jsCode = """
+            (function() {
+                const textToInsert = "\(escapedPrompt)";
+                let attempts = 0;
+                const maxAttempts = 35; // Try for up to 10.5 seconds (35 * 300ms)
+                
+                function tryInsert() {
+                    attempts++;
+                    
+                    // Comprehensive multi-provider input selector list
+                    let el = document.querySelector('#prompt-textarea')
+                          || document.querySelector('div#prompt-textarea')
+                          || document.querySelector('div[contenteditable="true"][role="textbox"]')
+                          || document.querySelector('rich-textarea div[contenteditable="true"]')
+                          || document.querySelector('rich-textarea div')
+                          || document.querySelector('.ql-editor')
+                          || document.querySelector('div[contenteditable="true"]')
+                          || document.querySelector('fieldset textarea')
+                          || document.querySelector('form textarea')
+                          || document.querySelector('textarea[placeholder]')
+                          || document.querySelector('textarea');
+                          
                     if (el) {
                         el.focus();
-                        if (el.tagName === 'TEXTAREA') {
-                            el.value = "\(escapedPrompt)";
+                        
+                        if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+                            el.value = textToInsert;
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
                         } else {
-                            el.innerText = "\(escapedPrompt)";
+                            // Rich text contenteditable (ChatGPT, Gemini, Claude)
+                            document.execCommand('selectAll', false, null);
+                            let success = false;
+                            try {
+                                success = document.execCommand('insertText', false, textToInsert);
+                            } catch (e) {
+                                success = false;
+                            }
+                            
+                            if (!success || !el.innerText || el.innerText.trim().length === 0) {
+                                el.innerText = textToInsert;
+                                el.innerHTML = '<p>' + textToInsert.split('\\n').join('<br>') + '</p>';
+                            }
+                            
+                            try {
+                                el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: textToInsert }));
+                            } catch (e) {
+                                el.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
                         }
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        // Scroll into view
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return true;
                     }
-                })();
-                """
-            case .gemini:
-                jsCode = """
-                (function() {
-                    let el = document.querySelector('.ql-editor') || document.querySelector('div[contenteditable="true"]') || document.querySelector('textarea');
-                    if (el) {
-                        el.focus();
-                        if (el.tagName === 'TEXTAREA') {
-                            el.value = "\(escapedPrompt)";
-                        } else {
-                            el.innerHTML = "<p>\(escapedPrompt)</p>";
-                        }
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                    
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryInsert, 300);
                     }
-                })();
-                """
-            case .claude:
-                jsCode = """
-                (function() {
-                    let el = document.querySelector('div[contenteditable="true"]') || document.querySelector('fieldset textarea');
-                    if (el) {
-                        el.focus();
-                        el.innerText = "\(escapedPrompt)";
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                })();
-                """
-            case .perplexity:
-                jsCode = """
-                (function() {
-                    let el = document.querySelector('textarea');
-                    if (el) {
-                        el.focus();
-                        el.value = "\(escapedPrompt)";
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                })();
-                """
-            }
+                    return false;
+                }
+                
+                tryInsert();
+            })();
+            """
             
             webView.evaluateJavaScript(jsCode, completionHandler: nil)
         }
