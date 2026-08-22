@@ -1,7 +1,6 @@
 import AppKit
 import SwiftUI
 import Vision
-@preconcurrency import ScreenCaptureKit
 
 @MainActor
 public final class ScreenSnipController: NSObject {
@@ -15,11 +14,10 @@ public final class ScreenSnipController: NSObject {
     }
     
     public func startSnip(completion: @escaping (String?) -> Void) {
-        // Dismiss any existing overlays
         closeOverlay()
         self.onComplete = completion
         
-        // Request Screen Recording permission if needed
+        // Check/Request Screen Recording permission
         if #available(macOS 10.15, *) {
             if !CGPreflightScreenCaptureAccess() {
                 CGRequestScreenCaptureAccess()
@@ -42,17 +40,8 @@ public final class ScreenSnipController: NSObject {
             window.ignoresMouseEvents = false
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             
-            let snipView = ScreenSnipView(screenFrame: screen.frame) { [weak self] capturedImage in
-                self?.closeOverlay()
-                guard let image = capturedImage else {
-                    self?.onComplete?(nil)
-                    return
-                }
-                
-                Task {
-                    let text = await ScreenOCRService.shared.recognizeText(from: image)
-                    self?.onComplete?(text)
-                }
+            let snipView = ScreenSnipView(screen: screen) { [weak self] selectedScreen, viewRect in
+                self?.handleSelection(screen: selectedScreen, viewRect: viewRect)
             } onCancel: { [weak self] in
                 self?.closeOverlay()
                 self?.onComplete?(nil)
@@ -74,22 +63,70 @@ public final class ScreenSnipController: NSObject {
         }
         overlayWindows.removeAll()
     }
+    
+    private func handleSelection(screen: NSScreen, viewRect: CGRect) {
+        // 1. Dismiss overlay IMMEDIATELY so screencapture captures raw clear screen
+        closeOverlay()
+        
+        // 2. Calculate exact macOS WindowServer global crop coordinates
+        let primaryHeight = NSScreen.screens.first?.frame.height ?? screen.frame.height
+        let globalX = Int(screen.frame.origin.x + viewRect.origin.x)
+        let globalY = Int(primaryHeight - (screen.frame.origin.y + screen.frame.height) + viewRect.origin.y)
+        let width = Int(viewRect.width)
+        let height = Int(viewRect.height)
+        
+        guard width > 10 && height > 10 else {
+            onComplete?(nil)
+            return
+        }
+        
+        // 3. Small delay to ensure overlay window is completely vanished from frame buffer
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in
+            let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("tooltrl_crop_\(UUID().uuidString).png")
+            
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            process.arguments = ["-x", "-R\(globalX),\(globalY),\(width),\(height)", tempURL.path]
+            
+            process.terminationHandler = { proc in
+                Task { @MainActor in
+                    defer { try? FileManager.default.removeItem(at: tempURL) }
+                    
+                    guard proc.terminationStatus == 0,
+                          FileManager.default.fileExists(atPath: tempURL.path),
+                          let image = NSImage(contentsOf: tempURL),
+                          let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                        self?.onComplete?(nil)
+                        return
+                    }
+                    
+                    let text = await ScreenOCRService.shared.recognizeText(from: cgImage)
+                    self?.onComplete?(text)
+                }
+            }
+            
+            do {
+                try process.run()
+            } catch {
+                self?.onComplete?(nil)
+            }
+        }
+    }
 }
 
 // MARK: - Interactive Screen Snip SwiftUI View
 struct ScreenSnipView: View {
-    let screenFrame: NSRect
-    let onCapture: (CGImage?) -> Void
+    let screen: NSScreen
+    let onSelection: (NSScreen, CGRect) -> Void
     let onCancel: () -> Void
     
     @State private var startPoint: CGPoint? = nil
     @State private var currentPoint: CGPoint? = nil
-    @State private var isDragging: Bool = false
     
     var body: some View {
         ZStack {
             // Darkened Dim Background
-            Color.black.opacity(0.22)
+            Color.black.opacity(0.2)
                 .edgesIgnoringSafeArea(.all)
             
             // Selection Rectangle Cutout
@@ -142,11 +179,10 @@ struct ScreenSnipView: View {
                         startPoint = value.startLocation
                     }
                     currentPoint = value.location
-                    isDragging = true
                 }
                 .onEnded { value in
-                    if let rect = currentRect, rect.width > 10 && rect.height > 10 {
-                        captureRegion(rect)
+                    if let rect = currentRect, rect.width > 8 && rect.height > 8 {
+                        onSelection(screen, rect)
                     } else {
                         onCancel()
                     }
@@ -164,40 +200,5 @@ struct ScreenSnipView: View {
         let width = abs(current.x - start.x)
         let height = abs(current.y - start.y)
         return CGRect(x: x, y: y, width: width, height: height)
-    }
-    
-    private func captureRegion(_ viewRect: CGRect) {
-        let screenX = Int(screenFrame.origin.x + viewRect.origin.x)
-        let screenY = Int(screenFrame.origin.y + viewRect.origin.y)
-        let width = Int(viewRect.width)
-        let height = Int(viewRect.height)
-        
-        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("tooltrl_crop_\(UUID().uuidString).png")
-        
-        // Use macOS native screencapture CLI with exact crop rectangle coordinates
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-        process.arguments = ["-x", "-R\(screenX),\(screenY),\(width),\(height)", tempURL.path]
-        
-        process.terminationHandler = { proc in
-            Task { @MainActor in
-                defer { try? FileManager.default.removeItem(at: tempURL) }
-                
-                guard proc.terminationStatus == 0,
-                      FileManager.default.fileExists(atPath: tempURL.path),
-                      let image = NSImage(contentsOf: tempURL),
-                      let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-                    onCancel()
-                    return
-                }
-                onCapture(cgImage)
-            }
-        }
-        
-        do {
-            try process.run()
-        } catch {
-            onCancel()
-        }
     }
 }
