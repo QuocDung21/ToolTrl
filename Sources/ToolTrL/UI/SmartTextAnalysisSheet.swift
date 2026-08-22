@@ -66,6 +66,7 @@ public struct SmartTextAnalysisSheet: View {
         }
         .frame(minWidth: 700, minHeight: 580)
         .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
+        .ignoresSafeArea()
         .onAppear {
             if !initialText.isEmpty {
                 self.inputText = initialText
@@ -79,9 +80,9 @@ public struct SmartTextAnalysisSheet: View {
     // MARK: - Top Header Bar
     private var topHeaderBar: some View {
         HStack(alignment: .center, spacing: 8) {
-            // Traffic Light Clearance
+            // Traffic Light Clearance (Exact alignment with macOS Traffic Lights 🔴 🟡 🟢)
             Spacer()
-                .frame(width: 70)
+                .frame(width: 72)
             
             HStack(spacing: 6) {
                 Image(systemName: "brain.head.profile")
@@ -89,6 +90,7 @@ public struct SmartTextAnalysisSheet: View {
                     .foregroundColor(.purple)
                 Text("AI Bóc Tách Ngữ Pháp & Từ Vựng")
                     .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.primary)
             }
             
             Spacer()
@@ -97,14 +99,14 @@ public struct SmartTextAnalysisSheet: View {
                 Button(action: closeAction) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 13))
-                        .foregroundColor(.secondary.opacity(0.7))
+                        .foregroundColor(.secondary.opacity(0.65))
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, 14)
+                .padding(.trailing, 16)
                 .help("Đóng")
             }
         }
-        .frame(height: 44)
+        .frame(height: 48)
         .background(Color.primary.opacity(0.025))
     }
     
