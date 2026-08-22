@@ -61,14 +61,14 @@ public struct TranslationHUDView: View {
             // Bottom Quick Search Bar
             bottomInputBar
         }
-        .frame(width: 400)
+        .frame(width: 455)
         .background(
-            VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow)
+            VisualEffectBackground(material: .popover, blendingMode: .behindWindow)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.12), lineWidth: 1)
         )
         #if canImport(Translation)
         .modifier(TranslationModifier(viewModel: viewModel))
@@ -77,7 +77,7 @@ public struct TranslationHUDView: View {
     
     // MARK: - Top App Bar
     private var topAppBar: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 6) {
             // App Branding
             HStack(spacing: 5) {
                 iconService.currentImage
@@ -88,18 +88,20 @@ public struct TranslationHUDView: View {
                 
                 Text("ToolTrL")
                     .font(.system(size: 11.5, weight: .bold))
+                    .foregroundColor(.primary)
                     .lineLimit(1)
                     .fixedSize()
             }
             
             Text("•")
-                .foregroundColor(.secondary.opacity(0.6))
+                .foregroundColor(.secondary.opacity(0.5))
                 .font(.system(size: 10))
             
-            // Language Pair Pill
+            // Language Pair Dropdown Menu (Perfect in Light & Dark Mode)
             HStack(spacing: 3) {
                 Text(viewModel.detectedLanguage.uppercased())
                     .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                    .foregroundColor(.blue)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1.5)
                     .background(Color.blue.opacity(0.12))
@@ -109,15 +111,35 @@ public struct TranslationHUDView: View {
                     .font(.system(size: 7.5, weight: .bold))
                     .foregroundColor(.secondary)
                 
-                Picker("", selection: $viewModel.targetLanguage) {
+                Menu {
                     ForEach(TargetLanguage.allCases) { lang in
-                        Text(lang.displayName).tag(lang)
+                        Button(action: {
+                            viewModel.targetLanguage = lang
+                        }) {
+                            if viewModel.targetLanguage == lang {
+                                Label(lang.displayName, systemImage: "checkmark")
+                            } else {
+                                Text(lang.displayName)
+                            }
+                        }
                     }
+                } label: {
+                    HStack(spacing: 2) {
+                        Text(viewModel.targetLanguage.displayName)
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.primary.opacity(0.06))
+                    .cornerRadius(4)
                 }
-                .labelsHidden()
-                .pickerStyle(.menu)
-                .frame(width: 115)
-                .scaleEffect(0.88, anchor: .leading)
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
             .lineLimit(1)
             .fixedSize()

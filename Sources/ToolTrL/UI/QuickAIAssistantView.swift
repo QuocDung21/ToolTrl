@@ -80,7 +80,7 @@ public struct QuickAIAssistantView: View {
                 .frame(width: 72)
             
             // Provider Segmented Tabs
-            HStack(spacing: 3) {
+            HStack(spacing: 4) {
                 ForEach(AIProvider.allCases) { provider in
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
@@ -95,9 +95,9 @@ public struct QuickAIAssistantView: View {
                         }
                         .padding(.horizontal, 11)
                         .padding(.vertical, 5)
-                        .foregroundColor(selectedProvider == provider ? .white : .primary.opacity(0.7))
+                        .foregroundColor(selectedProvider == provider ? .white : .primary.opacity(0.85))
                         .background(
-                            selectedProvider == provider ? Color.blue : Color.primary.opacity(0.04)
+                            selectedProvider == provider ? Color.blue : Color.primary.opacity(0.06)
                         )
                         .cornerRadius(6)
                     }
