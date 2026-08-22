@@ -69,6 +69,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             onTriggerTranslate: { [weak self] in
                 self?.triggerTranslation()
             },
+            onTriggerOCR: { [weak self] in
+                self?.triggerOCR()
+            },
             onOpenSettings: { [weak self] in
                 self?.openQuickLookup()
             }
@@ -85,8 +88,19 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onNotebook: {
                 VocabularyWindowController.shared.showNotebook()
+            },
+            onOCR: { [weak self] in
+                self?.triggerOCR()
             }
         )
+    }
+    
+    public func triggerOCR() {
+        ScreenOCRService.shared.captureAndRecognize { [weak self] recognizedText in
+            guard let text = recognizedText, !text.isEmpty else { return }
+            self?.viewModel.processText(text)
+            self?.floatingPanel?.showNearCursorOrCenter()
+        }
     }
     
     public func triggerQuickAI() {

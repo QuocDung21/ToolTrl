@@ -5,12 +5,19 @@ import SwiftUI
 public final class MenuBarController: NSObject {
     private var statusItem: NSStatusItem?
     private let onTriggerTranslate: () -> Void
+    private let onTriggerOCR: () -> Void
     private let onOpenSettings: () -> Void
     private let viewModel: TranslationViewModel
     
-    public init(viewModel: TranslationViewModel, onTriggerTranslate: @escaping () -> Void, onOpenSettings: @escaping () -> Void) {
+    public init(
+        viewModel: TranslationViewModel,
+        onTriggerTranslate: @escaping () -> Void,
+        onTriggerOCR: @escaping () -> Void,
+        onOpenSettings: @escaping () -> Void
+    ) {
         self.viewModel = viewModel
         self.onTriggerTranslate = onTriggerTranslate
+        self.onTriggerOCR = onTriggerOCR
         self.onOpenSettings = onOpenSettings
         super.init()
         setupMenuBar()
@@ -56,6 +63,11 @@ public final class MenuBarController: NSObject {
         let translateItem = NSMenuItem(title: "Dịch vùng chọn (\(translateKey))", action: #selector(handleTranslateAction), keyEquivalent: "")
         translateItem.target = self
         menu.addItem(translateItem)
+        
+        let ocrKey = HotKeyManager.shared.ocrShortcut.displayString
+        let ocrItem = NSMenuItem(title: "Quét chữ trên màn hình - OCR (\(ocrKey))", action: #selector(handleOCRAction), keyEquivalent: "")
+        ocrItem.target = self
+        menu.addItem(ocrItem)
         
         let aiKey = HotKeyManager.shared.aiShortcut.displayString
         let aiItem = NSMenuItem(title: "Hỏi nhanh Trợ lý AI (\(aiKey))", action: #selector(handleOpenAI), keyEquivalent: "")
@@ -107,6 +119,10 @@ public final class MenuBarController: NSObject {
     
     @objc private func handleTranslateAction() {
         onTriggerTranslate()
+    }
+    
+    @objc private func handleOCRAction() {
+        onTriggerOCR()
     }
     
     @objc private func handleQuickLookupAction() {

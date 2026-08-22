@@ -31,14 +31,23 @@ public final class HotKeyManager: ObservableObject {
         }
     }
     
+    @Published public var ocrShortcut: KeyShortcut {
+        didSet {
+            saveShortcut(ocrShortcut, key: "hotkey_ocr")
+            reRegister()
+        }
+    }
+    
     private var hotKeyRefTranslate: EventHotKeyRef?
     private var hotKeyRefAI: EventHotKeyRef?
     private var hotKeyRefNotebook: EventHotKeyRef?
+    private var hotKeyRefOCR: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
     
     private var translateAction: (() -> Void)?
     private var aiAction: (() -> Void)?
     private var notebookAction: (() -> Void)?
+    private var ocrAction: (() -> Void)?
     
     private var globalMonitor: Any?
     private var localMonitor: Any?
@@ -47,6 +56,7 @@ public final class HotKeyManager: ObservableObject {
         self.translateShortcut = Self.loadShortcut(key: "hotkey_translate") ?? KeyShortcut.defaultTranslate
         self.aiShortcut = Self.loadShortcut(key: "hotkey_ai") ?? KeyShortcut.defaultAI
         self.notebookShortcut = Self.loadShortcut(key: "hotkey_notebook") ?? KeyShortcut.defaultNotebook
+        self.ocrShortcut = Self.loadShortcut(key: "hotkey_ocr") ?? KeyShortcut.defaultOCR
         
         setupCarbonEventHandler()
         setupNSEventMonitor()
@@ -80,6 +90,8 @@ public final class HotKeyManager: ObservableObject {
                         HotKeyManager.shared.triggerAI()
                     } else if hotKeyID.id == 3 {
                         HotKeyManager.shared.triggerNotebook()
+                    } else if hotKeyID.id == 4 {
+                        HotKeyManager.shared.triggerOCR()
                     }
                 }
             }
@@ -148,6 +160,12 @@ public final class HotKeyManager: ObservableObject {
             return true
         }
         
+        // 4. OCR
+        if code == ocrShortcut.keyCode && flags.rawValue == ocrShortcut.cocoaModifiers {
+            DispatchQueue.main.async { self.triggerOCR() }
+            return true
+        }
+        
         return false
     }
     
@@ -155,11 +173,13 @@ public final class HotKeyManager: ObservableObject {
     public func registerHotKeys(
         onTranslate: @escaping () -> Void,
         onAI: @escaping () -> Void,
-        onNotebook: @escaping () -> Void
+        onNotebook: @escaping () -> Void,
+        onOCR: @escaping () -> Void
     ) {
         self.translateAction = onTranslate
         self.aiAction = onAI
         self.notebookAction = onNotebook
+        self.ocrAction = onOCR
         reRegister()
     }
     
@@ -199,6 +219,17 @@ public final class HotKeyManager: ObservableObject {
             &hotKeyRefNotebook
         )
         
+        // 4. OCR HotKey (ID 4)
+        let id4 = EventHotKeyID(signature: OSType(0x5452414E), id: 4)
+        _ = RegisterEventHotKey(
+            ocrShortcut.keyCode,
+            ocrShortcut.carbonModifiers,
+            id4,
+            GetEventDispatcherTarget(),
+            0,
+            &hotKeyRefOCR
+        )
+        
         setupNSEventMonitor()
         NotificationCenter.default.post(name: .hotKeysDidChange, object: nil)
     }
@@ -216,12 +247,17 @@ public final class HotKeyManager: ObservableObject {
             UnregisterEventHotKey(ref)
             hotKeyRefNotebook = nil
         }
+        if let ref = hotKeyRefOCR {
+            UnregisterEventHotKey(ref)
+            hotKeyRefOCR = nil
+        }
     }
     
     public func resetDefaults() {
         self.translateShortcut = KeyShortcut.defaultTranslate
         self.aiShortcut = KeyShortcut.defaultAI
         self.notebookShortcut = KeyShortcut.defaultNotebook
+        self.ocrShortcut = KeyShortcut.defaultOCR
     }
     
     private func triggerTranslate() {
@@ -234,6 +270,10 @@ public final class HotKeyManager: ObservableObject {
     
     private func triggerNotebook() {
         notebookAction?()
+    }
+    
+    private func triggerOCR() {
+        ocrAction?()
     }
     
     // MARK: - Persistence Helper

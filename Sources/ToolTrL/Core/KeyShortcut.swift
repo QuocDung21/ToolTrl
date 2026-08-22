@@ -37,6 +37,13 @@ public struct KeyShortcut: Codable, Equatable, Sendable {
         keyChar: "V"
     )
     
+    public static let defaultOCR = KeyShortcut(
+        keyCode: UInt32(kVK_ANSI_S),
+        carbonModifiers: UInt32(optionKey),
+        cocoaModifiers: NSEvent.ModifierFlags.option.rawValue,
+        keyChar: "S"
+    )
+    
     public var displayString: String {
         var str = ""
         let flags = NSEvent.ModifierFlags(rawValue: cocoaModifiers)

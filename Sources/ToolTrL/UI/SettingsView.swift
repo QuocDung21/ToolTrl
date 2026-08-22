@@ -520,6 +520,24 @@ public struct SettingsView: View {
                             )
                         }
                         
+                        Divider().opacity(0.2)
+                        
+                        // 4. Quét chữ màn hình (OCR)
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Quét chữ trên màn hình (OCR Screen Snip)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Kéo chuột chọn vùng ảnh chứa chữ trên màn hình để nhận diện & dịch.")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            ShortcutRecorderView(
+                                shortcut: $hotKeyManager.ocrShortcut,
+                                defaultShortcut: KeyShortcut.defaultOCR
+                            )
+                        }
+                        
                         HStack {
                             Spacer()
                             Button(action: {

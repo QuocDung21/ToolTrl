@@ -169,6 +169,19 @@ public struct TranslationHUDView: View {
                 .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
                 
                 Button(action: {
+                    ScreenOCRService.shared.captureAndRecognize { text in
+                        guard let recognized = text, !recognized.isEmpty else { return }
+                        viewModel.processText(recognized)
+                    }
+                }) {
+                    Image(systemName: "camera.viewfinder")
+                        .font(.system(size: 11))
+                        .foregroundColor(.blue.opacity(0.85))
+                }
+                .buttonStyle(.plain)
+                .help("Chụp & Quét chữ trên màn hình (OCR) (\(HotKeyManager.shared.ocrShortcut.displayString))")
+                
+                Button(action: {
                     isPinned.toggle()
                     onTogglePin?()
                 }) {
