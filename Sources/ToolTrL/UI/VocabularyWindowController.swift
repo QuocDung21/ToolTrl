@@ -20,19 +20,19 @@ public final class VocabularyWindowController {
         let hostingView = NSHostingView(rootView: notebookView)
         
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 840, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 940, height: 600),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         
-        win.title = "Sổ Tay Từ Vựng - ToolTrL"
+        win.title = "Sổ Tay Từ Vựng & Ngữ Pháp"
         win.titlebarAppearsTransparent = true
-        win.titleVisibility = .hidden
+        win.toolbarStyle = .unified
         win.contentView = hostingView
         win.center()
         win.isReleasedWhenClosed = false
-        win.minSize = NSSize(width: 700, height: 480)
+        win.minSize = NSSize(width: 800, height: 500)
         
         self.window = win
         win.makeKeyAndOrderFront(nil)
