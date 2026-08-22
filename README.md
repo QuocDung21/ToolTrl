@@ -42,23 +42,27 @@
 
 ---
 
-## 🚀 Hướng dẫn cài đặt & Build từ mã nguồn
+## 🚀 Hướng dẫn cài đặt
 
-### Yêu cầu hệ thống:
-- macOS 13.0 (Ventura) trở lên.
-- Xcode 15+ hoặc Swift 5.9+.
+### Cách 1: Tải file cài đặt `.dmg` (Khuyên dùng)
+1. Tải file **`ToolTrL-1.0.0.dmg`** mới nhất tại mục [Releases](https://github.com/QuocDung21/ToolTrl/releases).
+2. Mở file `.dmg` vừa tải về.
+3. Kéo biểu tượng **ToolTrL** vào thư mục **Applications** (Ứng dụng).
+4. Mở **ToolTrL** từ Launchpad hoặc Spotlight để sử dụng ngay!
 
-### Các bước build:
+---
+
+### Cách 2: Tự tạo file `.dmg` & Build từ mã nguồn
 ```bash
 # 1. Clone repository
 git clone https://github.com/QuocDung21/ToolTrl.git
 cd ToolTrl
 
-# 2. Chạy script đóng gói ứng dụng
-./Scripts/build_app.sh
+# 2. Tạo file cài đặt .dmg kéo-thả
+./Scripts/create_dmg.sh
 
-# 3. Khởi chạy
-open build/ToolTrL.app
+# File DMG sẽ được tạo tại: build/ToolTrL-1.0.0.dmg
+open build/ToolTrL-1.0.0.dmg
 ```
 
 ---
