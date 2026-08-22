@@ -77,88 +77,81 @@ public struct TranslationHUDView: View {
     
     // MARK: - Top App Bar
     private var topAppBar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             // App Branding
-            HStack(spacing: 5) {
+            HStack(spacing: 4.5) {
                 iconService.currentImage
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 17, height: 17)
+                    .frame(width: 16, height: 16)
                     .foregroundColor(iconService.selectedType.accentColor)
                 
                 Text("ToolTrL")
                     .font(.system(size: 11.5, weight: .bold))
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                    .fixedSize()
             }
+            .fixedSize()
             
-            Text("•")
-                .foregroundColor(.secondary.opacity(0.5))
-                .font(.system(size: 10))
-            
-            // Language Pair Dropdown Menu (Perfect in Light & Dark Mode)
-            HStack(spacing: 3) {
-                Text(viewModel.detectedLanguage.uppercased())
-                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
-                    .foregroundColor(.blue)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1.5)
-                    .background(Color.blue.opacity(0.12))
-                    .cornerRadius(3)
-                
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 7.5, weight: .bold))
-                    .foregroundColor(.secondary)
-                
-                Menu {
-                    ForEach(TargetLanguage.allCases) { lang in
-                        Button(action: {
-                            viewModel.targetLanguage = lang
-                        }) {
-                            if viewModel.targetLanguage == lang {
-                                Label(lang.displayName, systemImage: "checkmark")
-                            } else {
-                                Text(lang.displayName)
-                            }
+            // Unified Language Selector Pill (Clean, No Double Chevron)
+            Menu {
+                ForEach(TargetLanguage.allCases) { lang in
+                    Button(action: {
+                        viewModel.targetLanguage = lang
+                    }) {
+                        if viewModel.targetLanguage == lang {
+                            Label(lang.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(lang.displayName)
                         }
                     }
-                } label: {
-                    HStack(spacing: 2) {
-                        Text(viewModel.targetLanguage.displayName)
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 7, weight: .bold))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.primary.opacity(0.06))
-                    .cornerRadius(4)
                 }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(viewModel.detectedLanguage.uppercased())
+                        .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 3.5)
+                        .padding(.vertical, 1)
+                        .background(Color.blue.opacity(0.12))
+                        .cornerRadius(3)
+                    
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 7.5, weight: .bold))
+                        .foregroundColor(.secondary.opacity(0.6))
+                    
+                    Text(viewModel.targetLanguage.displayName)
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.5)
+                .background(Color.primary.opacity(0.045))
+                .cornerRadius(5)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
+                )
             }
-            .lineLimit(1)
+            .menuStyle(.borderlessButton)
             .fixedSize()
             
             Spacer(minLength: 4)
             
-            // Action Buttons
-            HStack(spacing: 6) {
+            // Right Action Buttons
+            HStack(spacing: 5) {
                 Button(action: {
                     QuickAIWindowController.shared.showAI(prompt: viewModel.originalText)
                 }) {
                     HStack(spacing: 3) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 9.5))
+                            .font(.system(size: 9))
                         Text("Hỏi AI")
-                            .font(.system(size: 10.5, weight: .semibold))
+                            .font(.system(size: 10, weight: .semibold))
                     }
                     .foregroundColor(.purple)
-                    .padding(.horizontal, 6.5)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 3)
                     .background(Color.purple.opacity(0.12))
                     .cornerRadius(5)
@@ -202,7 +195,7 @@ public struct TranslationHUDView: View {
                     VocabularyWindowController.shared.showNotebook()
                 }) {
                     Image(systemName: "book.pages.fill")
-                        .font(.system(size: 11.5))
+                        .font(.system(size: 11))
                         .foregroundColor(.orange.opacity(0.85))
                 }
                 .buttonStyle(.plain)
@@ -212,7 +205,7 @@ public struct TranslationHUDView: View {
                     SettingsWindowController.shared.showSettings()
                 }) {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 11.5))
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary.opacity(0.75))
                 }
                 .buttonStyle(.plain)
@@ -220,8 +213,8 @@ public struct TranslationHUDView: View {
                 
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary.opacity(0.7))
+                        .font(.system(size: 11.5))
+                        .foregroundColor(.secondary.opacity(0.65))
                 }
                 .buttonStyle(.plain)
                 .help("Đóng (ESC)")
