@@ -159,6 +159,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindowController.shared.showMainWindow()
+        return true
+    }
+    
     // MARK: - Handle Quit / Command + Q Confirmation
     public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let alert = NSAlert()
