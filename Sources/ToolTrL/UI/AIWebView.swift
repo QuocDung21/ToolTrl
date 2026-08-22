@@ -31,25 +31,6 @@ public enum AIProvider: String, CaseIterable, Identifiable {
             return URL(string: "https://www.perplexity.ai")!
         }
     }
-    
-    public func urlWithQuery(_ query: String) -> URL {
-        let clean = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !clean.isEmpty else { return baseURL }
-        
-        switch self {
-        case .chatgpt:
-            if let encoded = clean.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
-                return URL(string: "https://chatgpt.com/?q=\(encoded)") ?? baseURL
-            }
-        case .perplexity:
-            if let encoded = clean.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
-                return URL(string: "https://www.perplexity.ai/search?q=\(encoded)") ?? baseURL
-            }
-        case .gemini, .claude:
-            return baseURL
-        }
-        return baseURL
-    }
 }
 
 public struct AIWebView: NSViewRepresentable {
@@ -82,6 +63,12 @@ public struct AIWebView: NSViewRepresentable {
         let wv = WKWebView(frame: .zero, configuration: config)
         wv.navigationDelegate = context.coordinator
         wv.uiDelegate = context.coordinator
+        
+        // Ensure seamless dark background without white flash
+        wv.setValue(false, forKey: "drawsBackground")
+        if #available(macOS 12.0, *) {
+            wv.underPageBackgroundColor = .clear
+        }
         
         // Safari macOS Desktop User-Agent (Fixes Google/OpenAI OAuth blocking)
         wv.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
@@ -128,6 +115,19 @@ public struct AIWebView: NSViewRepresentable {
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             DispatchQueue.main.async {
                 self.parent.isLoading = false
+                
+                // Inject dark mode style if macOS is in dark mode
+                let isDark = NSApp.effectiveAppearance.name == .darkAqua || NSApp.effectiveAppearance.name == .vibrantDark
+                if isDark {
+                    let darkModeScript = """
+                    (function() {
+                        document.documentElement.classList.add('dark');
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                        document.documentElement.style.colorScheme = 'dark';
+                    })();
+                    """
+                    webView.evaluateJavaScript(darkModeScript, completionHandler: nil)
+                }
                 
                 if let prompt = self.parent.pendingPrompt, !prompt.isEmpty {
                     self.injectPrompt(prompt, into: webView, provider: self.currentProvider)

@@ -22,15 +22,16 @@ public struct QuickAIAssistantView: View {
     
     public var body: some View {
         VStack(spacing: 0) {
-            // Header Bar
+            // Unified Single-Row Header Bar
             headerBar
             
-            Divider().opacity(0.3)
+            Divider()
+                .opacity(0.18)
             
-            // Quick Prompt Suggestion Bar (if there is selected text)
+            // Quick Prompt Suggestion Bar (if text is present)
             if !currentPrompt.isEmpty {
                 quickPromptBar
-                Divider().opacity(0.2)
+                Divider().opacity(0.12)
             }
             
             // Web View Container
@@ -45,33 +46,35 @@ public struct QuickAIAssistantView: View {
                 if isLoading {
                     VStack {
                         ProgressView()
-                            .scaleEffect(0.8)
-                            .padding(8)
+                            .scaleEffect(0.85)
+                            .padding(10)
                             .background(VisualEffectBackground(material: .hudWindow, blendingMode: .withinWindow))
                             .clipShape(Circle())
-                            .shadow(radius: 4)
+                            .shadow(color: Color.black.opacity(0.25), radius: 6, x: 0, y: 3)
                         Spacer()
                     }
-                    .padding(.top, 16)
+                    .padding(.top, 24)
                     .transition(.opacity)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 640, minHeight: 580)
+        .frame(minWidth: 680, minHeight: 600)
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
+        .ignoresSafeArea()
     }
     
-    // MARK: - Header Bar
+    // MARK: - Unified Single-Row Header Bar
     private var headerBar: some View {
-        HStack(spacing: 8) {
-            // Window Traffic Light Clearance
-            Spacer().frame(width: 58)
+        HStack(alignment: .center, spacing: 8) {
+            // Traffic Light Clearance on the exact same row (68px)
+            Spacer()
+                .frame(width: 72)
             
-            // Provider Tabs
-            HStack(spacing: 4) {
+            // Provider Segmented Tabs
+            HStack(spacing: 3) {
                 ForEach(AIProvider.allCases) { provider in
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
@@ -82,11 +85,11 @@ public struct QuickAIAssistantView: View {
                             Image(systemName: provider.icon)
                                 .font(.system(size: 11))
                             Text(provider.rawValue)
-                                .font(.system(size: 11.5, weight: selectedProvider == provider ? .semibold : .regular))
+                                .font(.system(size: 11.5, weight: selectedProvider == provider ? .bold : .medium))
                         }
-                        .padding(.horizontal, 10)
+                        .padding(.horizontal, 11)
                         .padding(.vertical, 5)
-                        .foregroundColor(selectedProvider == provider ? .white : .primary.opacity(0.75))
+                        .foregroundColor(selectedProvider == provider ? .white : .primary.opacity(0.7))
                         .background(
                             selectedProvider == provider ? Color.blue : Color.primary.opacity(0.04)
                         )
@@ -98,15 +101,15 @@ public struct QuickAIAssistantView: View {
             
             Spacer()
             
-            // Action Buttons (Reload, Safari)
-            HStack(spacing: 6) {
+            // Right Action Buttons
+            HStack(spacing: 5) {
                 Button(action: {
                     webView?.reload()
                 }) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11))
+                        .font(.system(size: 11, weight: .medium))
                         .padding(6)
-                        .background(Color.primary.opacity(0.05))
+                        .background(Color.primary.opacity(0.06))
                         .cornerRadius(5)
                 }
                 .buttonStyle(.plain)
@@ -118,17 +121,18 @@ public struct QuickAIAssistantView: View {
                     }
                 }) {
                     Image(systemName: "safari")
-                        .font(.system(size: 11))
+                        .font(.system(size: 11, weight: .medium))
                         .padding(6)
-                        .background(Color.primary.opacity(0.05))
+                        .background(Color.primary.opacity(0.06))
                         .cornerRadius(5)
                 }
                 .buttonStyle(.plain)
                 .help("Mở trong Safari")
             }
-            .padding(.trailing, 12)
+            .padding(.trailing, 14)
         }
-        .padding(.vertical, 10)
+        .frame(height: 48)
+        .background(Color.primary.opacity(0.03))
     }
     
     // MARK: - Quick Prompt Suggestions Bar
@@ -138,7 +142,7 @@ public struct QuickAIAssistantView: View {
                 Text("Hỏi nhanh:")
                     .font(.system(size: 10.5, weight: .bold))
                     .foregroundColor(.secondary)
-                    .padding(.leading, 12)
+                    .padding(.leading, 14)
                 
                 promptChip(title: "📖 Giải thích & Dịch", prompt: "Hãy giải thích chi tiết, dịch chuẩn xác và phân tích câu sau:\n\n\(currentPrompt)")
                 promptChip(title: "✍️ Viết lại tự nhiên", prompt: "Hãy viết lại đoạn văn sau theo 3 phong cách (Tự nhiên, Trang trọng, Học thuật):\n\n\(currentPrompt)")
@@ -146,9 +150,9 @@ public struct QuickAIAssistantView: View {
                 promptChip(title: "💻 Giải thích Code", prompt: "Hãy giải thích cách hoạt động của đoạn mã này, độ phức tạp và tối ưu:\n\n\(currentPrompt)")
             }
             .padding(.vertical, 6)
-            .padding(.trailing, 12)
+            .padding(.trailing, 14)
         }
-        .background(Color.primary.opacity(0.02))
+        .background(Color.primary.opacity(0.015))
     }
     
     private func promptChip(title: String, prompt: String) -> some View {
@@ -182,7 +186,7 @@ public struct QuickAIAssistantView: View {
                 .font(.system(size: 10.5, weight: .medium))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3.5)
-                .background(Color.blue.opacity(0.08))
+                .background(Color.blue.opacity(0.09))
                 .foregroundColor(.blue)
                 .cornerRadius(5)
         }

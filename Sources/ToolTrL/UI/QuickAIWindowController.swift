@@ -24,13 +24,13 @@ public final class QuickAIWindowController: NSObject, NSWindowDelegate {
         }
         
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 680, height: 620),
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 640),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         
-        win.title = "Trợ Lý AI (ChatGPT / Gemini)"
+        win.title = ""
         win.titlebarAppearsTransparent = true
         win.titleVisibility = .hidden
         win.isReleasedWhenClosed = false
@@ -39,6 +39,12 @@ public final class QuickAIWindowController: NSObject, NSWindowDelegate {
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.isMovableByWindowBackground = true
         win.backgroundColor = .clear
+        win.isOpaque = false
+        win.hasShadow = true
+        
+        if #available(macOS 11.0, *) {
+            win.titlebarSeparatorStyle = .none
+        }
         
         let aiView = QuickAIAssistantView(initialPrompt: prompt) { [weak self] in
             self?.closeWindow()
