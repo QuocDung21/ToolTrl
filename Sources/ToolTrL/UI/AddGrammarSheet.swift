@@ -43,19 +43,19 @@ public struct AddGrammarSheet: View {
             // Form Body
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Tip banner
+                    // Information banner
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14))
-                            .foregroundColor(.purple)
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
                         
-                        Text("Nhập tên cấu trúc hoặc ghi chú thô bạn muốn học. AI sẽ tự động ép câu lệnh theo đúng khuôn mẫu chuẩn (Công thức toán học, 3 thể ví dụ, bẫy thi TOEIC/IELTS, mẹo nhớ) và lưu vào Sổ Tay.")
+                        Text("Nhập cấu trúc ngữ pháp bạn muốn tìm hiểu. Hệ thống sẽ tự động tổng hợp công thức, ví dụ 3 thể và các lưu ý quan trọng để lưu vào sổ tay.")
                             .font(.system(size: 11.5))
                             .foregroundColor(.secondary)
                             .lineSpacing(2)
                     }
                     .padding(10)
-                    .background(Color.purple.opacity(0.06))
+                    .background(Color.primary.opacity(0.035))
                     .cornerRadius(8)
                     
                     // Field 1: Tên cấu trúc
@@ -108,16 +108,11 @@ public struct AddGrammarSheet: View {
                 Button(action: {
                     createGrammarAndOpenAI()
                 }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "sparkles")
-                        Text("Ép AI Sinh Công Thức & Lưu")
-                    }
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                    Label("Tạo cấu trúc & Lưu", systemImage: "plus.circle")
+                        .font(.system(size: 12, weight: .semibold))
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.purple)
+                .tint(.blue)
                 .disabled(grammarTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .keyboardShortcut(.defaultAction)
             }

@@ -16,15 +16,15 @@ public struct GrammarDetailView: View {
         let formula = (parsed?.formula?.isEmpty == false ? parsed?.formula : nil) ?? (item.phonetic?.isEmpty == false ? item.phonetic : nil)
         
         VStack(alignment: .leading, spacing: 14) {
-            // Action Bar for Grammar
+            // Header Action Bar
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: "function")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.blue)
-                    Text("CÔNG THỨC & QUY TẮC NGỮ PHÁP CHUẨN")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.blue)
+                    Text("CẤU TRÚC & QUY TẮC NGỮ PHÁP")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -36,24 +36,20 @@ public struct GrammarDetailView: View {
                         targetWordTitle: item.cleanTitle
                     )
                 }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                        Text(parsed?.isEmpty == false ? "AI Phân tích lại" : "Dùng AI phân tích")
-                    }
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.purple)
+                    Label(parsed?.isEmpty == false ? "Làm mới phân tích" : "Phân tích cú pháp", systemImage: parsed?.isEmpty == false ? "arrow.triangle.2.circlepath" : "wand.and.stars")
+                        .font(.system(size: 11, weight: .medium))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderless)
             }
             .padding(.top, 2)
             
             if let p = parsed, !p.isEmpty {
-                // 1. Khung Công Thức Chuẩn (Formula Box)
+                // 1. Công thức tổng quát (Formula Box)
                 if let f = formula, !f.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Label("CÔNG THỨC CHUẨN (FORMULA)", systemImage: "function")
+                                Label("CÔNG THỨC TỔNG QUÁT", systemImage: "function")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.blue)
                                 Spacer()
@@ -81,11 +77,11 @@ public struct GrammarDetailView: View {
                     }
                 }
                 
-                // 2. Ý Nghĩa, Cách Dùng & Dấu Hiệu Nhận Biết
+                // 2. Cách dùng & Dấu hiệu nhận biết
                 if !p.meanings.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 6) {
-                            Label("Ý NGHĨA, CÁCH DÙNG & DẤU HIỆU", systemImage: "text.book.closed")
+                            Label("CÁCH DÙNG & DẤU HIỆU", systemImage: "text.book.closed")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
                             
@@ -106,11 +102,11 @@ public struct GrammarDetailView: View {
                     }
                 }
                 
-                // 3. Ví Dụ Minh Họa 3 Thể (+, -, ?)
+                // 3. Ví dụ minh họa
                 if !p.examples.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("VÍ DỤ MINH HỌA (3 THỂ KHẲNG ĐỊNH / PHỦ ĐỊNH / NGHI VẤN)", systemImage: "quote.bubble")
+                            Label("VÍ DỤ MINH HỌA (3 THỂ)", systemImage: "quote.bubble")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
                             
@@ -129,7 +125,7 @@ public struct GrammarDetailView: View {
                                         }) {
                                             Image(systemName: "speaker.wave.2")
                                                 .font(.system(size: 10))
-                                                .foregroundColor(.blue)
+                                                .foregroundColor(.secondary)
                                         }
                                         .buttonStyle(.plain)
                                     }
@@ -148,11 +144,11 @@ public struct GrammarDetailView: View {
                     }
                 }
                 
-                // 4. Lỗi Sai Thường Gặp & Bẫy Đề Thi
+                // 4. Lỗi sai hay gặp & Lưu ý
                 if !p.commonMistakes.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 6) {
-                            Label("LỖI SAI HAY GẶP & BẪY ĐỀ THI (TOEIC/IELTS)", systemImage: "exclamationmark.triangle")
+                            Label("LỖI SAI HAY GẶP & LƯU Ý", systemImage: "exclamationmark.triangle")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.orange)
                             
@@ -173,11 +169,11 @@ public struct GrammarDetailView: View {
                     }
                 }
                 
-                // 5. Mẹo Ghi Nhớ Thần Tốc
+                // 5. Mẹo ghi nhớ
                 if let mnemonic = p.mnemonic, !mnemonic.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 4) {
-                            Label("MẸO GHI NHỚ THẦN TỐC", systemImage: "lightbulb")
+                            Label("MẸO GHI NHỚ", systemImage: "lightbulb")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
                             
@@ -191,12 +187,12 @@ public struct GrammarDetailView: View {
                     }
                 }
             } else {
-                // Fallback if no AI analysis yet but formula exists
+                // Fallback if no analysis yet but formula exists
                 if let f = formula, !f.isEmpty {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                Label("CÔNG THỨC CHUẨN (FORMULA)", systemImage: "function")
+                                Label("CÔNG THỨC TỔNG QUÁT", systemImage: "function")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.blue)
                                 Spacer()
@@ -223,50 +219,39 @@ public struct GrammarDetailView: View {
                     }
                 }
                 
-                // Callout to analyze with AI
-                Button(action: {
-                    QuickAIWindowController.shared.showAI(
-                        prompt: AIPromptBuilder.grammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
-                        targetWordId: item.id,
-                        targetWordTitle: item.cleanTitle
-                    )
-                }) {
+                // Native macOS Clean Callout
+                GroupBox {
                     HStack(spacing: 12) {
-                        Image(systemName: "function")
-                            .font(.system(size: 22))
-                            .foregroundColor(.blue)
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 20))
+                            .foregroundColor(.secondary)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Chưa có phân tích công thức & quy tắc ngữ pháp đầy đủ")
-                                .font(.system(size: 12.5, weight: .bold))
+                            Text("Chưa có dữ liệu phân tích chi tiết")
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.primary)
-                            Text("Bấm để AI tự động tạo công thức toán học, ví dụ 3 thể và bẫy đề thi")
+                            Text("Nhấn phân tích để tạo công thức tổng quát, ví dụ và lưu ý sử dụng.")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                            Text("Phân tích ngay")
+                        Button(action: {
+                            QuickAIWindowController.shared.showAI(
+                                prompt: AIPromptBuilder.grammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                                targetWordId: item.id,
+                                targetWordTitle: item.cleanTitle
+                            )
+                        }) {
+                            Label("Phân tích", systemImage: "wand.and.stars")
+                                .font(.system(size: 11, weight: .medium))
                         }
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 4.5)
-                        .background(Color.purple)
-                        .cornerRadius(6)
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
                     }
-                    .padding(12)
-                    .background(Color.blue.opacity(0.05))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.blue.opacity(0.18), lineWidth: 1)
-                    )
+                    .padding(4)
                 }
-                .buttonStyle(.plain)
             }
         }
     }

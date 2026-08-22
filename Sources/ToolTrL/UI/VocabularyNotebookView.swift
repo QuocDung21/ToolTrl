@@ -792,7 +792,7 @@ public struct VocabularyNotebookView: View {
             HStack {
                 Picker("", selection: $selectedDetailTab) {
                     Text("Từ điển & Ghi chú").tag(WordDetailTab.original)
-                    Text("Phân tích AI").tag(WordDetailTab.ai)
+                    Text("Phân tích chuyên sâu").tag(WordDetailTab.ai)
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 250)
@@ -807,11 +807,10 @@ public struct VocabularyNotebookView: View {
                             targetWordTitle: item.cleanTitle
                         )
                     }) {
-                        Label("Cập nhật AI", systemImage: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.purple)
+                        Label("Làm mới", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 11, weight: .medium))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.borderless)
                 }
             }
             .padding(.top, 2)
@@ -959,7 +958,7 @@ public struct VocabularyNotebookView: View {
         }
     }
     
-    // MARK: - 2. AI Deep Analysis Section
+    // MARK: - 2. Deep Analysis Section
     @ViewBuilder
     private func aiContentSection(item: SavedWordItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -967,12 +966,12 @@ public struct VocabularyNotebookView: View {
                 let parsed = AIAnalysisParser.parse(deepAnalysis)
                 
                 VStack(alignment: .leading, spacing: 12) {
-                    // Card 0: Công thức chuẩn (Nếu có)
+                    // Card 0: Công thức tổng quát (Nếu có)
                     if let formula = parsed.formula, !formula.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Label("Công thức chuẩn (Formula)", systemImage: "function")
+                                    Label("CÔNG THỨC TỔNG QUÁT", systemImage: "function")
                                         .font(.system(size: 11, weight: .bold))
                                         .foregroundColor(.blue)
                                     Spacer()
@@ -990,7 +989,7 @@ public struct VocabularyNotebookView: View {
                                 }
                                 
                                 Text(formula)
-                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .font(.system(size: 13.5, weight: .bold, design: .monospaced))
                                     .foregroundColor(.blue)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1002,7 +1001,7 @@ public struct VocabularyNotebookView: View {
                     if !parsed.meanings.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 6) {
-                                Label("Tầng nghĩa & Định nghĩa", systemImage: "text.book.closed")
+                                Label("ĐỊNH NGHĨA & TẦNG NGHĨA", systemImage: "text.book.closed")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1027,7 +1026,7 @@ public struct VocabularyNotebookView: View {
                     if !parsed.wordFamily.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Họ từ (Word Family)", systemImage: "leaf.arrow.triangle.circlepath")
+                                Label("HỌ TỪ (WORD FAMILY)", systemImage: "text.word.spacing")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1035,10 +1034,10 @@ public struct VocabularyNotebookView: View {
                                     HStack(spacing: 8) {
                                         Text(item.pos)
                                             .font(.system(size: 10.5, weight: .bold))
-                                            .foregroundColor(.green)
+                                            .foregroundColor(.primary)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
-                                            .background(Color.green.opacity(0.12))
+                                            .background(Color.primary.opacity(0.06))
                                             .cornerRadius(4)
                                         
                                         Text(item.words)
@@ -1058,7 +1057,7 @@ public struct VocabularyNotebookView: View {
                     if !parsed.collocations.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Cụm từ hay đi kèm (Collocations)", systemImage: "link")
+                                Label("CỤM TỪ ĐI KÈM (COLLOCATIONS)", systemImage: "link")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1093,7 +1092,7 @@ public struct VocabularyNotebookView: View {
                     if !parsed.nuances.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 6) {
-                                Label("Sắc thái & Phân biệt", systemImage: "info.circle")
+                                Label("SẮC THÁI & PHÂN BIỆT", systemImage: "info.circle")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1143,7 +1142,7 @@ public struct VocabularyNotebookView: View {
                     if !parsed.examples.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 8) {
-                                Label("Ví dụ minh họa", systemImage: "quote.bubble")
+                                Label("VÍ DỤ MINH HỌA", systemImage: "quote.bubble")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1162,7 +1161,7 @@ public struct VocabularyNotebookView: View {
                                             }) {
                                                 Image(systemName: "speaker.wave.2")
                                                     .font(.system(size: 10))
-                                                    .foregroundColor(.blue)
+                                                    .foregroundColor(.secondary)
                                             }
                                             .buttonStyle(.plain)
                                         }
@@ -1185,7 +1184,7 @@ public struct VocabularyNotebookView: View {
                     if let mnemonic = parsed.mnemonic, !mnemonic.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 4) {
-                                Label("Mẹo ghi nhớ & Gốc từ", systemImage: "lightbulb")
+                                Label("MẸO GHI NHỚ & GỐC TỪ", systemImage: "lightbulb")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(.secondary)
                                 
@@ -1200,48 +1199,41 @@ public struct VocabularyNotebookView: View {
                     }
                 }
             } else {
-                // Callout Banner to prompt user to analyze with structured AI or Grammar Formula
-                Button(action: {
-                    let prompt = item.isGrammarFormula 
-                        ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
-                        : SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle)
-                    
-                    QuickAIWindowController.shared.showAI(
-                        prompt: prompt,
-                        targetWordId: item.id,
-                        targetWordTitle: item.cleanTitle
-                    )
-                }) {
-                    HStack(spacing: 10) {
-                        Image(systemName: item.isGrammarFormula ? "function" : "sparkles.square.filled.on.square")
+                // Native macOS Clean Callout
+                GroupBox {
+                    HStack(spacing: 12) {
+                        Image(systemName: "doc.text.magnifyingglass")
                             .font(.system(size: 20))
-                            .foregroundColor(.purple)
+                            .foregroundColor(.secondary)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(item.isGrammarFormula ? "Chưa có phân tích công thức & ngữ pháp" : "Chưa có phân tích AI chuyên sâu")
-                                .font(.system(size: 12, weight: .bold))
+                            Text("Chưa có phân tích chi tiết")
+                                .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.primary)
-                            Text(item.isGrammarFormula ? "Bấm để AI tạo công thức chuẩn, ví dụ 3 thể và bẫy đề thi" : "Bấm để yêu cầu ChatGPT/Gemini phân tích họ từ, collocations và lưu vào mục này")
+                            Text("Nhấn phân tích để mở rộng họ từ, cụm từ đi kèm và sắc thái nghĩa.")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                         }
                         
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.purple)
+                        Button(action: {
+                            let prompt = item.isGrammarFormula 
+                                ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
+                                : SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle)
+                            
+                            QuickAIWindowController.shared.showAI(
+                                prompt: prompt,
+                                targetWordId: item.id,
+                                targetWordTitle: item.cleanTitle
+                            )
+                        }) {
+                            Label("Phân tích", systemImage: "wand.and.stars")
+                                .font(.system(size: 11, weight: .medium))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
-                    .background(Color.purple.opacity(0.06))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.purple.opacity(0.18), lineWidth: 1)
-                    )
+                    .padding(4)
                 }
-                .buttonStyle(.plain)
             }
         }
     }

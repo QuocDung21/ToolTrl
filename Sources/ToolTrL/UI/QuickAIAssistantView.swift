@@ -113,11 +113,11 @@ public struct QuickAIAssistantView: View {
     // MARK: - Target Word Banner
     private func targetWordBanner(word: String) -> some View {
         HStack(spacing: 8) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 11))
-                .foregroundColor(.purple)
+            Image(systemName: word.contains("📐") ? "function" : "book.closed")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.blue)
             
-            Text("Đang phân tích chuyên sâu cho: ")
+            Text("Đang phân tích cho: ")
                 .font(.system(size: 11.5))
                 .foregroundColor(.secondary) +
             Text("\"\(word)\"")
@@ -129,23 +129,16 @@ public struct QuickAIAssistantView: View {
             Button(action: {
                 saveAnalysisToTargetWord()
             }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                    Text("Lưu vào Chi Tiết Từ")
-                }
-                .font(.system(size: 11, weight: .bold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4.5)
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(5)
+                Label("Lưu vào sổ tay", systemImage: "square.and.arrow.down")
+                    .font(.system(size: 11, weight: .semibold))
             }
-            .buttonStyle(.plain)
-            .help("Lưu kết quả phân tích cấu trúc của ChatGPT/Gemini vào phần chi tiết của từ '\(word)' trong Sổ Tay")
+            .buttonStyle(.borderedProminent)
+            .tint(.blue)
+            .help("Lưu kết quả phân tích cấu trúc của AI vào mục '\(word)' trong Sổ Tay")
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
-        .background(Color.purple.opacity(0.08))
+        .background(Color.primary.opacity(0.035))
     }
     
     // MARK: - Unified Single-Row Header Bar

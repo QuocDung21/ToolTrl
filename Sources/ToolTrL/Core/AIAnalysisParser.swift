@@ -26,7 +26,7 @@ public struct ParsedAIAnalysis {
     public var examples: [(en: String, vi: String)] = []
     public var mnemonic: String? = nil
     public var rawContent: String = ""
-    
+
     public var isEmpty: Bool {
         (formula == nil || formula!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) &&
         meanings.isEmpty &&
@@ -44,16 +44,16 @@ public enum AIAnalysisParser {
     public static func parse(_ rawText: String) -> ParsedAIAnalysis {
         var result = ParsedAIAnalysis()
         result.rawContent = rawText
-        
+
         let lines = rawText.components(separatedBy: .newlines)
         var currentSection = 0 // 1: Meanings/Usage, 2: Word Family, 3: Collocations, 4: Nuances, 5: Examples, 6: Mnemonic, 7: Formula, 8: Common Mistakes
-        
+
         for rawLine in lines {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if line.isEmpty { continue }
-            
+
             let lower = line.lowercased()
-            
+
             // Section Headers Detection (Markdown ### or numbered headers)
             if lower.contains("công thức") || lower.contains("formula") || lower.contains("cấu trúc chuẩn") {
                 currentSection = 7
@@ -80,7 +80,7 @@ public enum AIAnalysisParser {
                 currentSection = 6
                 continue
             }
-            
+
             // Content processing by active section
             switch currentSection {
             case 7:
@@ -93,13 +93,13 @@ public enum AIAnalysisParser {
                         result.formula = cleaned
                     }
                 }
-                
+
             case 1:
                 let cleaned = cleanBullet(line)
                 if !cleaned.isEmpty {
                     result.meanings.append(cleaned)
                 }
-                
+
             case 2:
                 // Parse "Danh từ (Noun): annual — ấn phẩm..."
                 let cleaned = cleanBullet(line)
@@ -115,7 +115,7 @@ public enum AIAnalysisParser {
                 } else if !cleaned.isEmpty {
                     result.wordFamily.append(ParsedWordFamilyItem(pos: "Liên quan", words: cleaned, meaning: ""))
                 }
-                
+
             case 3:
                 // Parse Collocations
                 let cleaned = cleanBullet(line)
@@ -127,20 +127,20 @@ public enum AIAnalysisParser {
                 } else if !cleaned.isEmpty {
                     result.collocations.append(ParsedCollocationItem(phrase: cleaned, meaning: "", example: nil))
                 }
-                
+
             case 4:
                 let cleaned = cleanBullet(line)
                 if !cleaned.isEmpty {
                     result.nuances.append(cleaned)
                 }
-                
+
             case 8:
                 // Common mistakes & pitfalls
                 let cleaned = cleanBullet(line)
                 if !cleaned.isEmpty {
                     result.commonMistakes.append(cleaned)
                 }
-                
+
             case 5:
                 let cleaned = cleanBullet(line)
                 if cleaned.contains("->") || cleaned.contains("→") || cleaned.contains("—") {
@@ -151,7 +151,7 @@ public enum AIAnalysisParser {
                 } else if !cleaned.isEmpty {
                     result.examples.append((en: cleaned, vi: ""))
                 }
-                
+
             case 6:
                 let cleaned = cleanBullet(line)
                 if !cleaned.isEmpty {
@@ -161,15 +161,15 @@ public enum AIAnalysisParser {
                         result.mnemonic = cleaned
                     }
                 }
-                
+
             default:
                 break
             }
         }
-        
+
         return result
     }
-    
+
     private static func cleanBullet(_ text: String) -> String {
         var s = text.trimmingCharacters(in: .whitespaces)
         // Remove leading numbers or markdown headers like "###", "##", "#", or bullet points "1.", "2.", "•", "-", "*"
