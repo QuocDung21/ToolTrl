@@ -62,8 +62,8 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     public func showNearCursorOrCenter() {
         let mouseLoc = NSEvent.mouseLocation
-        let windowWidth: CGFloat = 430
-        let windowHeight: CGFloat = 340
+        let windowWidth: CGFloat = 455
+        let windowHeight: CGFloat = 345
         
         if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLoc, $0.frame, false) }) ?? NSScreen.main {
             var x = mouseLoc.x + 8

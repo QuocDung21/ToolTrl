@@ -71,88 +71,104 @@ public struct TranslationHUDView: View {
     }
     
     // MARK: - Top App Bar
+    // MARK: - Top App Bar
     private var topAppBar: some View {
-        HStack(spacing: 6) {
-            AppLogo.image
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-            
-            Text("ToolTrL")
-                .font(.system(size: 11.5, weight: .bold))
+        HStack(spacing: 5) {
+            // App Branding
+            HStack(spacing: 5) {
+                AppLogo.image
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 17, height: 17)
+                
+                Text("ToolTrL")
+                    .font(.system(size: 11.5, weight: .bold))
+                    .lineLimit(1)
+                    .fixedSize()
+            }
             
             Text("•")
-                .foregroundColor(.secondary)
+                .foregroundColor(.secondary.opacity(0.6))
                 .font(.system(size: 10))
             
-            Text(viewModel.detectedLanguage.uppercased())
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .padding(.horizontal, 5)
-                .padding(.vertical, 1.5)
-                .background(Color.blue.opacity(0.12))
-                .cornerRadius(3)
-            
-            Image(systemName: "arrow.right")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.secondary)
-            
-            Picker("", selection: $viewModel.targetLanguage) {
-                ForEach(TargetLanguage.allCases) { lang in
-                    Text(lang.displayName).tag(lang)
+            // Language Pair Pill
+            HStack(spacing: 3) {
+                Text(viewModel.detectedLanguage.uppercased())
+                    .font(.system(size: 9.5, weight: .bold, design: .monospaced))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1.5)
+                    .background(Color.blue.opacity(0.12))
+                    .cornerRadius(3)
+                
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 7.5, weight: .bold))
+                    .foregroundColor(.secondary)
+                
+                Picker("", selection: $viewModel.targetLanguage) {
+                    ForEach(TargetLanguage.allCases) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .frame(width: 115)
+                .scaleEffect(0.88, anchor: .leading)
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: 125)
-            .scaleEffect(0.9, anchor: .leading)
+            .lineLimit(1)
+            .fixedSize()
             
-            Spacer()
+            Spacer(minLength: 4)
             
-            Button(action: {
-                QuickAIWindowController.shared.showAI(prompt: viewModel.originalText)
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 10))
-                    Text("Hỏi AI")
-                        .font(.system(size: 11, weight: .semibold))
+            // Action Buttons
+            HStack(spacing: 6) {
+                Button(action: {
+                    QuickAIWindowController.shared.showAI(prompt: viewModel.originalText)
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 9.5))
+                        Text("Hỏi AI")
+                            .font(.system(size: 10.5, weight: .semibold))
+                    }
+                    .foregroundColor(.purple)
+                    .padding(.horizontal, 6.5)
+                    .padding(.vertical, 3)
+                    .background(Color.purple.opacity(0.12))
+                    .cornerRadius(5)
                 }
-                .foregroundColor(.purple)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(Color.purple.opacity(0.12))
-                .cornerRadius(5)
+                .buttonStyle(.plain)
+                .lineLimit(1)
+                .fixedSize()
+                .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
+                
+                Button(action: {
+                    VocabularyWindowController.shared.showNotebook()
+                }) {
+                    Image(systemName: "book.pages.fill")
+                        .font(.system(size: 11.5))
+                        .foregroundColor(.orange.opacity(0.85))
+                }
+                .buttonStyle(.plain)
+                .help("Mở Sổ tay từ vựng")
+                
+                Button(action: {
+                    SettingsWindowController.shared.showSettings()
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 11.5))
+                        .foregroundColor(.secondary.opacity(0.75))
+                }
+                .buttonStyle(.plain)
+                .help("Cài đặt (Settings)")
+                
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+                .buttonStyle(.plain)
+                .help("Đóng (ESC)")
             }
-            .buttonStyle(.plain)
-            .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
-            
-            Button(action: {
-                VocabularyWindowController.shared.showNotebook()
-            }) {
-                Image(systemName: "book.pages.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.orange.opacity(0.85))
-            }
-            .buttonStyle(.plain)
-            .help("Mở Sổ tay từ vựng")
-            
-            Button(action: {
-                SettingsWindowController.shared.showSettings()
-            }) {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary.opacity(0.75))
-            }
-            .buttonStyle(.plain)
-            .help("Cài đặt (Settings)")
-            
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary.opacity(0.7))
-            }
-            .buttonStyle(.plain)
-            .help("Đóng (ESC)")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
