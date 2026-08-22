@@ -49,6 +49,28 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
     }
 }
 
+public enum NotebookSortOption: String, CaseIterable, Identifiable {
+    case newestFirst = "Mới lưu nhất"
+    case oldestFirst = "Cũ nhất"
+    case alphabeticalAZ = "Bảng chữ cái (A → Z)"
+    case alphabeticalZA = "Bảng chữ cái (Z → A)"
+    case favoritesFirst = "Yêu thích lên đầu"
+    case learningFirst = "Chưa thuộc lên đầu"
+    
+    public var id: String { rawValue }
+    
+    public var icon: String {
+        switch self {
+        case .newestFirst: return "clock.arrow.circlepath"
+        case .oldestFirst: return "clock"
+        case .alphabeticalAZ: return "textformat.abc"
+        case .alphabeticalZA: return "textformat.abc.dottedunderline"
+        case .favoritesFirst: return "star.fill"
+        case .learningFirst: return "circle.dashed"
+        }
+    }
+}
+
 public struct VocabularyNotebookView: View {
     @ObservedObject var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
@@ -56,6 +78,7 @@ public struct VocabularyNotebookView: View {
     @State private var selectedSidebarItem: NotebookSidebarItem? = .vocabulary
     @State private var selectedItemID: UUID? = nil
     @State private var searchText: String = ""
+    @State private var sortOption: NotebookSortOption = .newestFirst
     @State private var isFlashcardMode: Bool = false
     @State private var flashcardIndex: Int = 0
     @State private var isCardFlipped: Bool = false
@@ -89,6 +112,28 @@ public struct VocabularyNotebookView: View {
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm ghi chú...")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                // Sorting Menu
+                Menu {
+                    Section("SẮP XẾP DANH SÁCH") {
+                        ForEach(NotebookSortOption.allCases) { opt in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    sortOption = opt
+                                }
+                            }) {
+                                if sortOption == opt {
+                                    Label(opt.rawValue, systemImage: "checkmark")
+                                } else {
+                                    Label(opt.rawValue, systemImage: opt.icon)
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Sắp xếp", systemImage: "arrow.up.arrow.down")
+                }
+                .help("Sắp xếp từ vựng và công thức (\(sortOption.rawValue))")
+                
                 // AI Extraction Button
                 Button(action: {
                     TextAnalysisWindowController.shared.showAnalysis()
@@ -597,6 +642,22 @@ public struct VocabularyNotebookView: View {
                 $0.translation.lowercased().contains(q) ||
                 ($0.phonetic?.lowercased().contains(q) ?? false)
             }
+        }
+        
+        // Apply Sorting
+        switch sortOption {
+        case .newestFirst:
+            list.sort { $0.dateAdded > $1.dateAdded }
+        case .oldestFirst:
+            list.sort { $0.dateAdded < $1.dateAdded }
+        case .alphabeticalAZ:
+            list.sort { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
+        case .alphabeticalZA:
+            list.sort { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedDescending }
+        case .favoritesFirst:
+            list.sort { ($0.isFavorite ? 0 : 1) < ($1.isFavorite ? 0 : 1) }
+        case .learningFirst:
+            list.sort { ($0.isMastered ? 1 : 0) < ($1.isMastered ? 1 : 0) }
         }
         
         return list
