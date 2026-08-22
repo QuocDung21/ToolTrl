@@ -24,6 +24,7 @@ public struct SettingsView: View {
     @ObservedObject var vocabService = VocabularyService.shared
     @ObservedObject var iconService = AppIconService.shared
     @ObservedObject var promptService = QuickPromptService.shared
+    @ObservedObject var hotKeyManager = HotKeyManager.shared
     
     @State private var selectedTab: SettingsTab = .display
     @State private var searchVocabText: String = ""
@@ -461,22 +462,79 @@ public struct SettingsView: View {
     private var generalTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                settingCard(title: "Phím tắt toàn hệ thống (Global Hotkey)", icon: "command") {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Dịch nhanh từ / câu đã bôi đen")
-                                .font(.system(size: 12, weight: .semibold))
-                            Text("Bôi đen văn bản bất kỳ rồi bấm phím tắt để mở cửa sổ dịch.")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
+                settingCard(title: "Phím tắt toàn hệ thống (Global Hotkeys)", icon: "command") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Bấm vào ô phím tắt và gõ tổ hợp phím mới để thay đổi:")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        
+                        // 1. Dịch nhanh
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Dịch vùng chọn (Translate Selection)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Bôi đen văn bản bất kỳ rồi bấm phím tắt để mở cửa sổ dịch.")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            ShortcutRecorderView(
+                                shortcut: $hotKeyManager.translateShortcut,
+                                defaultShortcut: KeyShortcut.defaultTranslate
+                            )
                         }
-                        Spacer()
-                        Text("⌥ + D")
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.primary.opacity(0.08))
-                            .cornerRadius(5)
+                        
+                        Divider().opacity(0.2)
+                        
+                        // 2. Trợ lý AI
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Hỏi nhanh Trợ lý AI (ChatGPT / Gemini)")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Mở cửa sổ chat AI với đoạn văn đang bôi đen.")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            ShortcutRecorderView(
+                                shortcut: $hotKeyManager.aiShortcut,
+                                defaultShortcut: KeyShortcut.defaultAI
+                            )
+                        }
+                        
+                        Divider().opacity(0.2)
+                        
+                        // 3. Sổ tay từ vựng
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mở Sổ tay từ vựng & Flashcards")
+                                    .font(.system(size: 12, weight: .semibold))
+                                Text("Mở nhanh danh sách từ vựng đã lưu và thẻ ôn tập.")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            ShortcutRecorderView(
+                                shortcut: $hotKeyManager.notebookShortcut,
+                                defaultShortcut: KeyShortcut.defaultNotebook
+                            )
+                        }
+                        
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                hotKeyManager.resetDefaults()
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.counterclockwise")
+                                    Text("Khôi phục toàn bộ phím tắt mặc định")
+                                }
+                                .font(.system(size: 10.5, weight: .medium))
+                                .foregroundColor(.orange)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.top, 2)
                     }
                 }
                 

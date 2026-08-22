@@ -82,6 +82,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onAI: { [weak self] in
                 self?.triggerQuickAI()
+            },
+            onNotebook: {
+                VocabularyWindowController.shared.showNotebook()
             }
         )
     }

@@ -26,6 +26,12 @@ public final class MenuBarController: NSObject {
             }
         }
         
+        NotificationCenter.default.addObserver(forName: .hotKeysDidChange, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                self?.buildMenu()
+            }
+        }
+        
         buildMenu()
     }
     
@@ -46,25 +52,24 @@ public final class MenuBarController: NSObject {
         
         menu.addItem(NSMenuItem.separator())
         
-        let translateItem = NSMenuItem(title: "Dịch vùng chọn (Option + D)", action: #selector(handleTranslateAction), keyEquivalent: "d")
-        translateItem.keyEquivalentModifierMask = .option
+        let translateKey = HotKeyManager.shared.translateShortcut.displayString
+        let translateItem = NSMenuItem(title: "Dịch vùng chọn (\(translateKey))", action: #selector(handleTranslateAction), keyEquivalent: "")
         translateItem.target = self
         menu.addItem(translateItem)
         
-        let quickLookupItem = NSMenuItem(title: "Mở bảng tra cứu nhanh...", action: #selector(handleQuickLookupAction), keyEquivalent: "t")
-        quickLookupItem.keyEquivalentModifierMask = [.command, .option]
-        quickLookupItem.target = self
-        menu.addItem(quickLookupItem)
+        let aiKey = HotKeyManager.shared.aiShortcut.displayString
+        let aiItem = NSMenuItem(title: "Hỏi nhanh Trợ lý AI (\(aiKey))", action: #selector(handleOpenAI), keyEquivalent: "")
+        aiItem.target = self
+        menu.addItem(aiItem)
         
-        let notebookItem = NSMenuItem(title: "Mở Sổ tay từ vựng...", action: #selector(handleOpenNotebook), keyEquivalent: "v")
-        notebookItem.keyEquivalentModifierMask = .option
+        let notebookKey = HotKeyManager.shared.notebookShortcut.displayString
+        let notebookItem = NSMenuItem(title: "Mở Sổ tay từ vựng (\(notebookKey))", action: #selector(handleOpenNotebook), keyEquivalent: "")
         notebookItem.target = self
         menu.addItem(notebookItem)
         
-        let aiItem = NSMenuItem(title: "Hỏi nhanh Trợ lý AI (ChatGPT / Gemini)... (Option + A)", action: #selector(handleOpenAI), keyEquivalent: "a")
-        aiItem.keyEquivalentModifierMask = .option
-        aiItem.target = self
-        menu.addItem(aiItem)
+        let quickLookupItem = NSMenuItem(title: "Mở bảng tra cứu nhanh...", action: #selector(handleQuickLookupAction), keyEquivalent: "")
+        quickLookupItem.target = self
+        menu.addItem(quickLookupItem)
         
         menu.addItem(NSMenuItem.separator())
         
