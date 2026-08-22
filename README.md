@@ -1,84 +1,76 @@
-# ToolTrL - macOS AI Quick Dictionary & Translator 🌐📖✨
+# ToolTrL
 
-**ToolTrL** là ứng dụng macOS native (SwiftUI & AppKit) chạy ngầm siêu nhẹ trên thanh Menu Bar. Ứng dụng cung cấp giải pháp tra từ điển, dịch thuật đa ngôn ngữ song ngữ thông minh, bóc tách ngữ pháp AI, hỏi nhanh trợ lý AI (ChatGPT / Gemini / Claude) và chụp quét chữ màn hình (OCR) với tốc độ tức thì.
-
----
-
-## ✨ Tính Năng Nổi Bật
-
-### 1. ⚡ Dịch Tức Thì Tại Con Trỏ Chuột (Popup HUD)
-- Bôi đen bất kỳ từ hoặc đoạn văn bản nào ở mọi ứng dụng (Safari, Chrome, Word, Slack, VSCode, PDF, v.v.) và nhấn **`⌥ + D`** (`Option + D`).
-- Cửa sổ popup kính mờ (Liquid Glassmorphism) tự động xuất hiện ngay sát con trỏ chuột.
-
-### 2. 📸 Quét Chữ Trên Màn Hình & Hình Ảnh (Screen Area OCR)
-- Nhấn **`⌥ + S`** (`Option + S`) để kích hoạt công cụ khoanh vùng ảnh màn hình.
-- Tự động nhận diện chữ từ video Youtube, file PDF scan, hình ảnh hoặc các trang web chặn bôi đen bằng **Apple Vision Framework** và dịch song ngữ tức thì.
-
-### 3. 🧠 AI Bóc Tách Đoạn Văn & Trích Xuất Ngữ Pháp (Smart Text Analyzer)
-- Tự động nhận diện hơn **35+ mẫu cấu trúc & thành ngữ tiếng Anh cốt lõi** (Câu điều kiện, Subjunctive, Wish, Used to, Passive Voice, So...that, Collocations...).
-- Bóc tách từ vựng trọng tâm, từ loại, phiên âm và trích dẫn câu ví dụ thực tế.
-- Lưu trọn bộ vào Sổ tay từ vựng chỉ với **1-chạm (`1-Click Save`)**.
-
-### 4. 🤖 Trợ Lý AI Tích Hợp Sâu (Quick AI Assistant)
-- Nhấn **`⌥ + A`** (`Option + A`) để mở nhanh trợ lý AI (ChatGPT, Google Gemini, Claude, Perplexity).
-- Hỗ trợ các mẫu câu hỏi nhanh tùy chỉnh (Prompt Templates) với biến tự động `{text}`.
-
-### 5. 📚 Sổ Tay Từ Vựng & Thẻ Học Flashcards (`⌥ + V`)
-- Quản lý từ vựng thông minh, đánh dấu sao yêu thích, đánh dấu từ đã thuộc.
-- Chế độ ôn tập Flashcards lật thẻ 3D mượt mà kèm phát âm chuẩn người bản xứ (`AVSpeechSynthesizer`).
-
-### 6. 🎨 Tùy Biến Giao Diện & Logo Ứng Dụng
-- Hỗ trợ 7 bộ icon nghệ thuật (Mèo Tuxedo, Tia chớp, Ngôi sao, Sách, Địa cầu, Tên lửa, Kim cương) hoặc tải ảnh đại diện cá nhân từ máy.
-- Đồng bộ thời gian thực giữa macOS Menu Bar và thanh công cụ.
-
-### 7. 📌 Ghim Cửa Sổ Trên Cùng (Window Pinning)
-- Nút **`📌`** giúp cố định cửa sổ dịch hoặc chat AI luôn nổi trên các ứng dụng khác để tiện theo dõi.
+**ToolTrL** là ứng dụng Menu Bar trên macOS giúp bạn tra từ điển, dịch nhanh đoạn văn, lưu sổ tay từ vựng và quản lý công thức ngữ pháp trực tiếp khi làm việc hay duyệt web.
 
 ---
 
-## ⌨️ Bảng Phím Tắt Mặc Định (Có thể tùy chỉnh trong Cài Đặt)
+## 🌟 Tính năng chính
 
-| Phím tắt | Chức năng |
+### 1. Dịch nhanh tại vị trí con trỏ (`⌥ + D`)
+- Bôi đen đoạn văn bản ở bất kỳ đâu (trình duyệt, file PDF, Xcode, Slack...) rồi bấm `Option + D`.
+- Cửa sổ dịch nổi sẽ xuất hiện ngay bên cạnh con trỏ chuột.
+
+### 2. Chụp và quét chữ trên màn hình (`⌥ + S`)
+- Khoanh vùng bất kỳ khu vực nào trên màn hình (video Youtube, hình ảnh, trang web chặn bôi đen).
+- Ứng dụng tự động nhận diện chữ (Apple Vision OCR) và hiển thị bản dịch ngay lập tức.
+
+### 3. Sổ tay từ vựng & Cẩm nang ngữ pháp (`⌥ + V`)
+- **Giao diện 3 cột hoặc dạng bảng**: Dễ dàng tìm kiếm, lọc theo từ loại, độ quan trọng hay chủ đề.
+- **Phần Từ vựng**: Lưu nghĩa tiếng Việt, câu ví dụ thực tế kèm phát âm và từ điển giải nghĩa.
+- **Phần Ngữ pháp**: Lưu công thức chuẩn dạng toán học, ý nghĩa/dấu hiệu nhận biết, ví dụ 3 thể (+, -, ?) và lưu ý bẫy đề thi.
+- **Xem nhanh (Quick Look)**: Chọn một mục và bấm phím `Space` để xem toàn bộ thông tin chi tiết.
+- **Ôn tập Flashcards**: Chế độ lật thẻ ghi nhớ 3D hỗ trợ phát âm.
+
+### 4. Trợ lý AI hỗ trợ học (`⌥ + A`)
+- Cửa sổ nổi tích hợp nhanh ChatGPT, Gemini, Claude và Perplexity.
+- Tự động điền câu lệnh hỏi và hỗ trợ lưu kết quả phân tích về sổ tay chỉ với 1 nút bấm.
+
+---
+
+## ⌨️ Phím tắt mặc định
+
+| Phím tắt | Thao tác |
 |---|---|
-| `⌥ + D` (`Option + D`) | Dịch vùng chọn văn bản tại con trỏ chuột |
-| `⌥ + S` (`Option + S`) | Chụp & Quét chữ trên màn hình (OCR Screen Snip) |
-| `⌥ + A` (`Option + A`) | Mở nhanh Trợ lý AI (ChatGPT / Gemini) |
-| `⌥ + V` (`Option + V`) | Mở Sổ tay từ vựng & Ôn tập Flashcards |
-| `ESC` | Đóng nhanh popup / hủy chụp ảnh |
+| `⌥ + D` (`Option + D`) | Dịch văn bản đang chọn |
+| `⌥ + S` (`Option + S`) | Chụp quét chữ trên màn hình (OCR) |
+| `⌥ + A` (`Option + A`) | Mở trợ lý AI |
+| `⌥ + V` (`Option + V`) | Mở Sổ tay từ vựng & ngữ pháp |
+| `Space` | Xem nhanh chi tiết từ/ngữ pháp đang chọn |
+| `Esc` | Đóng nhanh cửa sổ nổi |
+
+*(Các phím tắt có thể tùy chỉnh lại trong phần Cài đặt của ứng dụng)*
 
 ---
 
-## 🚀 Cài Đặt & Khởi Chạy
+## 🚀 Hướng dẫn cài đặt & Build từ mã nguồn
 
-### 1. Build & Đóng gói ứng dụng:
+### Yêu cầu hệ thống:
+- macOS 13.0 (Ventura) trở lên.
+- Xcode 15+ hoặc Swift 5.9+.
+
+### Các bước build:
 ```bash
+# 1. Clone repository
+git clone https://github.com/QuocDung21/ToolTrl.git
+cd ToolTrl
+
+# 2. Chạy script đóng gói ứng dụng
 ./Scripts/build_app.sh
-```
 
-Ứng dụng sẽ được xuất ra tại thư mục: `build/ToolTrL.app`.
-
-### 2. Khởi chạy:
-```bash
+# 3. Khởi chạy
 open build/ToolTrL.app
 ```
 
 ---
 
-## 🔒 Cấp Quyền Hệ Thống macOS
+## 🔒 Cấp quyền hệ thống trên macOS
 
-Để ToolTrL hoạt động trọn vẹn mọi tính năng:
-1. **Quyền Trợ Năng (Accessibility)**: Để đọc vùng chọn văn bản khi bạn bấm phím tắt (*System Settings ➔ Privacy & Security ➔ Accessibility ➔ Bật ToolTrL*).
-2. **Quyền Ghi Màn Hình (Screen Recording)**: Để sử dụng tính năng chụp quét chữ OCR (*System Settings ➔ Privacy & Security ➔ Screen Recording ➔ Bật ToolTrL*).
-
----
-
-## 🛠️ Công Nghệ & Kiến Trúc
-- **Ngôn ngữ**: Swift 6 (SwiftUI & AppKit)
-- **AI & ML**: Apple Vision (`VNRecognizeTextRequest`), Apple NaturalLanguage (`NLTagger`, `NLLanguageRecognizer`), Apple Translation Framework
-- **Quản lý dependencies**: Swift Package Manager (SPM) - Zero external third-party pods
-- **Kiến trúc**: Domain-Driven Modular Flat Architecture
+Để ứng dụng hoạt động chính xác khi bấm phím tắt:
+1. **Quyền Trợ năng (Accessibility)**: Cho phép ứng dụng đọc văn bản bạn vừa bôi đen (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Trợ năng ➔ Bật ToolTrL*).
+2. **Quyền Ghi màn hình (Screen Recording)**: Cho phép chụp vùng màn hình để quét chữ OCR (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Ghi màn hình ➔ Bật ToolTrL*).
 
 ---
 
-## 📄 Bản quyền
-Phát triển bởi **Dũng Nguyễn Quốc** (QuocDung21). Giấy phép mã nguồn mở MIT.
+## 👨‍💻 Tác giả & Giấy phép
+- Tác giả: **Dũng Nguyễn Quốc** ([@QuocDung21](https://github.com/QuocDung21))
+- Mã nguồn phát hành theo giấy phép **MIT**.
