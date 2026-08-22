@@ -160,7 +160,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        MainWindowController.shared.showMainWindow()
+        VocabularyWindowController.shared.showNotebook()
         return true
     }
     

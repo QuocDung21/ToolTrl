@@ -57,10 +57,6 @@ public final class MenuBarController: NSObject {
         titleItem.isEnabled = false
         menu.addItem(titleItem)
         
-        let mainHubItem = NSMenuItem(title: "Mở Bảng Điều Khiển Chính (Main Dashboard)...", action: #selector(handleOpenMainHub), keyEquivalent: "m")
-        mainHubItem.target = self
-        menu.addItem(mainHubItem)
-        
         menu.addItem(NSMenuItem.separator())
         
         let translateKey = HotKeyManager.shared.translateShortcut.displayString
@@ -138,10 +134,6 @@ public final class MenuBarController: NSObject {
             viewModel.targetLanguage = lang
             buildMenu()
         }
-    }
-    
-    @objc private func handleOpenMainHub() {
-        MainWindowController.shared.showMainWindow()
     }
     
     @objc private func handleAccessibilityCheck() {
