@@ -2,30 +2,81 @@ import Foundation
 import NaturalLanguage
 import SwiftUI
 
+public enum VocabImportance: String, Codable, Sendable, CaseIterable {
+    case core = "Cốt lõi"
+    case collocation = "Cụm từ"
+    case advanced = "Nâng cao"
+    
+    public var displayName: String {
+        switch self {
+        case .core: return "🌟 Từ Vựng Cốt Lõi"
+        case .collocation: return "💡 Cụm Từ & Thành Ngữ"
+        case .advanced: return "📖 Từ Vựng Nâng Cao"
+        }
+    }
+    
+    public var badgeColor: Color {
+        switch self {
+        case .core: return .orange
+        case .collocation: return .purple
+        case .advanced: return .blue
+        }
+    }
+}
+
+public enum POSCategory: String, Codable, Sendable, CaseIterable {
+    case noun = "Danh từ"
+    case verb = "Động từ"
+    case adjective = "Tính từ"
+    case adverb = "Trạng từ"
+    case phrase = "Cụm từ"
+    case other = "Khác"
+    
+    public var color: Color {
+        switch self {
+        case .noun: return .blue
+        case .verb: return .green
+        case .adjective: return .orange
+        case .adverb: return .pink
+        case .phrase: return .purple
+        case .other: return .secondary
+        }
+    }
+}
+
 public struct ExtractedVocabulary: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID = UUID()
     public var word: String
     public var partOfSpeech: String
+    public var posCategory: POSCategory
+    public var importance: VocabImportance
     public var phonetic: String?
     public var vietnameseMeaning: String
     public var contextSentence: String
+    public var orderIndex: Int
     public var isSelected: Bool = true
     
     public init(
         id: UUID = UUID(),
         word: String,
         partOfSpeech: String,
+        posCategory: POSCategory = .other,
+        importance: VocabImportance = .core,
         phonetic: String? = nil,
         vietnameseMeaning: String,
         contextSentence: String,
+        orderIndex: Int = 0,
         isSelected: Bool = true
     ) {
         self.id = id
         self.word = word
         self.partOfSpeech = partOfSpeech
+        self.posCategory = posCategory
+        self.importance = importance
         self.phonetic = phonetic
         self.vietnameseMeaning = vietnameseMeaning
         self.contextSentence = contextSentence
+        self.orderIndex = orderIndex
         self.isSelected = isSelected
     }
 }
@@ -93,58 +144,52 @@ public final class TextAnalysisService: ObservableObject {
     
     private let grammarRules: [GrammarRule] = [
         GrammarRule(
-            patternRegex: "(?i)\\bwould rather\\b.*\\b(than|did|had|were)\\b",
-            formula: "S + would rather (+ S + V-ed) / (V-bare than V-bare)",
-            title: "Cấu trúc Thích hơn / Giả định với Would Rather",
-            meaningVi: "Diễn tả sự ưa thích hơn hoặc mong muốn ai đó làm gì."
+            patternRegex: "(?i)\\bif\\b.*\\b(had|hadn't)\\s+[a-z]+(ed|en|t)\\b.*\\bwould\\s+have\\s+[a-z]+(ed|en|t)\\b",
+            formula: "If + S + had + V3/ed, S + would have + V3/ed",
+            title: "Câu điều kiện loại 3 (Conditional Type 3)",
+            meaningVi: "Diễn tả sự việc trái ngược với thực tế trong quá khứ."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\b(wish|wishes|wished)\\b",
-            formula: "S + wish + (that) + S + V(quá khứ / past perfect)",
-            title: "Câu ước với Wish (Subjunctive Wish)",
-            meaningVi: "Diễn tả ước muốn trái với thực tế ở hiện tại hoặc quá khứ."
+            patternRegex: "(?i)\\bif\\b.*\\b(were|weren't|[a-z]+ed)\\b.*\\b(would|could|might)\\b",
+            formula: "If + S + V2/ed (were), S + would/could + V-bare",
+            title: "Câu điều kiện loại 2 (Conditional Type 2)",
+            meaningVi: "Diễn tả điều kiện không có thật ở hiện tại hoặc tương lai."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\bused to\\b\\s+[a-z]+",
-            formula: "S + used to + V-bare",
-            title: "Thói quen trong quá khứ (Used to V)",
-            meaningVi: "Đã từng làm gì thường xuyên trong quá khứ (nay không còn nữa)."
-        ),
-        GrammarRule(
-            patternRegex: "(?i)\\b(am|is|are|was|were|get|got|getting)\\s+used to\\b\\s+[a-z]+ing",
-            formula: "S + be/get used to + V-ing / Noun",
-            title: "Quen với việc gì (Be/Get used to V-ing)",
-            meaningVi: "Quen thuộc hoặc dần thích nghi với một hành động, sự việc."
-        ),
-        GrammarRule(
-            patternRegex: "(?i)\\bif\\b.*\\b(will|can|shall|may)\\b",
+            patternRegex: "(?i)\\bif\\b.*\\b(will|can|may)\\b",
             formula: "If + S + V(s/es), S + will/can + V-bare",
-            title: "Câu điều kiện Loại 1 (Conditional Type 1)",
-            meaningVi: "Điều kiện có thể xảy ra ở hiện tại hoặc tương lai."
+            title: "Câu điều kiện loại 1 (Conditional Type 1)",
+            meaningVi: "Diễn tả sự việc có thể xảy ra ở hiện tại hoặc tương lai."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\bif\\b.*\\b(would|could|might)\\b\\s+[a-z]+(?<!have)",
-            formula: "If + S + V-ed/were, S + would/could + V-bare",
-            title: "Câu điều kiện Loại 2 (Conditional Type 2)",
-            meaningVi: "Giả định không có thật ở hiện tại."
+            patternRegex: "(?i)\\b(wish|wishes|wished)\\b.*\\b(had|hadn't)\\s+[a-z]+(ed|en|t)\\b",
+            formula: "S + wish(es) + (that) + S + had + V3/ed",
+            title: "Cấu trúc Ước trong quá khứ (Wish in Past)",
+            meaningVi: "Diễn tả sự tiếc nuối về một việc đã xảy ra hoặc không xảy ra trong quá khứ."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\bif\\b.*\\bhad\\b.*\\b(would|could|might)\\s+have\\b",
-            formula: "If + S + had + V3/ed, S + would/could have + V3/ed",
-            title: "Câu điều kiện Loại 3 (Conditional Type 3)",
-            meaningVi: "Giả định điều trái ngược với sự thật trong quá khứ."
+            patternRegex: "(?i)\\b(wish|wishes)\\b.*\\b(were|[a-z]+ed|could)\\b",
+            formula: "S + wish(es) + (that) + S + V2/ed (were)",
+            title: "Cấu trúc Ước ở hiện tại (Wish in Present)",
+            meaningVi: "Diễn tả mong muốn một điều trái ngược với thực tế hiện tại."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\bnot only\\b.*\\bbut also\\b",
-            formula: "Not only + A + but also + B",
-            title: "Cấu trúc Không những... mà còn...",
-            meaningVi: "Nhấn mạnh hai đặc điểm hoặc hai hành động cùng tồn tại."
+            patternRegex: "(?i)\\bwould\\s+rather\\b.*\\b(than|that)\\b",
+            formula: "S + would rather (+ V-bare) + than (+ V-bare)",
+            title: "Cấu trúc Thích hơn (Would rather)",
+            meaningVi: "Diễn đạt sở thích hoặc mong muốn giữa hai lựa chọn."
         ),
         GrammarRule(
-            patternRegex: "(?i)\\btoo\\s+[a-z]+\\s+(for\\s+[a-z]+\\s+)?to\\s+[a-z]+",
-            formula: "S + be/V + too + Adj/Adv + (for O) + to V",
-            title: "Cấu trúc Quá... đến nỗi không thể làm gì",
-            meaningVi: "Chỉ mức độ vượt quá khả năng thực hiện hành động."
+            patternRegex: "(?i)\\bused\\s+to\\s+[a-z]+\\b",
+            formula: "S + used to + V-bare",
+            title: "Cấu trúc Đã từng (Used to)",
+            meaningVi: "Diễn tả thói quen hoặc trạng thái trong quá khứ nhưng nay không còn nữa."
+        ),
+        GrammarRule(
+            patternRegex: "(?i)\\b(am|is|are|was|were|get|got)\\s+used\\s+to\\s+[a-z]+ing\\b",
+            formula: "S + be/get used to + V-ing / Noun",
+            title: "Cấu trúc Quen với việc gì (Be/Get used to)",
+            meaningVi: "Diễn tả việc đã quen dần hoặc cảm thấy bình thường với một hành động."
         ),
         GrammarRule(
             patternRegex: "(?i)\\bso\\s+[a-z]+\\s+that\\b",
@@ -271,6 +316,7 @@ public final class TextAnalysisService: ObservableObject {
         // 3. Extract Key Vocabularies using NaturalLanguage
         var extractedWords: [ExtractedVocabulary] = []
         var seenWords = Set<String>()
+        var wordOrder = 0
         
         let tagger = NLTagger(tagSchemes: [.lexicalClass, .lemma])
         tagger.string = trimmed
@@ -281,14 +327,35 @@ public final class TextAnalysisService: ObservableObject {
             if rawWord.count >= 3 && !stopWords.contains(rawWord) && !seenWords.contains(rawWord) {
                 // Determine part of speech
                 var posName = "Từ vựng"
+                var posCat: POSCategory = .other
                 if let t = tag {
                     switch t {
-                    case .noun: posName = "Danh từ (Noun)"
-                    case .verb: posName = "Động từ (Verb)"
-                    case .adjective: posName = "Tính từ (Adj)"
-                    case .adverb: posName = "Phó từ (Adv)"
-                    default: posName = "Từ vựng"
+                    case .noun:
+                        posName = "Danh từ (Noun)"
+                        posCat = .noun
+                    case .verb:
+                        posName = "Động từ (Verb)"
+                        posCat = .verb
+                    case .adjective:
+                        posName = "Tính từ (Adj)"
+                        posCat = .adjective
+                    case .adverb:
+                        posName = "Trạng từ (Adv)"
+                        posCat = .adverb
+                    default:
+                        posName = "Từ vựng"
+                        posCat = .other
                     }
+                }
+                
+                // Determine Importance by word length & characteristics
+                var importance: VocabImportance = .core
+                if rawWord.count >= 8 || rawWord.contains("-") {
+                    importance = .advanced
+                } else if posCat == .verb || posCat == .noun {
+                    importance = .core
+                } else {
+                    importance = .collocation
                 }
                 
                 // Find context sentence
@@ -299,17 +366,21 @@ public final class TextAnalysisService: ObservableObject {
                     ExtractedVocabulary(
                         word: rawWord.capitalized,
                         partOfSpeech: posName,
+                        posCategory: posCat,
+                        importance: importance,
                         vietnameseMeaning: "Đang tra cứu nghĩa...",
                         contextSentence: context.trimmingCharacters(in: .whitespacesAndNewlines),
+                        orderIndex: wordOrder,
                         isSelected: true
                     )
                 )
+                wordOrder += 1
             }
             return true
         }
         
-        // Limit top words to 12 most relevant to prevent overwhelming
-        let topWords = Array(extractedWords.prefix(12))
+        // Limit to 15 most relevant words
+        let topWords = Array(extractedWords.prefix(15))
         
         // Translate words in parallel
         var finalizedWords: [ExtractedVocabulary] = []

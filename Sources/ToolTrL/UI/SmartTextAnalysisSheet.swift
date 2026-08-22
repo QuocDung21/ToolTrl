@@ -3,7 +3,16 @@ import SwiftUI
 public enum AnalysisFilterTab: String, CaseIterable, Identifiable {
     case all = "Tất cả"
     case grammar = "Công thức ngữ pháp"
-    case vocabulary = "Từ vựng trọng tâm"
+    case vocabulary = "Từ vựng"
+    
+    public var id: String { rawValue }
+}
+
+public enum VocabSortOption: String, CaseIterable, Identifiable {
+    case smartAI = "🌟 Phân loại AI (Mức độ quan trọng)"
+    case partOfSpeech = "🏷️ Theo Từ Loại (Noun, Verb, Adj...)"
+    case appearance = "⏱️ Thứ tự xuất hiện trong bài"
+    case alphabetical = "🔤 Bảng chữ cái (A → Z)"
     
     public var id: String { rawValue }
 }
@@ -14,11 +23,13 @@ public struct SmartTextAnalysisSheet: View {
     
     @State private var inputText: String = ""
     @State private var analysisResult: TextAnalysisResult? = nil
-    @State private var savedCountToast: Int? = nil
     @State private var selectedTab: AnalysisFilterTab = .all
+    @State private var sortOption: VocabSortOption = .smartAI
+    @State private var savedCount: Int? = nil
+    @State private var showSavedNotification: Bool = false
     
-    public let initialText: String
-    public var onClose: (() -> Void)? = nil
+    private var initialText: String
+    private var onClose: (() -> Void)?
     
     public init(initialText: String = "", onClose: (() -> Void)? = nil) {
         self.initialText = initialText
@@ -64,7 +75,7 @@ public struct SmartTextAnalysisSheet: View {
                 bottomActionBar(result)
             }
         }
-        .frame(minWidth: 700, minHeight: 580)
+        .frame(minWidth: 720, minHeight: 600)
         .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
         .ignoresSafeArea()
         .onAppear {
@@ -80,7 +91,7 @@ public struct SmartTextAnalysisSheet: View {
     // MARK: - Top Header Bar
     private var topHeaderBar: some View {
         HStack(alignment: .center, spacing: 8) {
-            // Traffic Light Clearance (Exact alignment with macOS Traffic Lights 🔴 🟡 🟢)
+            // Traffic Light Clearance
             Spacer()
                 .frame(width: 72)
             
@@ -115,7 +126,7 @@ public struct SmartTextAnalysisSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Nhập hoặc dán đoạn văn bản:")
-                    .font(.system(size: 11.5, weight: .semibold))
+                    .font(.system(size: 11.5, weight: .medium))
                     .foregroundColor(.secondary)
                 
                 Spacer()
@@ -123,18 +134,18 @@ public struct SmartTextAnalysisSheet: View {
                 if !inputText.isEmpty {
                     Text("\(inputText.split(separator: " ").count) từ")
                         .font(.system(size: 10.5))
-                        .foregroundColor(.secondary.opacity(0.7))
+                        .foregroundColor(.secondary.opacity(0.8))
                 }
             }
             
             TextEditor(text: $inputText)
-                .font(.system(size: 12))
+                .font(.system(size: 12.5))
+                .frame(height: 72)
                 .padding(6)
                 .background(Color.primary.opacity(0.03))
-                .cornerRadius(8)
-                .frame(height: 65)
+                .cornerRadius(6)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 6)
                         .stroke(Color.primary.opacity(0.08), lineWidth: 1)
                 )
             
@@ -195,37 +206,71 @@ public struct SmartTextAnalysisSheet: View {
     // MARK: - Filter Tabs & Results Content
     private func resultsContent(_ result: TextAnalysisResult) -> some View {
         VStack(spacing: 0) {
-            // Segmented Filter Bar
-            HStack(spacing: 6) {
-                ForEach(AnalysisFilterTab.allCases) { tab in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            selectedTab = tab
+            // Segmented Filter Bar + Sort Options
+            HStack(spacing: 8) {
+                // Category Filter Pills
+                HStack(spacing: 4) {
+                    ForEach(AnalysisFilterTab.allCases) { tab in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                selectedTab = tab
+                            }
+                        }) {
+                            HStack(spacing: 4) {
+                                Text(tab.rawValue)
+                                    .font(.system(size: 11, weight: selectedTab == tab ? .bold : .medium))
+                                
+                                let count = badgeCount(for: tab, result: result)
+                                Text("\(count)")
+                                    .font(.system(size: 9.5, weight: .bold))
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 1)
+                                    .background(selectedTab == tab ? Color.white.opacity(0.25) : Color.primary.opacity(0.08))
+                                    .clipShape(Capsule())
+                            }
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .foregroundColor(selectedTab == tab ? .white : .secondary)
+                            .background(selectedTab == tab ? Color.purple : Color.primary.opacity(0.03))
+                            .cornerRadius(6)
                         }
-                    }) {
-                        HStack(spacing: 4) {
-                            Text(tab.rawValue)
-                                .font(.system(size: 11, weight: selectedTab == tab ? .bold : .medium))
-                            
-                            // Badge Count
-                            let count = badgeCount(for: tab, result: result)
-                            Text("\(count)")
-                                .font(.system(size: 9.5, weight: .bold))
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 1)
-                                .background(selectedTab == tab ? Color.white.opacity(0.25) : Color.primary.opacity(0.08))
-                                .clipShape(Capsule())
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4.5)
-                        .foregroundColor(selectedTab == tab ? .white : .secondary)
-                        .background(selectedTab == tab ? Color.purple : Color.primary.opacity(0.03))
-                        .cornerRadius(6)
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
                 
                 Spacer()
+                
+                // AI Sort / Grouping Menu
+                if selectedTab != .grammar {
+                    Menu {
+                        ForEach(VocabSortOption.allCases) { opt in
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    sortOption = opt
+                                }
+                            }) {
+                                if sortOption == opt {
+                                    Label(opt.rawValue, systemImage: "checkmark")
+                                } else {
+                                    Text(opt.rawValue)
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .font(.system(size: 9.5))
+                            Text(sortOption.rawValue)
+                                .font(.system(size: 10.5, weight: .medium))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3.5)
+                        .background(Color.primary.opacity(0.04))
+                        .cornerRadius(5)
+                    }
+                    .menuStyle(.borderlessButton)
+                    .fixedSize()
+                }
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 8)
@@ -235,13 +280,13 @@ public struct SmartTextAnalysisSheet: View {
             
             // Scrollable List
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 16) {
                     if (selectedTab == .all || selectedTab == .grammar) && !result.grammars.isEmpty {
                         grammarSection(result)
                     }
                     
                     if (selectedTab == .all || selectedTab == .vocabulary) && !result.vocabularies.isEmpty {
-                        vocabularySection(result)
+                        sortedVocabularySection(result)
                     }
                 }
                 .padding(18)
@@ -263,12 +308,11 @@ public struct SmartTextAnalysisSheet: View {
             HStack {
                 Image(systemName: "function")
                     .foregroundColor(.blue)
-                Text("Cấu Trúc & Công Thức Ngữ Pháp (\(result.grammars.count))")
+                Text("Cấu Trúc Ngữ Pháp Nhận Diện Được (\(result.grammars.count))")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.primary)
             }
-            
-            VStack(spacing: 8) {
+                
                 ForEach(result.grammars.indices, id: \.self) { idx in
                     let item = result.grammars[idx]
                     HStack(alignment: .top, spacing: 10) {
@@ -283,21 +327,17 @@ public struct SmartTextAnalysisSheet: View {
                         .padding(.top, 2)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            HStack(alignment: .center) {
-                                Text(item.title)
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.primary)
-                                
-                                Spacer()
-                                
-                                Text(item.formula)
-                                    .font(.system(size: 10.5, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.blue)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 2.5)
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(4)
-                            }
+                            Text(item.title)
+                                .font(.system(size: 12.5, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            Text(item.formula)
+                                .font(.system(size: 11.5, weight: .semibold, design: .monospaced))
+                                .foregroundColor(.blue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(4)
                             
                             Text(item.meaningVi)
                                 .font(.system(size: 11))
@@ -305,8 +345,8 @@ public struct SmartTextAnalysisSheet: View {
                             
                             if !item.exampleSentence.isEmpty {
                                 HStack(alignment: .top, spacing: 4) {
-                                    Text("Ví dụ trong đoạn:")
-                                        .font(.system(size: 10, weight: .bold))
+                                    Text("Ví dụ:")
+                                        .font(.system(size: 10.5, weight: .bold))
                                         .foregroundColor(.secondary)
                                     Text("\"\(item.exampleSentence)\"")
                                         .font(.system(size: 10.5))
@@ -327,83 +367,180 @@ public struct SmartTextAnalysisSheet: View {
                 }
             }
         }
+    
+    // MARK: - Sorted & Grouped Vocabulary Section
+    private func sortedVocabularySection(_ result: TextAnalysisResult) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            switch sortOption {
+            case .smartAI:
+                // Group by AI Importance
+                ForEach(VocabImportance.allCases, id: \.self) { importance in
+                    let items = result.vocabularies.filter { $0.importance == importance }
+                    if !items.isEmpty {
+                        vocabGroupBlock(
+                            title: importance.displayName,
+                            color: importance.badgeColor,
+                            items: items
+                        )
+                    }
+                }
+                
+            case .partOfSpeech:
+                // Group by Part of Speech
+                ForEach(POSCategory.allCases, id: \.self) { pos in
+                    let items = result.vocabularies.filter { $0.posCategory == pos }
+                    if !items.isEmpty {
+                        vocabGroupBlock(
+                            title: "\(pos.rawValue)s",
+                            color: pos.color,
+                            items: items
+                        )
+                    }
+                }
+                
+            case .appearance:
+                let sorted = result.vocabularies.sorted { $0.orderIndex < $1.orderIndex }
+                vocabGroupBlock(
+                    title: "⏱️ Thứ Tự Xuất Hiện Trong Bài",
+                    color: .purple,
+                    items: sorted
+                )
+                
+            case .alphabetical:
+                let sorted = result.vocabularies.sorted { $0.word.lowercased() < $1.word.lowercased() }
+                vocabGroupBlock(
+                    title: "🔤 Bảng Chữ Cái (A → Z)",
+                    color: .orange,
+                    items: sorted
+                )
+            }
+        }
     }
     
-    // MARK: - Vocabulary Section
-    private func vocabularySection(_ result: TextAnalysisResult) -> some View {
+    // MARK: - Reusable Vocabulary Group Block
+    private func vocabGroupBlock(title: String, color: Color, items: [ExtractedVocabulary]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "character.book.closed.fill")
-                    .foregroundColor(.orange)
-                Text("Từ Vựng Trọng Tâm & Collocations (\(result.vocabularies.count))")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.primary)
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(.system(size: 11.5, weight: .bold))
+                    .foregroundColor(color)
+                
+                Text("\(items.count)")
+                    .font(.system(size: 9.5, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(color.opacity(0.12))
+                    .foregroundColor(color)
+                    .clipShape(Capsule())
+                
+                Spacer()
+                
+                // Select All / Deselect All for this group
+                let allSelected = items.allSatisfy { $0.isSelected }
+                Button(action: {
+                    toggleSelectGroup(items: items, selectAll: !allSelected)
+                }) {
+                    Text(allSelected ? "Bỏ chọn nhóm" : "Chọn nhóm")
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 4)
             
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 8)], spacing: 8) {
-                ForEach(result.vocabularies.indices, id: \.self) { idx in
-                    let item = result.vocabularies[idx]
-                    HStack(alignment: .top, spacing: 9) {
-                        Button(action: {
-                            analysisResult?.vocabularies[idx].isSelected.toggle()
-                        }) {
-                            Image(systemName: item.isSelected ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 15))
-                                .foregroundColor(item.isSelected ? .orange : .secondary.opacity(0.35))
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 2)
-                        
-                        VStack(alignment: .leading, spacing: 3) {
-                            HStack(alignment: .center, spacing: 6) {
-                                Text(item.word)
-                                    .font(.system(size: 12.5, weight: .bold))
-                                    .foregroundColor(.primary)
-                                
-                                Text(item.partOfSpeech)
-                                    .font(.system(size: 9.5))
-                                    .foregroundColor(.orange)
-                                    .padding(.horizontal, 5)
-                                    .padding(.vertical, 1)
-                                    .background(Color.orange.opacity(0.12))
-                                    .cornerRadius(3)
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    speechService.speak(text: item.word, languageCode: "en-US", speakerID: "vocab_\(item.id)")
-                                }) {
-                                    Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "vocab_\(item.id)") ? "speaker.wave.3.fill" : "speaker.wave.2")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.blue)
-                                }
-                                .buttonStyle(.plain)
-                                .help("Nghe phát âm")
-                            }
-                            
-                            Text(item.vietnameseMeaning)
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(.primary.opacity(0.9))
-                            
-                            if !item.contextSentence.isEmpty {
-                                Text("\"\(item.contextSentence)\"")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.secondary)
-                                    .italic()
-                                    .lineLimit(2)
-                            }
-                        }
-                    }
-                    .padding(10)
-                    .background(Color.primary.opacity(0.025))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(item.isSelected ? Color.orange.opacity(0.35) : Color.primary.opacity(0.05), lineWidth: 1)
-                    )
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 310), spacing: 8)], spacing: 8) {
+                ForEach(items) { item in
+                    vocabCard(item: item)
                 }
             }
         }
+        .padding(10)
+        .background(Color.primary.opacity(0.015))
+        .cornerRadius(9)
+        .overlay(
+            RoundedRectangle(cornerRadius: 9)
+                .stroke(Color.primary.opacity(0.04), lineWidth: 0.8)
+        )
+    }
+    
+    private func toggleVocabSelection(id: UUID) {
+        guard var res = analysisResult else { return }
+        if let idx = res.vocabularies.firstIndex(where: { $0.id == id }) {
+            res.vocabularies[idx].isSelected.toggle()
+            self.analysisResult = res
+        }
+    }
+    
+    private func vocabCard(item: ExtractedVocabulary) -> some View {
+        HStack(alignment: .top, spacing: 9) {
+            Button(action: {
+                toggleVocabSelection(id: item.id)
+            }) {
+                Image(systemName: item.isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 14))
+                    .foregroundColor(item.isSelected ? .orange : .secondary.opacity(0.35))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
+            
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .center, spacing: 6) {
+                    Text(item.word)
+                        .font(.system(size: 12.5, weight: .bold))
+                        .foregroundColor(.primary)
+                    
+                    Text(item.partOfSpeech)
+                        .font(.system(size: 9))
+                        .foregroundColor(.orange)
+                        .padding(.horizontal, 4.5)
+                        .padding(.vertical, 1)
+                        .background(Color.orange.opacity(0.12))
+                        .cornerRadius(3)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        speechService.speak(text: item.word, languageCode: "en-US", speakerID: "vocab_\(item.id)")
+                    }) {
+                        Image(systemName: (speechService.isSpeaking && speechService.currentSpeakerID == "vocab_\(item.id)") ? "speaker.wave.3.fill" : "speaker.wave.2")
+                            .font(.system(size: 10))
+                            .foregroundColor(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Nghe phát âm")
+                }
+                
+                Text(item.vietnameseMeaning)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.primary.opacity(0.9))
+                
+                if !item.contextSentence.isEmpty {
+                    Text("\"\(item.contextSentence)\"")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .italic()
+                        .lineLimit(2)
+                }
+            }
+        }
+        .padding(9)
+        .background(Color.primary.opacity(0.025))
+        .cornerRadius(7)
+        .overlay(
+            RoundedRectangle(cornerRadius: 7)
+                .stroke(item.isSelected ? Color.orange.opacity(0.35) : Color.primary.opacity(0.05), lineWidth: 1)
+        )
+    }
+    
+    private func toggleSelectGroup(items: [ExtractedVocabulary], selectAll: Bool) {
+        guard var currentResult = analysisResult else { return }
+        let ids = Set(items.map { $0.id })
+        for i in 0..<currentResult.vocabularies.count {
+            if ids.contains(currentResult.vocabularies[i].id) {
+                currentResult.vocabularies[i].isSelected = selectAll
+            }
+        }
+        self.analysisResult = currentResult
     }
     
     // MARK: - Welcome & Empty States
@@ -420,13 +557,13 @@ public struct SmartTextAnalysisSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private var welcomeHintSection: some View {
+    private var emptyResultSection: some View {
         VStack(spacing: 10) {
             Spacer()
-            Image(systemName: "text.magnifyingglass")
+            Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary.opacity(0.4))
-            Text("Dán một đoạn văn tiếng Anh vào ô trên và bấm 'Phân Tích Ngay'")
+            Text("Không tìm thấy cấu trúc ngữ pháp hay từ vựng đặc thù trong đoạn văn này.")
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
             Spacer()
@@ -434,15 +571,18 @@ public struct SmartTextAnalysisSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private var emptyResultSection: some View {
-        VStack(spacing: 8) {
+    private var welcomeHintSection: some View {
+        VStack(spacing: 12) {
             Spacer()
-            Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary.opacity(0.4))
-            Text("Không tìm thấy cấu trúc ngữ pháp đặc thù trong đoạn này.")
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 34))
+                .foregroundColor(.purple.opacity(0.5))
+            
+            Text("Dán một đoạn văn tiếng Anh vào ô phía trên và bấm 'Phân Tích Ngay'\nAI sẽ tự động trích xuất toàn bộ công thức ngữ pháp và từ vựng trọng tâm cho bạn.")
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -450,48 +590,60 @@ public struct SmartTextAnalysisSheet: View {
     
     // MARK: - Bottom Action Bar
     private func bottomActionBar(_ result: TextAnalysisResult) -> some View {
-        let selectedVocabs = result.vocabularies.filter { $0.isSelected }.count
-        let selectedGrammars = result.grammars.filter { $0.isSelected }.count
-        let totalSelected = selectedVocabs + selectedGrammars
+        let selectedVocabCount = result.vocabularies.filter { $0.isSelected }.count
+        let selectedGrammarCount = result.grammars.filter { $0.isSelected }.count
+        let totalSelected = selectedVocabCount + selectedGrammarCount
         
-        return HStack {
-            Text("Đã chọn \(selectedVocabs) từ vựng và \(selectedGrammars) công thức")
-                .font(.system(size: 11.5, weight: .medium))
+        return HStack(spacing: 12) {
+            HStack(spacing: 6) {
+                Button("Chọn tất cả") {
+                    toggleAllSelection(true)
+                }
+                .font(.system(size: 11))
+                .buttonStyle(.plain)
+                .foregroundColor(.purple)
+                
+                Text("•")
+                    .foregroundColor(.secondary.opacity(0.5))
+                
+                Button("Bỏ chọn hết") {
+                    toggleAllSelection(false)
+                }
+                .font(.system(size: 11))
+                .buttonStyle(.plain)
                 .foregroundColor(.secondary)
+            }
             
             Spacer()
             
-            if let saved = savedCountToast {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-                    Text("Đã lưu \(saved) mục vào Sổ tay!")
-                        .font(.system(size: 11.5, weight: .bold))
-                        .foregroundColor(.green)
-                }
-                .transition(.opacity)
+            if showSavedNotification, let count = savedCount {
+                Text("✅ Đã lưu \(count) mục vào Sổ tay!")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.green)
+                    .transition(.opacity)
             }
             
             Button(action: {
                 let count = analyzer.saveSelectedToNotebook(result: result)
+                self.savedCount = count
                 withAnimation {
-                    self.savedCountToast = count
+                    self.showSavedNotification = true
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                     withAnimation {
-                        self.savedCountToast = nil
+                        self.showSavedNotification = false
                     }
                 }
             }) {
                 HStack(spacing: 5) {
-                    Image(systemName: "tray.and.arrow.down.fill")
-                    Text("Lưu (\(totalSelected)) vào Sổ tay từ vựng")
+                    Image(systemName: "folder.badge.plus")
+                    Text("Lưu vào Sổ Tay (\(totalSelected) mục)")
                 }
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 11.5, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(totalSelected > 0 ? Color.blue : Color.gray.opacity(0.5))
+                .padding(.vertical, 6.5)
+                .background(totalSelected > 0 ? Color.orange : Color.gray.opacity(0.4))
                 .cornerRadius(6)
             }
             .buttonStyle(.plain)
@@ -499,6 +651,17 @@ public struct SmartTextAnalysisSheet: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
-        .background(Color.primary.opacity(0.04))
+        .background(Color.primary.opacity(0.02))
+    }
+    
+    private func toggleAllSelection(_ selected: Bool) {
+        guard var result = analysisResult else { return }
+        for i in 0..<result.vocabularies.count {
+            result.vocabularies[i].isSelected = selected
+        }
+        for i in 0..<result.grammars.count {
+            result.grammars[i].isSelected = selected
+        }
+        self.analysisResult = result
     }
 }
