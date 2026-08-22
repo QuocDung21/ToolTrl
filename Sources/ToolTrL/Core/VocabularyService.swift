@@ -88,6 +88,28 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         """
     }
     
+    public static func buildWordGrammarPatternsPrompt(for word: String, context: String? = nil) -> String {
+        let contextHint = (context != nil && !context!.isEmpty) ? "\n(Ví dụ ngữ cảnh: \"\(context!)\")" : ""
+        return """
+        Hãy phân tích và trích xuất các CẤU TRÚC & CÔNG THỨC NGỮ PHÁP quan trọng nhất đi với từ '\(word)'\(contextHint) theo đúng cấu trúc sau để lưu vào Sổ Tay:
+
+        ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
+        [Liệt kê các cấu trúc ngữ pháp dạng công thức, ví dụ: S + \(word) + to V / V-ing / that + S + V / prep + O]
+
+        ### 2. 💡 CÁCH DÙNG & GIỚI TỪ ĐI KÈM
+        - Các giới từ cố định, cấu trúc đi kèm và ý nghĩa từng trường hợp.
+
+        ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
+        - Câu ví dụ thực tế cho từng cấu trúc (kèm dịch nghĩa tiếng Việt).
+
+        ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
+        - Bẫy ngữ pháp thường gặp trong đề thi TOEIC/IELTS khi dùng từ này.
+
+        ### 5. 🧠 MẸO GHI NHỚ
+        - Mẹo ngắn gọn để nhớ nhanh các cấu trúc này.
+        """
+    }
+    
     public var isGrammarFormula: Bool {
         return word.contains("📐") || (phonetic?.contains("+") == true) || translation.contains("Công thức:")
     }

@@ -824,18 +824,24 @@ public struct VocabularyNotebookView: View {
                 }
             }
             
-            // 3. Saved Formula (if any or trigger AI creation)
-            if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
+            // 3. Grammar Formula & Structure Card or AI Generator Button
+            let parsedAI = item.aiDetailedAnalysis != nil ? AIAnalysisParser.parse(item.aiDetailedAnalysis!) : nil
+            let activeFormula = (item.isGrammarFormula ? item.phonetic : nil) ?? (parsedAI?.formula) ?? (item.phonetic?.contains("+") == true ? item.phonetic : nil)
+            
+            if let formula = activeFormula, !formula.isEmpty {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Label("Công thức ngữ pháp", systemImage: "function")
+                            Label("Công thức & Cấu trúc ngữ pháp", systemImage: "function")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.blue)
                             Spacer()
                             Button(action: {
+                                let prompt = item.isGrammarFormula
+                                    ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
+                                    : SavedWordItem.buildWordGrammarPatternsPrompt(for: item.cleanTitle, context: item.exampleEn)
                                 QuickAIWindowController.shared.showAI(
-                                    prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                                    prompt: prompt,
                                     targetWordId: item.id,
                                     targetWordTitle: item.cleanTitle
                                 )
@@ -863,35 +869,58 @@ public struct VocabularyNotebookView: View {
                         }
                         
                         Text(formula)
-                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .font(.system(size: 13.5, weight: .bold, design: .monospaced))
                             .foregroundColor(.blue)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
                 }
-            } else if item.isGrammarFormula || item.aiPartOfSpeech == .grammar {
+            } else {
+                // Button to generate grammar formula & patterns with AI
                 Button(action: {
+                    let prompt = item.isGrammarFormula
+                        ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
+                        : SavedWordItem.buildWordGrammarPatternsPrompt(for: item.cleanTitle, context: item.exampleEn)
                     QuickAIWindowController.shared.showAI(
-                        prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                        prompt: prompt,
                         targetWordId: item.id,
                         targetWordTitle: item.cleanTitle
                     )
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "function")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.blue)
-                        Text("Dùng AI tự động tạo công thức & quy tắc ngữ pháp cho mục này")
-                            .font(.system(size: 11.5, weight: .medium))
-                            .foregroundColor(.primary)
+                        
+                        VStack(alignment: .leading, spacing: 1.5) {
+                            Text("Sinh cấu trúc & ngữ pháp đi kèm (AI)")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.primary)
+                            Text("Tự động trích xuất các mẫu câu, giới từ và bẫy thi của từ '\(item.cleanTitle)'")
+                                .font(.system(size: 10.5))
+                                .foregroundColor(.secondary)
+                        }
+                        
                         Spacer()
-                        Image(systemName: "sparkles")
-                            .foregroundColor(.purple)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "sparkles")
+                            Text("Sinh ngữ pháp")
+                        }
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundColor(.purple)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3.5)
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(4)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .background(Color.blue.opacity(0.06))
+                    .padding(8)
+                    .background(Color.blue.opacity(0.04))
                     .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.blue.opacity(0.12), lineWidth: 1)
+                    )
                 }
                 .buttonStyle(.plain)
             }
