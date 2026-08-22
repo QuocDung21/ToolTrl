@@ -32,6 +32,14 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         self.isFavorite = isFavorite
         self.isMastered = isMastered
     }
+    
+    public var isGrammarFormula: Bool {
+        return word.contains("📐") || (phonetic?.contains("+") == true) || translation.contains("Công thức:")
+    }
+    
+    public var cleanTitle: String {
+        return word.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 @MainActor
