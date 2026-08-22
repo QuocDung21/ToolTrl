@@ -2,11 +2,14 @@ import SwiftUI
 import WebKit
 
 public struct QuickAIAssistantView: View {
+    @ObservedObject var promptService = QuickPromptService.shared
+    
     @State private var selectedProvider: AIProvider = .chatgpt
     @State private var webView: WKWebView?
     @State private var isLoading: Bool = false
     @State private var currentPrompt: String = ""
     @State private var injectedPrompt: String? = nil
+    @State private var showPromptManager: Bool = false
     
     public let initialPrompt: String?
     public let onClose: () -> Void
@@ -28,7 +31,7 @@ public struct QuickAIAssistantView: View {
             Divider()
                 .opacity(0.18)
             
-            // Quick Prompt Suggestion Bar (if text is present)
+            // Dynamic Quick Prompt Suggestion Bar (if text is present)
             if !currentPrompt.isEmpty {
                 quickPromptBar
                 Divider().opacity(0.12)
@@ -64,6 +67,9 @@ public struct QuickAIAssistantView: View {
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
         .ignoresSafeArea()
+        .sheet(isPresented: $showPromptManager) {
+            QuickPromptManagerSheet()
+        }
     }
     
     // MARK: - Unified Single-Row Header Bar
@@ -135,7 +141,7 @@ public struct QuickAIAssistantView: View {
         .background(Color.primary.opacity(0.03))
     }
     
-    // MARK: - Quick Prompt Suggestions Bar
+    // MARK: - Dynamic Quick Prompt Suggestions Bar
     private var quickPromptBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
@@ -144,10 +150,28 @@ public struct QuickAIAssistantView: View {
                     .foregroundColor(.secondary)
                     .padding(.leading, 14)
                 
-                promptChip(title: "📖 Giải thích & Dịch", prompt: "Hãy giải thích chi tiết, dịch chuẩn xác và phân tích câu sau:\n\n\(currentPrompt)")
-                promptChip(title: "✍️ Viết lại tự nhiên", prompt: "Hãy viết lại đoạn văn sau theo 3 phong cách (Tự nhiên, Trang trọng, Học thuật):\n\n\(currentPrompt)")
-                promptChip(title: "🔍 Tìm lỗi ngữ pháp", prompt: "Hãy kiểm tra lỗi ngữ pháp, từ vựng và chỉ ra cách sửa cho đoạn sau:\n\n\(currentPrompt)")
-                promptChip(title: "💻 Giải thích Code", prompt: "Hãy giải thích cách hoạt động của đoạn mã này, độ phức tạp và tối ưu:\n\n\(currentPrompt)")
+                ForEach(promptService.prompts) { item in
+                    let rendered = promptService.renderPrompt(for: item, text: currentPrompt)
+                    promptChip(title: "\(item.icon) \(item.title)", prompt: rendered)
+                }
+                
+                Button(action: {
+                    showPromptManager = true
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 9.5))
+                        Text("Tùy chỉnh mẫu...")
+                            .font(.system(size: 10.5, weight: .medium))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3.5)
+                    .background(Color.primary.opacity(0.06))
+                    .foregroundColor(.secondary)
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                .help("Thêm, sửa, hoặc xóa các mẫu câu hỏi nhanh")
             }
             .padding(.vertical, 6)
             .padding(.trailing, 14)

@@ -23,10 +23,12 @@ public struct SettingsView: View {
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var vocabService = VocabularyService.shared
     @ObservedObject var iconService = AppIconService.shared
+    @ObservedObject var promptService = QuickPromptService.shared
     
     @State private var selectedTab: SettingsTab = .display
     @State private var searchVocabText: String = ""
     @State private var copiedVocab: Bool = false
+    @State private var showPromptManagerSheet: Bool = false
     
     public init() {}
     
@@ -61,6 +63,9 @@ public struct SettingsView: View {
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
+        .sheet(isPresented: $showPromptManagerSheet) {
+            QuickPromptManagerSheet()
+        }
     }
     
     // MARK: - Top Segmented Navigation Bar
@@ -328,6 +333,55 @@ public struct SettingsView: View {
                             }
                         }
                         .padding(.top, 4)
+                    }
+                }
+                
+                // Mẫu Câu Hỏi Nhanh AI (Custom AI Prompts)
+                settingCard(title: "Mẫu Câu Hỏi Nhanh Cho AI (Custom Prompts)", icon: "sparkles.rectangle.stack.fill") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Tùy chỉnh các mẫu câu hỏi nhanh xuất hiện trên thanh công cụ của Trợ lý AI (Option + A):")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        
+                        VStack(spacing: 5) {
+                            ForEach(promptService.prompts.prefix(4)) { item in
+                                HStack(spacing: 6) {
+                                    Text(item.icon)
+                                        .font(.system(size: 12))
+                                    Text(item.title)
+                                        .font(.system(size: 11.5, weight: .semibold))
+                                        .foregroundColor(.primary)
+                                    Text("• \(item.template)")
+                                        .font(.system(size: 10.5))
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4.5)
+                                .background(Color.primary.opacity(0.025))
+                                .cornerRadius(5)
+                            }
+                        }
+                        
+                        HStack(spacing: 8) {
+                            Button(action: {
+                                showPromptManagerSheet = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "slider.horizontal.3")
+                                    Text("Quản lý & Thêm mẫu mới...")
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.purple.opacity(0.12))
+                                .foregroundColor(.purple)
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.top, 2)
                     }
                 }
             }
