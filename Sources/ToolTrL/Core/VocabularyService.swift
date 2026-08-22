@@ -187,7 +187,25 @@ public final class VocabularyService: ObservableObject {
         self.savedWords = items
     }
     
+    private let saveQueue = DispatchQueue(label: "com.tooltrl.vocabulary.save", qos: .utility)
+    private var saveWorkItem: DispatchWorkItem?
+    
     public func saveWords() {
+        let snapshot = self.savedWords
+        saveWorkItem?.cancel()
+        
+        let workItem = DispatchWorkItem { [storageKey] in
+            guard let data = try? JSONEncoder().encode(snapshot) else { return }
+            UserDefaults.standard.set(data, forKey: storageKey)
+        }
+        
+        saveWorkItem = workItem
+        saveQueue.asyncAfter(deadline: .now() + 0.15, execute: workItem)
+    }
+    
+    /// Synchronous flush when needed
+    public func flush() {
+        saveWorkItem?.cancel()
         if let data = try? JSONEncoder().encode(savedWords) {
             UserDefaults.standard.set(data, forKey: storageKey)
         }

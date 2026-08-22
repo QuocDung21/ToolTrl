@@ -161,24 +161,38 @@ public final class SmartDictionaryService {
                 to: targetLanguage
             ) ?? cleanWord
             
-            // Fast parallel translation of definitions and examples
-            for gIdx in 0..<meaningGroups.count {
-                for dIdx in 0..<meaningGroups[gIdx].definitions.count {
-                    let defEn = meaningGroups[gIdx].definitions[dIdx].definitionEn
-                    let defVi = await TranslationService.shared.translateFallback(
-                        text: defEn,
-                        from: "en",
-                        to: targetLanguage
-                    )
-                    meaningGroups[gIdx].definitions[dIdx].definitionVi = defVi
-                    
-                    if let exEn = meaningGroups[gIdx].definitions[dIdx].exampleEn {
-                        let exVi = await TranslationService.shared.translateFallback(
-                            text: exEn,
-                            from: "en",
-                            to: targetLanguage
-                        )
-                        meaningGroups[gIdx].definitions[dIdx].exampleVi = exVi
+            // Fast parallel translation of definitions and examples using structured TaskGroup
+            await withTaskGroup(of: (groupIndex: Int, defIndex: Int, isExample: Bool, translated: String?).self) { group in
+                for gIdx in 0..<meaningGroups.count {
+                    for dIdx in 0..<meaningGroups[gIdx].definitions.count {
+                        let defEn = meaningGroups[gIdx].definitions[dIdx].definitionEn
+                        group.addTask {
+                            let trans = await TranslationService.shared.translateFallback(
+                                text: defEn,
+                                from: "en",
+                                to: targetLanguage
+                            )
+                            return (gIdx, dIdx, false, trans)
+                        }
+                        
+                        if let exEn = meaningGroups[gIdx].definitions[dIdx].exampleEn {
+                            group.addTask {
+                                let trans = await TranslationService.shared.translateFallback(
+                                    text: exEn,
+                                    from: "en",
+                                    to: targetLanguage
+                                )
+                                return (gIdx, dIdx, true, trans)
+                            }
+                        }
+                    }
+                }
+                
+                for await result in group {
+                    if result.isExample {
+                        meaningGroups[result.groupIndex].definitions[result.defIndex].exampleVi = result.translated
+                    } else {
+                        meaningGroups[result.groupIndex].definitions[result.defIndex].definitionVi = result.translated
                     }
                 }
             }

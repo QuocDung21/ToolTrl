@@ -31,6 +31,15 @@ public enum TargetLanguage: String, CaseIterable, Identifiable, Sendable {
 public final class TranslationService {
     public static let shared = TranslationService()
     
+    private let urlSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 4.0
+        config.timeoutIntervalForResource = 8.0
+        config.httpMaximumConnectionsPerHost = 10
+        config.requestCachePolicy = .returnCacheDataElseLoad
+        return URLSession(configuration: config)
+    }()
+    
     private init() {}
     
     /// Detects language from text using Apple NaturalLanguage framework
@@ -92,7 +101,7 @@ public final class TranslationService {
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
                   let html = String(data: data, encoding: .utf8) else {
                 return nil
@@ -126,7 +135,7 @@ public final class TranslationService {
         request.timeoutInterval = 4.0
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 return nil
             }
@@ -155,7 +164,7 @@ public final class TranslationService {
         request.timeoutInterval = 3.0
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await urlSession.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
                 return nil
             }
