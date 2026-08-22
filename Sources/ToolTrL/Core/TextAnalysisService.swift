@@ -9,9 +9,9 @@ public enum VocabImportance: String, Codable, Sendable, CaseIterable {
     
     public var displayName: String {
         switch self {
-        case .core: return "🌟 Từ Vựng Cốt Lõi"
-        case .collocation: return "💡 Cụm Từ & Thành Ngữ"
-        case .advanced: return "📖 Từ Vựng Nâng Cao"
+        case .core: return "Từ Vựng Cốt Lõi"
+        case .collocation: return "Cụm Từ & Thành Ngữ"
+        case .advanced: return "Từ Vựng Nâng Cao"
         }
     }
     

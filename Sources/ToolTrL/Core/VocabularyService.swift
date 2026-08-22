@@ -80,20 +80,20 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
 }
 
 public enum ItemAIPriority: String, CaseIterable, Identifiable {
-    case core = "🌟 Từ Vựng Cốt Lõi"
-    case phrases = "💡 Cụm Từ & Thành Ngữ"
-    case advanced = "📖 Từ Vựng Nâng Cao"
-    case grammar = "📐 Công Thức Ngữ Pháp"
+    case core = "Từ Vựng Cốt Lõi"
+    case phrases = "Cụm Từ & Thành Ngữ"
+    case advanced = "Từ Vựng Nâng Cao"
+    case grammar = "Công Thức Ngữ Pháp"
     
     public var id: String { rawValue }
 }
 
 public enum ItemAIPartOfSpeech: String, CaseIterable, Identifiable {
-    case noun = "🔵 Danh Từ (Noun)"
-    case verb = "🟢 Động Từ (Verb)"
-    case adjective = "🟣 Tính Từ (Adjective)"
-    case adverb = "🟡 Trạng Từ & Khác"
-    case grammar = "📐 Cấu Trúc Ngữ Pháp"
+    case noun = "Danh Từ (Noun)"
+    case verb = "Động Từ (Verb)"
+    case adjective = "Tính Từ (Adjective)"
+    case adverb = "Trạng Từ & Khác"
+    case grammar = "Cấu Trúc Ngữ Pháp"
     
     public var id: String { rawValue }
 }

@@ -50,8 +50,8 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
 }
 
 public enum NotebookSortOption: String, CaseIterable, Identifiable {
-    case aiPriority = "🌟 Phân loại AI (Mức độ quan trọng)"
-    case aiPartOfSpeech = "🏷️ Phân loại AI (Theo Từ Loại)"
+    case aiPriority = "Mức độ quan trọng"
+    case aiPartOfSpeech = "Theo từ loại"
     case newestFirst = "Mới lưu nhất"
     case oldestFirst = "Cũ nhất"
     case alphabeticalAZ = "Bảng chữ cái (A → Z)"
@@ -63,8 +63,8 @@ public enum NotebookSortOption: String, CaseIterable, Identifiable {
     
     public var icon: String {
         switch self {
-        case .aiPriority: return "sparkles"
-        case .aiPartOfSpeech: return "tag.fill"
+        case .aiPriority: return "list.bullet.indent"
+        case .aiPartOfSpeech: return "tag"
         case .newestFirst: return "clock.arrow.circlepath"
         case .oldestFirst: return "clock"
         case .alphabeticalAZ: return "textformat.abc"
@@ -116,18 +116,18 @@ public struct VocabularyNotebookView: View {
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm ghi chú...")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                // Sorting & AI Grouping Menu
+                // Sorting Menu
                 Menu {
-                    Section("PHÂN LOẠI & SẮP XẾP BẰNG AI") {
+                    Section("NHÓM DANH MỤC") {
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 sortOption = .aiPriority
                             }
                         }) {
                             if sortOption == .aiPriority {
-                                Label("🌟 Phân loại AI (Mức độ quan trọng)", systemImage: "checkmark")
+                                Label("Mức độ quan trọng", systemImage: "checkmark")
                             } else {
-                                Label("🌟 Phân loại AI (Mức độ quan trọng)", systemImage: "sparkles")
+                                Label("Mức độ quan trọng", systemImage: "list.bullet.indent")
                             }
                         }
                         
@@ -137,14 +137,14 @@ public struct VocabularyNotebookView: View {
                             }
                         }) {
                             if sortOption == .aiPartOfSpeech {
-                                Label("🏷️ Phân loại AI (Theo Từ Loại)", systemImage: "checkmark")
+                                Label("Theo từ loại", systemImage: "checkmark")
                             } else {
-                                Label("🏷️ Phân loại AI (Theo Từ Loại)", systemImage: "tag.fill")
+                                Label("Theo từ loại", systemImage: "tag")
                             }
                         }
                     }
                     
-                    Section("SẮP XẾP TIÊU CHUẨN") {
+                    Section("SẮP XẾP") {
                         ForEach([
                             NotebookSortOption.newestFirst,
                             NotebookSortOption.oldestFirst,
@@ -171,13 +171,13 @@ public struct VocabularyNotebookView: View {
                 }
                 .help("Phân loại và sắp xếp ghi chú (\(sortOption.rawValue))")
                 
-                // AI Extraction Button
+                // Text Analysis Button
                 Button(action: {
                     TextAnalysisWindowController.shared.showAnalysis()
                 }) {
-                    Label("AI Bóc Tách", systemImage: "brain.head.profile")
+                    Label("Bóc Tách", systemImage: "doc.text.magnifyingglass")
                 }
-                .help("AI tự động bóc tách từ vựng & ngữ pháp từ đoạn văn")
+                .help("Bóc tách từ vựng & ngữ pháp từ đoạn văn")
                 
                 // Flashcards Button
                 Button(action: {

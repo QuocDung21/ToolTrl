@@ -5,7 +5,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable {
     case shortcuts = "Phím tắt"
     case speech = "Giọng đọc"
     case appearance = "Giao diện & Icon"
-    case prompts = "Mẫu câu AI"
+    case prompts = "Mẫu câu hỏi"
     case about = "Giới thiệu"
     
     public var id: String { rawValue }
@@ -16,7 +16,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable {
         case .shortcuts: return "command"
         case .speech: return "speaker.wave.2"
         case .appearance: return "paintbrush"
-        case .prompts: return "sparkles"
+        case .prompts: return "text.badge.plus"
         case .about: return "info.circle"
         }
     }
@@ -27,7 +27,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable {
         case .shortcuts: return .orange
         case .speech: return .blue
         case .appearance: return .purple
-        case .prompts: return .pink
+        case .prompts: return .teal
         case .about: return .indigo
         }
     }

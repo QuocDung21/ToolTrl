@@ -9,10 +9,10 @@ public enum AnalysisFilterTab: String, CaseIterable, Identifiable {
 }
 
 public enum VocabSortOption: String, CaseIterable, Identifiable {
-    case smartAI = "🌟 Phân loại AI (Mức độ quan trọng)"
-    case partOfSpeech = "🏷️ Theo Từ Loại (Noun, Verb, Adj...)"
-    case appearance = "⏱️ Thứ tự xuất hiện trong bài"
-    case alphabetical = "🔤 Bảng chữ cái (A → Z)"
+    case smartAI = "Mức độ quan trọng"
+    case partOfSpeech = "Theo Từ Loại (Noun, Verb, Adj...)"
+    case appearance = "Thứ tự xuất hiện trong bài"
+    case alphabetical = "Bảng chữ cái (A → Z)"
     
     public var id: String { rawValue }
 }
@@ -96,10 +96,10 @@ public struct SmartTextAnalysisSheet: View {
                 .frame(width: 72)
             
             HStack(spacing: 6) {
-                Image(systemName: "brain.head.profile")
+                Image(systemName: "doc.text.magnifyingglass")
                     .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.purple)
-                Text("AI Bóc Tách Ngữ Pháp & Từ Vựng")
+                    .foregroundColor(.blue)
+                Text("Bóc Tách Ngữ Pháp & Từ Vựng")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(.primary)
             }
@@ -156,14 +156,15 @@ public struct SmartTextAnalysisSheet: View {
                     }
                 }) {
                     HStack(spacing: 5) {
-                        Image(systemName: "bolt.fill")
-                        Text("Phân Tích Ngay (AI On-Device)")
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 10))
+                        Text("Phân Tích Ngay")
                     }
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
-                    .background(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.4) : Color.purple)
+                    .background(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray.opacity(0.4) : Color.blue)
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)
@@ -175,14 +176,14 @@ public struct SmartTextAnalysisSheet: View {
                     )
                 }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                        Text("Hỏi sâu với ChatGPT / Gemini...")
+                        Image(systemName: "bubble.left.and.text.bubble.right")
+                        Text("Hỏi Trợ Lý AI...")
                     }
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.purple)
+                    .foregroundColor(.primary.opacity(0.85))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 6)
-                    .background(Color.purple.opacity(0.1))
+                    .background(Color.primary.opacity(0.05))
                     .cornerRadius(6)
                 }
                 .buttonStyle(.plain)

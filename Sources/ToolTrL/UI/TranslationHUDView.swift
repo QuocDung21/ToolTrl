@@ -144,22 +144,12 @@ public struct TranslationHUDView: View {
                 Button(action: {
                     QuickAIWindowController.shared.showAI(prompt: viewModel.originalText)
                 }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 9))
-                        Text("Hỏi AI")
-                            .font(.system(size: 10, weight: .semibold))
-                    }
-                    .foregroundColor(.purple)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.purple.opacity(0.12))
-                    .cornerRadius(5)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 11))
+                        .foregroundColor(.purple.opacity(0.85))
                 }
                 .buttonStyle(.plain)
-                .lineLimit(1)
-                .fixedSize()
-                .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
+                .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này (\(HotKeyManager.shared.aiShortcut.displayString))")
                 
                 Button(action: {
                     onClose()
