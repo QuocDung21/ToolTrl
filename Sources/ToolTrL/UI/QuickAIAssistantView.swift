@@ -108,7 +108,26 @@ public struct QuickAIAssistantView: View {
             Spacer()
             
             // Right Action Buttons
-            HStack(spacing: 5) {
+            HStack(spacing: 6) {
+                // Extract into Vocabulary Notebook Button
+                Button(action: {
+                    extractAndAnalyzeAIResponse()
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.down.on.square")
+                            .font(.system(size: 10.5))
+                        Text("Bóc tách vào Sổ Tay")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4.5)
+                    .background(Color.green.opacity(0.12))
+                    .foregroundColor(.green)
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                .help("Dùng AI On-Device để tinh lọc câu trả lời của ChatGPT/Gemini thành từ vựng & ngữ pháp lưu vào Sổ Tay")
+                
                 // Pin Window Button
                 Button(action: {
                     QuickAIWindowController.shared.togglePin()
@@ -155,6 +174,44 @@ public struct QuickAIAssistantView: View {
         }
         .frame(height: 48)
         .background(Color.primary.opacity(0.03))
+    }
+    
+    // MARK: - Extract and Analyze AI Response with Local AI
+    private func extractAndAnalyzeAIResponse() {
+        guard let wv = webView else {
+            TextAnalysisWindowController.shared.showAnalysis(text: currentPrompt)
+            return
+        }
+        
+        let js = """
+        (function() {
+            let sel = window.getSelection().toString().trim();
+            if (sel.length > 0) return sel;
+            
+            let gptMsgs = document.querySelectorAll('[data-message-author-role="assistant"]');
+            if (gptMsgs.length > 0) {
+                return gptMsgs[gptMsgs.length - 1].innerText.trim();
+            }
+            
+            let geminiMsgs = document.querySelectorAll('.model-response-text, message-content, [data-test-id="model-response-text"]');
+            if (geminiMsgs.length > 0) {
+                return geminiMsgs[geminiMsgs.length - 1].innerText.trim();
+            }
+            
+            let markdowns = document.querySelectorAll('.font-claude-message, .prose, .markdown');
+            if (markdowns.length > 0) {
+                return markdowns[markdowns.length - 1].innerText.trim();
+            }
+            
+            return document.body.innerText.trim();
+        })();
+        """
+        
+        wv.evaluateJavaScript(js) { result, error in
+            let extracted = (result as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let finalText = extracted.isEmpty ? currentPrompt : extracted
+            TextAnalysisWindowController.shared.showAnalysis(text: finalText)
+        }
     }
     
     // MARK: - Dynamic Quick Prompt Suggestions Bar
