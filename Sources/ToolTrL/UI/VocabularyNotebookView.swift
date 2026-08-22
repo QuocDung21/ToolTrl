@@ -49,6 +49,20 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
     }
 }
 
+public enum NotebookLayoutMode: String, CaseIterable, Identifiable {
+    case split = "3 Cột (Chi tiết)"
+    case table = "Bảng dữ liệu"
+    
+    public var id: String { rawValue }
+    
+    public var icon: String {
+        switch self {
+        case .split: return "rectangle.split.3x1"
+        case .table: return "tablecells"
+        }
+    }
+}
+
 public enum NotebookSortOption: String, CaseIterable, Identifiable {
     case aiPriority = "Mức độ quan trọng (AI)"
     case thematicGenre = "Theo thể loại / chủ đề (AI)"
@@ -83,6 +97,8 @@ public struct VocabularyNotebookView: View {
     
     @State private var selectedSidebarItem: NotebookSidebarItem? = .vocabulary
     @State private var selectedItemID: UUID? = nil
+    @State private var selectedTableItemIDs: Set<UUID> = []
+    @State private var layoutMode: NotebookLayoutMode = .split
     @State private var searchText: String = ""
     @State private var sortOption: NotebookSortOption = .aiPriority
     @State private var isFlashcardMode: Bool = false
@@ -97,27 +113,46 @@ public struct VocabularyNotebookView: View {
             if isFlashcardMode {
                 flashcardStudyView
             } else {
-                nativeSplitLayout
+                nativeRootLayout
             }
         }
-        .frame(minWidth: 920, minHeight: 600)
+        .frame(minWidth: 960, minHeight: 620)
     }
     
-    // MARK: - Pure Native macOS 3-Pane Layout (Sidebar - List - Detail)
-    private var nativeSplitLayout: some View {
-        NavigationSplitView {
-            sidebarView
-                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
-        } content: {
-            contentListView
-                .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 380)
-        } detail: {
-            detailView
+    // MARK: - Native Root Layout (Split vs Table)
+    private var nativeRootLayout: some View {
+        Group {
+            if layoutMode == .split {
+                NavigationSplitView {
+                    sidebarView
+                        .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+                } content: {
+                    contentListView
+                        .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 380)
+                } detail: {
+                    detailView
+                }
+            } else {
+                NavigationSplitView {
+                    sidebarView
+                        .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+                } detail: {
+                    tableViewMode
+                }
+            }
         }
         .navigationTitle(selectedSidebarItem?.title ?? "Sổ Tay")
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm ghi chú...")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                // Layout Switcher (3-Pane vs Table)
+                Picker("Chế độ xem", selection: $layoutMode) {
+                    Label("3 Cột", systemImage: "rectangle.split.3x1").tag(NotebookLayoutMode.split)
+                    Label("Bảng", systemImage: "tablecells").tag(NotebookLayoutMode.table)
+                }
+                .pickerStyle(.segmented)
+                .help("Chuyển đổi giao diện: 3 Cột chi tiết hoặc Bảng dữ liệu rộng")
+                
                 // Sorting Menu
                 Menu {
                     Section("PHÂN LOẠI THEO AI") {
@@ -248,7 +283,7 @@ public struct VocabularyNotebookView: View {
         }
     }
     
-    // MARK: - Middle Content List (Supports AI Grouped Sections)
+    // MARK: - 1. Middle Content List (For 3-Pane Split Mode)
     private var contentListView: some View {
         VStack(spacing: 0) {
             // Quick Filter & Sort Header Bar
@@ -259,67 +294,7 @@ public struct VocabularyNotebookView: View {
                 
                 Spacer()
                 
-                Menu {
-                    Section("PHÂN LOẠI THEO AI") {
-                        Button(action: { withAnimation { sortOption = .aiPriority } }) {
-                            if sortOption == .aiPriority {
-                                Label("Mức độ quan trọng (AI)", systemImage: "checkmark")
-                            } else {
-                                Label("Mức độ quan trọng (AI)", systemImage: "list.bullet.indent")
-                            }
-                        }
-                        
-                        Button(action: { withAnimation { sortOption = .thematicGenre } }) {
-                            if sortOption == .thematicGenre {
-                                Label("Theo thể loại / chủ đề (AI)", systemImage: "checkmark")
-                            } else {
-                                Label("Theo thể loại / chủ đề (AI)", systemImage: "folder.badge.gearshape")
-                            }
-                        }
-                        
-                        Button(action: { withAnimation { sortOption = .aiPartOfSpeech } }) {
-                            if sortOption == .aiPartOfSpeech {
-                                Label("Theo từ loại (AI)", systemImage: "checkmark")
-                            } else {
-                                Label("Theo từ loại (AI)", systemImage: "tag")
-                            }
-                        }
-                    }
-                    
-                    Section("SẮP XẾP TIÊU CHUẨN") {
-                        ForEach([
-                            NotebookSortOption.newestFirst,
-                            NotebookSortOption.oldestFirst,
-                            NotebookSortOption.alphabeticalAZ,
-                            NotebookSortOption.alphabeticalZA,
-                            NotebookSortOption.favoritesFirst,
-                            NotebookSortOption.learningFirst
-                        ]) { opt in
-                            Button(action: { withAnimation { sortOption = opt } }) {
-                                if sortOption == opt {
-                                    Label(opt.rawValue, systemImage: "checkmark")
-                                } else {
-                                    Label(opt.rawValue, systemImage: opt.icon)
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: sortOption.icon)
-                            .font(.system(size: 10))
-                        Text(sortOption.rawValue)
-                            .font(.system(size: 11, weight: .medium))
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 8, weight: .semibold))
-                    }
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3.5)
-                    .background(Color.primary.opacity(0.04))
-                    .cornerRadius(5)
-                }
-                .buttonStyle(.plain)
+                sortDropdownMenu
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 6)
@@ -329,111 +304,10 @@ public struct VocabularyNotebookView: View {
             
             // List View
             if filteredItems.isEmpty {
-                VStack(spacing: 8) {
-                    Spacer()
-                    Image(systemName: selectedSidebarItem?.icon ?? "books.vertical")
-                        .font(.system(size: 32))
-                        .foregroundColor(.secondary.opacity(0.3))
-                    Text(emptyListMessage)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
-                    Spacer()
-                }
+                emptyStatePlaceholder
             } else {
                 List(selection: $selectedItemID) {
-                    switch sortOption {
-                    case .aiPriority:
-                        // Group by AI Priority with internal alphabetical sort
-                        ForEach(ItemAIPriority.allCases) { priority in
-                            let group = filteredItems
-                                .filter { $0.aiPriority == priority }
-                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
-                            if !group.isEmpty {
-                                Section {
-                                    ForEach(group) { item in
-                                        itemRowLink(item: item)
-                                    }
-                                } header: {
-                                    HStack {
-                                        Text(priority.rawValue.uppercased())
-                                            .font(.system(size: 10.5, weight: .bold))
-                                            .foregroundColor(.secondary)
-                                        Spacer()
-                                        Text("\(group.count)")
-                                            .font(.system(size: 9.5, weight: .bold))
-                                            .padding(.horizontal, 5)
-                                            .padding(.vertical, 1)
-                                            .background(Color.secondary.opacity(0.12))
-                                            .clipShape(Capsule())
-                                    }
-                                }
-                            }
-                        }
-                        
-                    case .thematicGenre:
-                        // Group by Thematic Genre (Chủ đề / Thể loại)
-                        ForEach(ItemThematicGenre.allCases) { genre in
-                            let group = filteredItems
-                                .filter { $0.aiThematicGenre == genre }
-                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
-                            if !group.isEmpty {
-                                Section {
-                                    ForEach(group) { item in
-                                        itemRowLink(item: item)
-                                    }
-                                } header: {
-                                    HStack {
-                                        Text(genre.rawValue.uppercased())
-                                            .font(.system(size: 10.5, weight: .bold))
-                                            .foregroundColor(.secondary)
-                                        Spacer()
-                                        Text("\(group.count)")
-                                            .font(.system(size: 9.5, weight: .bold))
-                                            .padding(.horizontal, 5)
-                                            .padding(.vertical, 1)
-                                            .background(Color.secondary.opacity(0.12))
-                                            .clipShape(Capsule())
-                                    }
-                                }
-                            }
-                        }
-                        
-                    case .aiPartOfSpeech:
-                        // Group by AI Part of Speech with internal alphabetical sort
-                        ForEach(ItemAIPartOfSpeech.allCases) { pos in
-                            let group = filteredItems
-                                .filter { $0.aiPartOfSpeech == pos }
-                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
-                            if !group.isEmpty {
-                                Section {
-                                    ForEach(group) { item in
-                                        itemRowLink(item: item)
-                                    }
-                                } header: {
-                                    HStack {
-                                        Text(pos.rawValue.uppercased())
-                                            .font(.system(size: 10.5, weight: .bold))
-                                            .foregroundColor(.secondary)
-                                        Spacer()
-                                        Text("\(group.count)")
-                                            .font(.system(size: 9.5, weight: .bold))
-                                            .padding(.horizontal, 5)
-                                            .padding(.vertical, 1)
-                                            .background(Color.secondary.opacity(0.12))
-                                            .clipShape(Capsule())
-                                    }
-                                }
-                            }
-                        }
-                        
-                    default:
-                        // Standard Flat List
-                        ForEach(filteredItems) { item in
-                            itemRowLink(item: item)
-                        }
-                    }
+                    renderGroupedListRows
                 }
                 .listStyle(.inset)
             }
@@ -442,6 +316,329 @@ public struct VocabularyNotebookView: View {
             if selectedItemID == nil, let first = filteredItems.first {
                 selectedItemID = first.id
             }
+        }
+    }
+    
+    // MARK: - 2. Full Table View Mode (Shows massive list of vocabulary at once)
+    private var tableViewMode: some View {
+        VStack(spacing: 0) {
+            // Table Header Status Bar
+            HStack(spacing: 10) {
+                HStack(spacing: 4) {
+                    Image(systemName: "tablecells")
+                        .foregroundColor(.blue)
+                    Text("\(filteredItems.count) từ vựng / công thức")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                
+                Spacer()
+                
+                sortDropdownMenu
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(Color.primary.opacity(0.02))
+            
+            Divider()
+            
+            if filteredItems.isEmpty {
+                emptyStatePlaceholder
+            } else {
+                Table(filteredItems, selection: $selectedItemID) {
+                    // 1. Star / Favorite Column
+                    TableColumn("⭐") { item in
+                        Button(action: {
+                            vocabService.toggleFavorite(id: item.id)
+                        }) {
+                            Image(systemName: item.isFavorite ? "star.fill" : "star")
+                                .font(.system(size: 11))
+                                .foregroundColor(item.isFavorite ? .yellow : .secondary.opacity(0.4))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Yêu thích")
+                    }
+                    .width(min: 28, ideal: 32, max: 36)
+                    
+                    // 2. Word / Title Column
+                    TableColumn("Từ vựng / Cấu trúc") { item in
+                        HStack(spacing: 6) {
+                            if item.isGrammarFormula {
+                                Text("📐")
+                                    .font(.system(size: 9))
+                            }
+                            
+                            Text(item.cleanTitle)
+                                .font(.system(size: 12.5, weight: .bold, design: item.isGrammarFormula ? .monospaced : .default))
+                                .foregroundColor(item.isGrammarFormula ? .blue : .primary)
+                            
+                            if let ph = item.phonetic, !ph.isEmpty, !item.isGrammarFormula {
+                                Text(ph)
+                                    .font(.system(size: 10.5, design: .serif))
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            Button(action: {
+                                speechService.speak(text: item.word, languageCode: "en-US", speakerID: "table_\(item.id.uuidString)")
+                            }) {
+                                Image(systemName: "speaker.wave.2")
+                                    .font(.system(size: 9.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Phát âm")
+                        }
+                    }
+                    .width(min: 160, ideal: 200, max: 280)
+                    
+                    // 3. Meaning / Translation Column
+                    TableColumn("Nghĩa tiếng Việt") { item in
+                        Text(item.translation)
+                            .font(.system(size: 12))
+                            .foregroundColor(.primary.opacity(0.9))
+                            .lineLimit(1)
+                    }
+                    .width(min: 180, ideal: 240)
+                    
+                    // 4. Thematic Genre / Topic
+                    TableColumn("Chủ đề (AI)") { item in
+                        Text(item.aiThematicGenre.rawValue)
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.04))
+                            .cornerRadius(4)
+                    }
+                    .width(min: 130, ideal: 150, max: 180)
+                    
+                    // 5. Part of Speech Column
+                    TableColumn("Từ loại") { item in
+                        Text(item.aiPartOfSpeech.rawValue)
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.secondary)
+                    }
+                    .width(min: 110, ideal: 130, max: 160)
+                    
+                    // 6. Example Sentence Column
+                    TableColumn("Ví dụ") { item in
+                        if let ex = item.exampleEn, !ex.isEmpty {
+                            Text("\"\(ex)\"")
+                                .font(.system(size: 11, design: .serif))
+                                .foregroundColor(.secondary)
+                                .italic()
+                                .lineLimit(1)
+                        } else {
+                            Text("—")
+                                .foregroundColor(.secondary.opacity(0.4))
+                        }
+                    }
+                    .width(min: 180, ideal: 260)
+                    
+                    // 7. Status (Mastered) Column
+                    TableColumn("Trạng thái") { item in
+                        Button(action: {
+                            vocabService.toggleMastered(id: item.id)
+                        }) {
+                            HStack(spacing: 3) {
+                                Image(systemName: item.isMastered ? "checkmark.seal.fill" : "circle")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(item.isMastered ? .green : .secondary.opacity(0.4))
+                                Text(item.isMastered ? "Đã thuộc" : "Đang học")
+                                    .font(.system(size: 10.5, weight: item.isMastered ? .semibold : .regular))
+                                    .foregroundColor(item.isMastered ? .green : .secondary)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .width(min: 85, ideal: 95, max: 110)
+                    
+                    // 8. Action Delete Column
+                    TableColumn("Xóa") { item in
+                        Button(role: .destructive, action: {
+                            vocabService.removeWord(id: item.id)
+                        }) {
+                            Image(systemName: "trash")
+                                .font(.system(size: 10.5))
+                                .foregroundColor(.secondary.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Xóa khỏi sổ tay")
+                    }
+                    .width(min: 36, ideal: 40, max: 46)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Sort Dropdown Menu
+    private var sortDropdownMenu: some View {
+        Menu {
+            Section("PHÂN LOẠI THEO AI") {
+                Button(action: { withAnimation { sortOption = .aiPriority } }) {
+                    if sortOption == .aiPriority {
+                        Label("Mức độ quan trọng (AI)", systemImage: "checkmark")
+                    } else {
+                        Label("Mức độ quan trọng (AI)", systemImage: "list.bullet.indent")
+                    }
+                }
+                
+                Button(action: { withAnimation { sortOption = .thematicGenre } }) {
+                    if sortOption == .thematicGenre {
+                        Label("Theo thể loại / chủ đề (AI)", systemImage: "checkmark")
+                    } else {
+                        Label("Theo thể loại / chủ đề (AI)", systemImage: "folder.badge.gearshape")
+                    }
+                }
+                
+                Button(action: { withAnimation { sortOption = .aiPartOfSpeech } }) {
+                    if sortOption == .aiPartOfSpeech {
+                        Label("Theo từ loại (AI)", systemImage: "checkmark")
+                    } else {
+                        Label("Theo từ loại (AI)", systemImage: "tag")
+                    }
+                }
+            }
+            
+            Section("SẮP XẾP TIÊU CHUẨN") {
+                ForEach([
+                    NotebookSortOption.newestFirst,
+                    NotebookSortOption.oldestFirst,
+                    NotebookSortOption.alphabeticalAZ,
+                    NotebookSortOption.alphabeticalZA,
+                    NotebookSortOption.favoritesFirst,
+                    NotebookSortOption.learningFirst
+                ]) { opt in
+                    Button(action: { withAnimation { sortOption = opt } }) {
+                        if sortOption == opt {
+                            Label(opt.rawValue, systemImage: "checkmark")
+                        } else {
+                            Label(opt.rawValue, systemImage: opt.icon)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: sortOption.icon)
+                    .font(.system(size: 10))
+                Text(sortOption.rawValue)
+                    .font(.system(size: 11, weight: .medium))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3.5)
+            .background(Color.primary.opacity(0.04))
+            .cornerRadius(5)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - Render Grouped Rows
+    @ViewBuilder
+    private var renderGroupedListRows: some View {
+        switch sortOption {
+        case .aiPriority:
+            ForEach(ItemAIPriority.allCases) { priority in
+                let group = filteredItems
+                    .filter { $0.aiPriority == priority }
+                    .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
+                if !group.isEmpty {
+                    Section {
+                        ForEach(group) { item in
+                            itemRowLink(item: item)
+                        }
+                    } header: {
+                        HStack {
+                            Text(priority.rawValue.uppercased())
+                                .font(.system(size: 10.5, weight: .bold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(group.count)")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.secondary.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            
+        case .thematicGenre:
+            ForEach(ItemThematicGenre.allCases) { genre in
+                let group = filteredItems
+                    .filter { $0.aiThematicGenre == genre }
+                    .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
+                if !group.isEmpty {
+                    Section {
+                        ForEach(group) { item in
+                            itemRowLink(item: item)
+                        }
+                    } header: {
+                        HStack {
+                            Text(genre.rawValue.uppercased())
+                                .font(.system(size: 10.5, weight: .bold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(group.count)")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.secondary.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            
+        case .aiPartOfSpeech:
+            ForEach(ItemAIPartOfSpeech.allCases) { pos in
+                let group = filteredItems
+                    .filter { $0.aiPartOfSpeech == pos }
+                    .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
+                if !group.isEmpty {
+                    Section {
+                        ForEach(group) { item in
+                            itemRowLink(item: item)
+                        }
+                    } header: {
+                        HStack {
+                            Text(pos.rawValue.uppercased())
+                                .font(.system(size: 10.5, weight: .bold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text("\(group.count)")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(Color.secondary.opacity(0.12))
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            
+        default:
+            ForEach(filteredItems) { item in
+                itemRowLink(item: item)
+            }
+        }
+    }
+    
+    private var emptyStatePlaceholder: some View {
+        VStack(spacing: 8) {
+            Spacer()
+            Image(systemName: selectedSidebarItem?.icon ?? "books.vertical")
+                .font(.system(size: 32))
+                .foregroundColor(.secondary.opacity(0.3))
+            Text(emptyListMessage)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            Spacer()
         }
     }
     
