@@ -98,6 +98,36 @@ public final class VocabularyService: ObservableObject {
         saveWords()
     }
     
+    public func addWord(
+        word: String,
+        phonetic: String? = nil,
+        translation: String,
+        exampleEn: String? = nil,
+        exampleVi: String? = nil
+    ) {
+        let clean = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        if let idx = savedWords.firstIndex(where: { $0.word.lowercased() == clean.lowercased() }) {
+            savedWords[idx] = SavedWordItem(
+                word: clean,
+                phonetic: phonetic,
+                translation: translation,
+                exampleEn: exampleEn,
+                exampleVi: exampleVi
+            )
+        } else {
+            let newItem = SavedWordItem(
+                word: clean,
+                phonetic: phonetic,
+                translation: translation,
+                exampleEn: exampleEn,
+                exampleVi: exampleVi
+            )
+            savedWords.insert(newItem, at: 0)
+        }
+        saveWords()
+    }
+    
     public func toggleFavorite(id: UUID) {
         if let index = savedWords.firstIndex(where: { $0.id == id }) {
             savedWords[index].isFavorite.toggle()

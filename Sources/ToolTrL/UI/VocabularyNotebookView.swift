@@ -29,6 +29,7 @@ public struct VocabularyNotebookView: View {
     @State private var flashcardIndex: Int = 0
     @State private var isCardFlipped: Bool = false
     @State private var copied: Bool = false
+    @State private var showTextAnalysisSheet: Bool = false
     
     public init() {}
     
@@ -44,6 +45,9 @@ public struct VocabularyNotebookView: View {
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
+        .sheet(isPresented: $showTextAnalysisSheet) {
+            SmartTextAnalysisSheet()
+        }
         .onAppear {
             if selectedWordID == nil, let first = filteredWords.first {
                 selectedWordID = first.id
@@ -76,6 +80,29 @@ public struct VocabularyNotebookView: View {
                     .frame(width: 68) // Clearance for Red/Yellow/Green window buttons
                 
                 Spacer()
+                
+                // AI Analysis Button
+                Button(action: {
+                    showTextAnalysisSheet = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 10.5))
+                        Text("AI Phân Tích")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Color.purple.opacity(0.15))
+                    .foregroundColor(.purple)
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.purple.opacity(0.25), lineWidth: 0.8)
+                    )
+                }
+                .buttonStyle(.plain)
+                .help("Đưa vào một đoạn văn và để AI tự động trích xuất từ vựng & cấu trúc ngữ pháp")
                 
                 // Flashcard Quick Action Button
                 Button(action: {

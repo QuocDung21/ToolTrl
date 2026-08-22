@@ -13,6 +13,7 @@ public struct TranslationHUDView: View {
     @State private var isPinned: Bool = false
     @State private var manualInput: String = ""
     @State private var copied: Bool = false
+    @State private var showTextAnalysisSheet: Bool = false
     
     public init(viewModel: TranslationViewModel, onTogglePin: (() -> Void)? = nil, onClose: @escaping () -> Void) {
         self.viewModel = viewModel
@@ -72,6 +73,9 @@ public struct TranslationHUDView: View {
         #if canImport(Translation)
         .modifier(TranslationModifier(viewModel: viewModel))
         #endif
+        .sheet(isPresented: $showTextAnalysisSheet) {
+            SmartTextAnalysisSheet(initialText: viewModel.originalText)
+        }
     }
     
     // MARK: - Top App Bar
@@ -535,6 +539,25 @@ public struct TranslationHUDView: View {
                 }
                 
                 Spacer()
+                
+                // AI Grammar & Vocab Extraction Button
+                Button(action: {
+                    showTextAnalysisSheet = true
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 9))
+                        Text("AI Bóc Tách")
+                            .font(.system(size: 9.5, weight: .bold))
+                    }
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.purple.opacity(0.15))
+                    .foregroundColor(.purple)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .help("AI tự động bóc tách từ vựng trọng tâm và công thức ngữ pháp để lưu vào Sổ tay")
                 
                 Text("\(viewModel.originalText.split(separator: " ").count) từ")
                     .font(.system(size: 9.5))
