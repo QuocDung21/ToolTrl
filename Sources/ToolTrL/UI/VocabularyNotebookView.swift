@@ -824,7 +824,7 @@ public struct VocabularyNotebookView: View {
                 }
             }
             
-            // 3. Saved Formula (if any)
+            // 3. Saved Formula (if any or trigger AI creation)
             if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 6) {
@@ -833,6 +833,22 @@ public struct VocabularyNotebookView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.blue)
                             Spacer()
+                            Button(action: {
+                                QuickAIWindowController.shared.showAI(
+                                    prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                                    targetWordId: item.id,
+                                    targetWordTitle: item.cleanTitle
+                                )
+                            }) {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "sparkles")
+                                    Text("AI Tạo lại")
+                                }
+                                .font(.system(size: 10.5))
+                                .foregroundColor(.purple)
+                            }
+                            .buttonStyle(.borderless)
+                            
                             Button(action: {
                                 let pb = NSPasteboard.general
                                 pb.clearContents()
@@ -853,6 +869,31 @@ public struct VocabularyNotebookView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
                 }
+            } else if item.isGrammarFormula || item.aiPartOfSpeech == .grammar {
+                Button(action: {
+                    QuickAIWindowController.shared.showAI(
+                        prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                        targetWordId: item.id,
+                        targetWordTitle: item.cleanTitle
+                    )
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "function")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.blue)
+                        Text("Dùng AI tự động tạo công thức & quy tắc ngữ pháp cho mục này")
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.purple)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Color.blue.opacity(0.06))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
             }
             
             // 4. Offline Dictionary API Definitions
@@ -949,6 +990,37 @@ public struct VocabularyNotebookView: View {
                 let parsed = AIAnalysisParser.parse(deepAnalysis)
                 
                 VStack(alignment: .leading, spacing: 12) {
+                    // Card 0: Công thức chuẩn (Nếu có)
+                    if let formula = parsed.formula, !formula.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Label("Công thức chuẩn (Formula)", systemImage: "function")
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(.blue)
+                                    Spacer()
+                                    Button(action: {
+                                        let pb = NSPasteboard.general
+                                        pb.clearContents()
+                                        pb.setString(formula, forType: .string)
+                                        withAnimation { formulaCopied = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { formulaCopied = false }
+                                    }) {
+                                        Label(formulaCopied ? "Đã chép" : "Sao chép", systemImage: formulaCopied ? "checkmark" : "doc.on.doc")
+                                            .font(.system(size: 10.5))
+                                    }
+                                    .buttonStyle(.borderless)
+                                }
+                                
+                                Text(formula)
+                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.blue)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
                     // Card 1: Tầng nghĩa & Định nghĩa
                     if !parsed.meanings.isEmpty {
                         GroupBox {
@@ -1065,6 +1137,31 @@ public struct VocabularyNotebookView: View {
                         }
                     }
                     
+                    // Card 4.5: Lỗi sai thường gặp & Bẫy đề thi (Common Mistakes)
+                    if !parsed.commonMistakes.isEmpty {
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Label("Lỗi sai hay gặp & Bẫy đề thi", systemImage: "exclamationmark.triangle")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.secondary)
+                                
+                                ForEach(parsed.commonMistakes, id: \.self) { mistake in
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Text("•")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.orange)
+                                        Text(mistake)
+                                            .font(.system(size: 12.5))
+                                            .foregroundColor(.primary)
+                                            .lineSpacing(2)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                    
                     // Card 5: Ví dụ thực tế
                     if !parsed.examples.isEmpty {
                         GroupBox {
@@ -1126,24 +1223,28 @@ public struct VocabularyNotebookView: View {
                     }
                 }
             } else {
-                // Callout Banner to prompt user to analyze with structured AI
+                // Callout Banner to prompt user to analyze with structured AI or Grammar Formula
                 Button(action: {
+                    let prompt = item.isGrammarFormula 
+                        ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
+                        : SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle)
+                    
                     QuickAIWindowController.shared.showAI(
-                        prompt: SavedWordItem.buildStructuredWordPrompt(for: item.cleanTitle),
+                        prompt: prompt,
                         targetWordId: item.id,
                         targetWordTitle: item.cleanTitle
                     )
                 }) {
                     HStack(spacing: 10) {
-                        Image(systemName: "sparkles.square.filled.on.square")
+                        Image(systemName: item.isGrammarFormula ? "function" : "sparkles.square.filled.on.square")
                             .font(.system(size: 20))
                             .foregroundColor(.purple)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Chưa có phân tích AI chuyên sâu")
+                            Text(item.isGrammarFormula ? "Chưa có phân tích công thức & ngữ pháp" : "Chưa có phân tích AI chuyên sâu")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.primary)
-                            Text("Bấm để yêu cầu ChatGPT/Gemini phân tích họ từ, collocations và lưu vào mục này")
+                            Text(item.isGrammarFormula ? "Bấm để AI tạo công thức chuẩn, ví dụ 3 thể và bẫy đề thi" : "Bấm để yêu cầu ChatGPT/Gemini phân tích họ từ, collocations và lưu vào mục này")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
                         }

@@ -4,10 +4,10 @@ import NaturalLanguage
 public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID = UUID()
     public let word: String
-    public let phonetic: String?
-    public let translation: String
-    public let exampleEn: String?
-    public let exampleVi: String?
+    public var phonetic: String?
+    public var translation: String
+    public var exampleEn: String?
+    public var exampleVi: String?
     public let dateAdded: Date
     public var isFavorite: Bool
     public var isMastered: Bool
@@ -61,6 +61,30 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
 
         ### 6. 🧠 MẸO GHI NHỚ (MNEMONIC & ETYMOLOGY)
         - Gốc từ hoặc mẹo liên tưởng dễ nhớ.
+        """
+    }
+    
+    public static func buildGrammarFormulaPrompt(for title: String, context: String? = nil) -> String {
+        let contextHint = (context != nil && !context!.isEmpty) ? "\n(Ngữ cảnh câu: \"\(context!)\")" : ""
+        return """
+        Hãy phân tích và thiết lập CÔNG THỨC & QUY TẮC NGỮ PHÁP cho cấu trúc '\(title)'\(contextHint) theo đúng khuôn mẫu chuẩn sau để lưu vào Sổ Tay:
+
+        ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
+        [Ghi rõ công thức tổng quát dạng toán học, ví dụ: S + had + V3/ed + by the time + S + V2/ed, hoặc S + wish + (that) + S + V-past / would + V]
+
+        ### 2. 💡 Ý NGHĨA & CÁCH DÙNG
+        - Giải thích bản chất, hoàn cảnh sử dụng và các dấu hiệu nhận biết (Signal words / Trạng từ đi kèm).
+
+        ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
+        - Thể khẳng định (+): ... ➔ Dịch nghĩa tiếng Việt
+        - Thể phủ định (-): ... ➔ Dịch nghĩa tiếng Việt
+        - Thể nghi vấn (?): ... ➔ Dịch nghĩa tiếng Việt
+
+        ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
+        - Điểm bẫy ngữ pháp thường xuất hiện trong đề thi TOEIC/IELTS hoặc giao tiếp.
+
+        ### 5. 🧠 MẸO GHI NHỚ THẦN TỐC
+        - Mẹo vần điệu hoặc quy tắc liên tưởng ngắn gọn giúp nhớ công thức vĩnh viễn.
         """
     }
     
@@ -281,6 +305,10 @@ public final class VocabularyService: ObservableObject {
     public func updateAIDetailedAnalysis(wordId: UUID, analysis: String) {
         if let index = savedWords.firstIndex(where: { $0.id == wordId }) {
             savedWords[index].aiDetailedAnalysis = analysis
+            let parsed = AIAnalysisParser.parse(analysis)
+            if let formula = parsed.formula, !formula.isEmpty {
+                savedWords[index].phonetic = formula
+            }
             saveWords()
         }
     }
@@ -289,6 +317,10 @@ public final class VocabularyService: ObservableObject {
         let clean = wordTitle.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if let index = savedWords.firstIndex(where: { $0.cleanTitle.lowercased() == clean }) {
             savedWords[index].aiDetailedAnalysis = analysis
+            let parsed = AIAnalysisParser.parse(analysis)
+            if let formula = parsed.formula, !formula.isEmpty {
+                savedWords[index].phonetic = formula
+            }
             saveWords()
         }
     }
