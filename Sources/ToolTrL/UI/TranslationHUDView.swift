@@ -73,9 +73,6 @@ public struct TranslationHUDView: View {
         #if canImport(Translation)
         .modifier(TranslationModifier(viewModel: viewModel))
         #endif
-        .sheet(isPresented: $showTextAnalysisSheet) {
-            SmartTextAnalysisSheet(initialText: viewModel.originalText)
-        }
     }
     
     // MARK: - Top App Bar
@@ -542,7 +539,7 @@ public struct TranslationHUDView: View {
                 
                 // AI Grammar & Vocab Extraction Button
                 Button(action: {
-                    showTextAnalysisSheet = true
+                    TextAnalysisWindowController.shared.showAnalysis(text: viewModel.originalText)
                 }) {
                     HStack(spacing: 3) {
                         Image(systemName: "brain.head.profile")

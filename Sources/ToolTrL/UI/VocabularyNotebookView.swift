@@ -45,9 +45,6 @@ public struct VocabularyNotebookView: View {
         .background(
             VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow)
         )
-        .sheet(isPresented: $showTextAnalysisSheet) {
-            SmartTextAnalysisSheet()
-        }
         .onAppear {
             if selectedWordID == nil, let first = filteredWords.first {
                 selectedWordID = first.id
@@ -83,7 +80,7 @@ public struct VocabularyNotebookView: View {
                 
                 // AI Analysis Button
                 Button(action: {
-                    showTextAnalysisSheet = true
+                    TextAnalysisWindowController.shared.showAnalysis()
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "brain.head.profile")
