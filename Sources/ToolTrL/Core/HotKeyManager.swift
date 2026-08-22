@@ -6,9 +6,11 @@ import AppKit
 public final class HotKeyManager {
     public static let shared = HotKeyManager()
     
-    private var hotKeyRef: EventHotKeyRef?
+    private var hotKeyRefD: EventHotKeyRef?
+    private var hotKeyRefA: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
-    private var actionHandler: (() -> Void)?
+    private var translateAction: (() -> Void)?
+    private var aiAction: (() -> Void)?
     private var globalMonitor: Any?
     private var localMonitor: Any?
     
@@ -36,15 +38,20 @@ public final class HotKeyManager {
                 &hotKeyID
             )
             
-            if status == noErr, hotKeyID.id == 1 {
-                DispatchQueue.main.async {
-                    HotKeyManager.shared.triggerAction()
+            if status == noErr {
+                if hotKeyID.id == 1 {
+                    DispatchQueue.main.async {
+                        HotKeyManager.shared.triggerTranslate()
+                    }
+                } else if hotKeyID.id == 2 {
+                    DispatchQueue.main.async {
+                        HotKeyManager.shared.triggerAI()
+                    }
                 }
             }
             return noErr
         }
         
-        // CRITICAL: Must use GetEventDispatcherTarget() for system-wide global hotkeys in background apps
         InstallEventHandler(
             GetEventDispatcherTarget(),
             handlerCallback,
@@ -56,19 +63,34 @@ public final class HotKeyManager {
     }
     
     private func setupNSEventMonitor() {
-        // Dual fallback: NSEvent Global Monitor for Option + D (Key code 2)
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.modifierFlags.contains(.option) && !event.modifierFlags.contains(.command) && event.keyCode == 2 {
+            guard event.modifierFlags.contains(.option) && !event.modifierFlags.contains(.command) else { return }
+            
+            // Option + D (Key code 2)
+            if event.keyCode == 2 {
                 DispatchQueue.main.async {
-                    self?.triggerAction()
+                    self?.triggerTranslate()
+                }
+            }
+            // Option + A (Key code 0)
+            else if event.keyCode == 0 {
+                DispatchQueue.main.async {
+                    self?.triggerAI()
                 }
             }
         }
         
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.modifierFlags.contains(.option) && !event.modifierFlags.contains(.command) && event.keyCode == 2 {
+            guard event.modifierFlags.contains(.option) && !event.modifierFlags.contains(.command) else { return event }
+            
+            if event.keyCode == 2 {
                 DispatchQueue.main.async {
-                    self?.triggerAction()
+                    self?.triggerTranslate()
+                }
+                return nil
+            } else if event.keyCode == 0 {
+                DispatchQueue.main.async {
+                    self?.triggerAI()
                 }
                 return nil
             }
@@ -76,42 +98,54 @@ public final class HotKeyManager {
         }
     }
     
-    /// Register global hotkey (default: Option + D)
-    public func registerHotKey(
-        keyCode: UInt32 = UInt32(kVK_ANSI_D),
-        modifiers: UInt32 = UInt32(optionKey),
-        action: @escaping () -> Void
+    /// Register global hotkeys (Option + D for Translate, Option + A for AI Assistant)
+    public func registerHotKeys(
+        onTranslate: @escaping () -> Void,
+        onAI: @escaping () -> Void
     ) {
-        unregisterHotKey()
-        self.actionHandler = action
+        unregisterHotKeys()
+        self.translateAction = onTranslate
+        self.aiAction = onAI
         
-        let hotKeyID = EventHotKeyID(signature: OSType(0x5452414E), id: 1) // "TRAN"
-        
-        // Register with GetEventDispatcherTarget so it receives events system-wide
-        let status = RegisterEventHotKey(
-            keyCode,
-            modifiers,
-            hotKeyID,
+        // 1. Register Option + D (ID 1)
+        let id1 = EventHotKeyID(signature: OSType(0x5452414E), id: 1) // "TRAN"
+        _ = RegisterEventHotKey(
+            UInt32(kVK_ANSI_D),
+            UInt32(optionKey),
+            id1,
             GetEventDispatcherTarget(),
             0,
-            &hotKeyRef
+            &hotKeyRefD
         )
         
-        if status == noErr {
-            print("✅ Global HotKey registered successfully with GetEventDispatcherTarget (Option + D)")
-        } else {
-            print("❌ Failed to register Global HotKey, status: \(status)")
-        }
+        // 2. Register Option + A (ID 2)
+        let id2 = EventHotKeyID(signature: OSType(0x5452414E), id: 2)
+        _ = RegisterEventHotKey(
+            UInt32(kVK_ANSI_A),
+            UInt32(optionKey),
+            id2,
+            GetEventDispatcherTarget(),
+            0,
+            &hotKeyRefA
+        )
     }
     
-    public func unregisterHotKey() {
-        if let ref = hotKeyRef {
+    public func unregisterHotKeys() {
+        if let ref = hotKeyRefD {
             UnregisterEventHotKey(ref)
-            hotKeyRef = nil
+            hotKeyRefD = nil
+        }
+        if let ref = hotKeyRefA {
+            UnregisterEventHotKey(ref)
+            hotKeyRefA = nil
         }
     }
     
-    private func triggerAction() {
-        actionHandler?()
+    private func triggerTranslate() {
+        translateAction?()
+    }
+    
+    private func triggerAI() {
+        aiAction?()
     }
 }

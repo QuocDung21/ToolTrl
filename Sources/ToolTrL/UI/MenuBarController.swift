@@ -52,6 +52,11 @@ public final class MenuBarController: NSObject {
         notebookItem.target = self
         menu.addItem(notebookItem)
         
+        let aiItem = NSMenuItem(title: "Hỏi nhanh Trợ lý AI (ChatGPT / Gemini)... (Option + A)", action: #selector(handleOpenAI), keyEquivalent: "a")
+        aiItem.keyEquivalentModifierMask = .option
+        aiItem.target = self
+        menu.addItem(aiItem)
+        
         menu.addItem(NSMenuItem.separator())
         
         // Target Language Submenu
@@ -107,6 +112,13 @@ public final class MenuBarController: NSObject {
     
     @objc private func handleOpenNotebook() {
         VocabularyWindowController.shared.showNotebook()
+    }
+    
+    @objc private func handleOpenAI() {
+        Task { @MainActor in
+            let text = await TextGrabber.shared.getSelectedText()
+            QuickAIWindowController.shared.showAI(prompt: text)
+        }
     }
     
     @objc private func handleOpenSettings() {

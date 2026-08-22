@@ -70,8 +70,20 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupHotKey() {
-        HotKeyManager.shared.registerHotKey { [weak self] in
-            self?.triggerTranslation()
+        HotKeyManager.shared.registerHotKeys(
+            onTranslate: { [weak self] in
+                self?.triggerTranslation()
+            },
+            onAI: { [weak self] in
+                self?.triggerQuickAI()
+            }
+        )
+    }
+    
+    public func triggerQuickAI() {
+        Task { @MainActor in
+            let text = await TextGrabber.shared.getSelectedText()
+            QuickAIWindowController.shared.showAI(prompt: text)
         }
     }
     
