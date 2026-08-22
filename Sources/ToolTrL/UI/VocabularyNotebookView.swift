@@ -50,8 +50,8 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
 }
 
 public enum NotebookSortOption: String, CaseIterable, Identifiable {
-    case aiPriority = "Mức độ quan trọng"
-    case aiPartOfSpeech = "Theo từ loại"
+    case aiPriority = "Mức độ quan trọng (AI)"
+    case aiPartOfSpeech = "Theo từ loại (AI)"
     case newestFirst = "Mới lưu nhất"
     case oldestFirst = "Cũ nhất"
     case alphabeticalAZ = "Bảng chữ cái (A → Z)"
@@ -108,7 +108,7 @@ public struct VocabularyNotebookView: View {
                 .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
         } content: {
             contentListView
-                .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 360)
+                .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 380)
         } detail: {
             detailView
         }
@@ -118,16 +118,16 @@ public struct VocabularyNotebookView: View {
             ToolbarItemGroup(placement: .primaryAction) {
                 // Sorting Menu
                 Menu {
-                    Section("NHÓM DANH MỤC") {
+                    Section("PHÂN LOẠI DANH MỤC") {
                         Button(action: {
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 sortOption = .aiPriority
                             }
                         }) {
                             if sortOption == .aiPriority {
-                                Label("Mức độ quan trọng", systemImage: "checkmark")
+                                Label("Mức độ quan trọng (AI)", systemImage: "checkmark")
                             } else {
-                                Label("Mức độ quan trọng", systemImage: "list.bullet.indent")
+                                Label("Mức độ quan trọng (AI)", systemImage: "list.bullet.indent")
                             }
                         }
                         
@@ -137,9 +137,9 @@ public struct VocabularyNotebookView: View {
                             }
                         }) {
                             if sortOption == .aiPartOfSpeech {
-                                Label("Theo từ loại", systemImage: "checkmark")
+                                Label("Theo từ loại (AI)", systemImage: "checkmark")
                             } else {
-                                Label("Theo từ loại", systemImage: "tag")
+                                Label("Theo từ loại (AI)", systemImage: "tag")
                             }
                         }
                     }
@@ -236,7 +236,76 @@ public struct VocabularyNotebookView: View {
     
     // MARK: - Middle Content List (Supports AI Grouped Sections)
     private var contentListView: some View {
-        Group {
+        VStack(spacing: 0) {
+            // Quick Filter & Sort Header Bar
+            HStack(spacing: 6) {
+                Text("\(filteredItems.count) mục")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Menu {
+                    Section("PHÂN LOẠI THEO AI") {
+                        Button(action: { withAnimation { sortOption = .aiPriority } }) {
+                            if sortOption == .aiPriority {
+                                Label("Mức độ quan trọng (AI)", systemImage: "checkmark")
+                            } else {
+                                Label("Mức độ quan trọng (AI)", systemImage: "list.bullet.indent")
+                            }
+                        }
+                        
+                        Button(action: { withAnimation { sortOption = .aiPartOfSpeech } }) {
+                            if sortOption == .aiPartOfSpeech {
+                                Label("Theo từ loại (AI)", systemImage: "checkmark")
+                            } else {
+                                Label("Theo từ loại (AI)", systemImage: "tag")
+                            }
+                        }
+                    }
+                    
+                    Section("SẮP XẾP TIÊU CHUẨN") {
+                        ForEach([
+                            NotebookSortOption.newestFirst,
+                            NotebookSortOption.oldestFirst,
+                            NotebookSortOption.alphabeticalAZ,
+                            NotebookSortOption.alphabeticalZA,
+                            NotebookSortOption.favoritesFirst,
+                            NotebookSortOption.learningFirst
+                        ]) { opt in
+                            Button(action: { withAnimation { sortOption = opt } }) {
+                                if sortOption == opt {
+                                    Label(opt.rawValue, systemImage: "checkmark")
+                                } else {
+                                    Label(opt.rawValue, systemImage: opt.icon)
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: sortOption.icon)
+                            .font(.system(size: 10))
+                        Text(sortOption.rawValue)
+                            .font(.system(size: 11, weight: .medium))
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 8, weight: .semibold))
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3.5)
+                    .background(Color.primary.opacity(0.04))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(Color.primary.opacity(0.015))
+            
+            Divider().opacity(0.15)
+            
+            // List View
             if filteredItems.isEmpty {
                 VStack(spacing: 8) {
                     Spacer()
@@ -254,26 +323,56 @@ public struct VocabularyNotebookView: View {
                 List(selection: $selectedItemID) {
                     switch sortOption {
                     case .aiPriority:
-                        // Group by AI Priority
+                        // Group by AI Priority with internal alphabetical sort
                         ForEach(ItemAIPriority.allCases) { priority in
-                            let group = filteredItems.filter { $0.aiPriority == priority }
+                            let group = filteredItems
+                                .filter { $0.aiPriority == priority }
+                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
                             if !group.isEmpty {
-                                Section(header: Text("\(priority.rawValue) (\(group.count))")) {
+                                Section {
                                     ForEach(group) { item in
                                         itemRowLink(item: item)
+                                    }
+                                } header: {
+                                    HStack {
+                                        Text(priority.rawValue.uppercased())
+                                            .font(.system(size: 10.5, weight: .bold))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("\(group.count)")
+                                            .font(.system(size: 9.5, weight: .bold))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1)
+                                            .background(Color.secondary.opacity(0.12))
+                                            .clipShape(Capsule())
                                     }
                                 }
                             }
                         }
                         
                     case .aiPartOfSpeech:
-                        // Group by AI Part of Speech
+                        // Group by AI Part of Speech with internal alphabetical sort
                         ForEach(ItemAIPartOfSpeech.allCases) { pos in
-                            let group = filteredItems.filter { $0.aiPartOfSpeech == pos }
+                            let group = filteredItems
+                                .filter { $0.aiPartOfSpeech == pos }
+                                .sorted { $0.cleanTitle.localizedCaseInsensitiveCompare($1.cleanTitle) == .orderedAscending }
                             if !group.isEmpty {
-                                Section(header: Text("\(pos.rawValue) (\(group.count))")) {
+                                Section {
                                     ForEach(group) { item in
                                         itemRowLink(item: item)
+                                    }
+                                } header: {
+                                    HStack {
+                                        Text(pos.rawValue.uppercased())
+                                            .font(.system(size: 10.5, weight: .bold))
+                                            .foregroundColor(.secondary)
+                                        Spacer()
+                                        Text("\(group.count)")
+                                            .font(.system(size: 9.5, weight: .bold))
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 1)
+                                            .background(Color.secondary.opacity(0.12))
+                                            .clipShape(Capsule())
                                     }
                                 }
                             }
@@ -717,11 +816,8 @@ public struct VocabularyNotebookView: View {
         
         // Apply Sorting
         switch sortOption {
-        case .aiPriority:
-            // Grouping is handled in List Sections
-            break
-        case .aiPartOfSpeech:
-            // Grouping is handled in List Sections
+        case .aiPriority, .aiPartOfSpeech:
+            // Section-based grouping handles sorting within sections
             break
         case .newestFirst:
             list.sort { $0.dateAdded > $1.dateAdded }

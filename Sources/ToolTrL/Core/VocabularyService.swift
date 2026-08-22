@@ -44,11 +44,15 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     
     public var aiPriority: ItemAIPriority {
         if isGrammarFormula { return .grammar }
-        let clean = cleanTitle.lowercased()
+        let clean = cleanTitle.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         if clean.contains(" ") || clean.contains("-") {
             return .phrases
         }
-        if clean.count >= 8 {
+        
+        let academicSuffixes = ["tion", "sion", "ment", "able", "ible", "ology", "istic", "ize", "ify", "ance", "ence", "ous", "ive", "ity", "ical", "tude"]
+        let hasAcademicSuffix = academicSuffixes.contains { clean.hasSuffix($0) }
+        
+        if clean.count >= 7 || hasAcademicSuffix {
             return .advanced
         }
         return .core
