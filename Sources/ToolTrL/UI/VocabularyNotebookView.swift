@@ -423,6 +423,33 @@ public struct VocabularyNotebookView: View {
             
             Divider().opacity(0.15)
             
+            // In Grammar Tab: Quick Add Grammar Action
+            if selectedSidebarItem == .grammar {
+                Button(action: {
+                    showAddGrammarSheet = true
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 11.5))
+                            .foregroundColor(.blue)
+                        Text("Thêm Cấu Trúc Ngữ Pháp Mới")
+                            .font(.system(size: 11.5, weight: .bold))
+                            .foregroundColor(.blue)
+                        Spacer()
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 10))
+                            .foregroundColor(.purple)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color.blue.opacity(0.06))
+                    .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+            
             // List View
             if filteredItems.isEmpty {
                 emptyStatePlaceholder
@@ -836,105 +863,101 @@ public struct VocabularyNotebookView: View {
                 }
             }
             
-            // 3. Grammar Formula & Structure Card or AI Generator Button
-            let parsedAI = item.aiDetailedAnalysis != nil ? AIAnalysisParser.parse(item.aiDetailedAnalysis!) : nil
-            let activeFormula = (item.isGrammarFormula ? item.phonetic : nil) ?? (parsedAI?.formula) ?? (item.phonetic?.contains("+") == true ? item.phonetic : nil)
-            
-            if let formula = activeFormula, !formula.isEmpty {
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Label("Công thức & Cấu trúc ngữ pháp", systemImage: "function")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.blue)
-                            Spacer()
-                            Button(action: {
-                                let prompt = item.isGrammarFormula
-                                    ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
-                                    : SavedWordItem.buildWordGrammarPatternsPrompt(for: item.cleanTitle, context: item.exampleEn)
-                                QuickAIWindowController.shared.showAI(
-                                    prompt: prompt,
-                                    targetWordId: item.id,
-                                    targetWordTitle: item.cleanTitle
-                                )
-                            }) {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "sparkles")
-                                    Text("AI Tạo lại")
-                                }
-                                .font(.system(size: 10.5))
-                                .foregroundColor(.purple)
-                            }
-                            .buttonStyle(.borderless)
-                            
-                            Button(action: {
-                                let pb = NSPasteboard.general
-                                pb.clearContents()
-                                pb.setString(formula, forType: .string)
-                                withAnimation { formulaCopied = true }
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { formulaCopied = false }
-                            }) {
-                                Label(formulaCopied ? "Đã chép" : "Sao chép", systemImage: formulaCopied ? "checkmark" : "doc.on.doc")
+            // 3. Grammar Formula & Structure Card (Only for Grammar Items)
+            if item.isGrammarFormula || item.aiPartOfSpeech == .grammar {
+                let parsedAI = item.aiDetailedAnalysis != nil ? AIAnalysisParser.parse(item.aiDetailedAnalysis!) : nil
+                let activeFormula = item.phonetic ?? parsedAI?.formula
+                
+                if let formula = activeFormula, !formula.isEmpty {
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Label("Công thức & Cấu trúc chuẩn", systemImage: "function")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.blue)
+                                Spacer()
+                                Button(action: {
+                                    QuickAIWindowController.shared.showAI(
+                                        prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                                        targetWordId: item.id,
+                                        targetWordTitle: item.cleanTitle
+                                    )
+                                }) {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "sparkles")
+                                        Text("AI Tạo lại")
+                                    }
                                     .font(.system(size: 10.5))
+                                    .foregroundColor(.purple)
+                                }
+                                .buttonStyle(.borderless)
+                                
+                                Button(action: {
+                                    let pb = NSPasteboard.general
+                                    pb.clearContents()
+                                    pb.setString(formula, forType: .string)
+                                    withAnimation { formulaCopied = true }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { formulaCopied = false }
+                                }) {
+                                    Label(formulaCopied ? "Đã chép" : "Sao chép", systemImage: formulaCopied ? "checkmark" : "doc.on.doc")
+                                        .font(.system(size: 10.5))
+                                }
+                                .buttonStyle(.borderless)
                             }
-                            .buttonStyle(.borderless)
+                            
+                            Text(formula)
+                                .font(.system(size: 13.5, weight: .bold, design: .monospaced))
+                                .foregroundColor(.blue)
                         }
-                        
-                        Text(formula)
-                            .font(.system(size: 13.5, weight: .bold, design: .monospaced))
-                            .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(6)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(6)
-                }
-            } else {
-                // Button to generate grammar formula & patterns with AI
-                Button(action: {
-                    let prompt = item.isGrammarFormula
-                        ? SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn)
-                        : SavedWordItem.buildWordGrammarPatternsPrompt(for: item.cleanTitle, context: item.exampleEn)
-                    QuickAIWindowController.shared.showAI(
-                        prompt: prompt,
-                        targetWordId: item.id,
-                        targetWordTitle: item.cleanTitle
-                    )
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "function")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 1.5) {
-                            Text("Sinh cấu trúc & ngữ pháp đi kèm (AI)")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.primary)
-                            Text("Tự động trích xuất các mẫu câu, giới từ và bẫy thi của từ '\(item.cleanTitle)'")
-                                .font(.system(size: 10.5))
-                                .foregroundColor(.secondary)
+                } else {
+                    // Button to generate grammar formula with AI
+                    Button(action: {
+                        QuickAIWindowController.shared.showAI(
+                            prompt: SavedWordItem.buildGrammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                            targetWordId: item.id,
+                            targetWordTitle: item.cleanTitle
+                        )
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "function")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.blue)
+                            
+                            VStack(alignment: .leading, spacing: 1.5) {
+                                Text("Dùng AI tự động tạo công thức & quy tắc ngữ pháp")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                Text("Trích xuất công thức toán học, 3 thể câu và bẫy đề thi")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 3) {
+                                Image(systemName: "sparkles")
+                                Text("Sinh ngữ pháp")
+                            }
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(.purple)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3.5)
+                            .background(Color.purple.opacity(0.1))
+                            .cornerRadius(4)
                         }
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 3) {
-                            Image(systemName: "sparkles")
-                            Text("Sinh ngữ pháp")
-                        }
-                        .font(.system(size: 10.5, weight: .medium))
-                        .foregroundColor(.purple)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3.5)
-                        .background(Color.purple.opacity(0.1))
-                        .cornerRadius(4)
+                        .padding(8)
+                        .background(Color.blue.opacity(0.04))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.blue.opacity(0.12), lineWidth: 1)
+                        )
                     }
-                    .padding(8)
-                    .background(Color.blue.opacity(0.04))
-                    .cornerRadius(6)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.blue.opacity(0.12), lineWidth: 1)
-                    )
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             
             // 4. Offline Dictionary API Definitions
