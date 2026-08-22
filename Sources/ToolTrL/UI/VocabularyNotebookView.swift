@@ -97,7 +97,6 @@ public struct VocabularyNotebookView: View {
     
     @State private var selectedSidebarItem: NotebookSidebarItem? = .vocabulary
     @State private var selectedItemID: UUID? = nil
-    @State private var selectedTableItemIDs: Set<UUID> = []
     @State private var layoutMode: NotebookLayoutMode = .split
     @State private var searchText: String = ""
     @State private var sortOption: NotebookSortOption = .aiPriority
@@ -105,6 +104,8 @@ public struct VocabularyNotebookView: View {
     @State private var flashcardIndex: Int = 0
     @State private var isCardFlipped: Bool = false
     @State private var formulaCopied: Bool = false
+    @State private var isQuickLookPresented: Bool = false
+    @State private var keyMonitor: Any? = nil
     
     public init() {}
     
@@ -115,8 +116,60 @@ public struct VocabularyNotebookView: View {
             } else {
                 nativeRootLayout
             }
+            
+            // Quick Look Overlay on Spacebar Press
+            if isQuickLookPresented {
+                quickLookModal
+            }
         }
         .frame(minWidth: 960, minHeight: 620)
+        .onAppear {
+            setupKeyMonitor()
+            if selectedItemID == nil, let first = filteredItems.first {
+                selectedItemID = first.id
+            }
+        }
+        .onDisappear {
+            removeKeyMonitor()
+        }
+    }
+    
+    // MARK: - Local Key Monitor for Spacebar & Esc (Quick Look)
+    private func setupKeyMonitor() {
+        guard keyMonitor == nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Spacebar is keyCode 49
+            if event.keyCode == 49 {
+                // Ensure user is not currently typing in a search/text field
+                if let window = NSApp.keyWindow,
+                   let firstResponder = window.firstResponder as? NSTextView,
+                   firstResponder.isFieldEditor {
+                    return event
+                }
+                
+                if selectedItemID != nil {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                        isQuickLookPresented.toggle()
+                    }
+                    return nil // Consume space event
+                }
+            } else if event.keyCode == 53 { // Esc key
+                if isQuickLookPresented {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isQuickLookPresented = false
+                    }
+                    return nil // Consume Esc
+                }
+            }
+            return event
+        }
+    }
+    
+    private func removeKeyMonitor() {
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
     }
     
     // MARK: - Native Root Layout (Split vs Table)
@@ -220,6 +273,19 @@ public struct VocabularyNotebookView: View {
                 }
                 .help("Phân loại và sắp xếp ghi chú (\(sortOption.rawValue))")
                 
+                // Quick Look Spacebar Button
+                Button(action: {
+                    if selectedItemID != nil {
+                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            isQuickLookPresented.toggle()
+                        }
+                    }
+                }) {
+                    Label("Xem nhanh (Space)", systemImage: "eye")
+                }
+                .disabled(selectedItemID == nil)
+                .help("Xem nhanh chi tiết từ đang chọn (Nhấn phím Space)")
+                
                 // Text Analysis Button
                 Button(action: {
                     TextAnalysisWindowController.shared.showAnalysis()
@@ -312,11 +378,6 @@ public struct VocabularyNotebookView: View {
                 .listStyle(.inset)
             }
         }
-        .onAppear {
-            if selectedItemID == nil, let first = filteredItems.first {
-                selectedItemID = first.id
-            }
-        }
     }
     
     // MARK: - 2. Full Table View Mode (Shows massive list of vocabulary at once)
@@ -330,6 +391,10 @@ public struct VocabularyNotebookView: View {
                     Text("\(filteredItems.count) từ vựng / công thức")
                         .font(.system(size: 12, weight: .bold))
                 }
+                
+                Text("• Bấm phím Space để xem nhanh chi tiết")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.8))
                 
                 Spacer()
                 
@@ -466,6 +531,191 @@ public struct VocabularyNotebookView: View {
                     }
                     .width(min: 36, ideal: 40, max: 46)
                 }
+            }
+        }
+    }
+    
+    // MARK: - 3. Quick Look Detail Modal (Press Spacebar)
+    private var quickLookModal: some View {
+        ZStack {
+            // Dimmed backdrop
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isQuickLookPresented = false
+                    }
+                }
+            
+            if let id = selectedItemID,
+               let item = vocabService.savedWords.first(where: { $0.id == id }) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Quick Look Titlebar
+                    HStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "eye.fill")
+                                .font(.system(size: 11))
+                                .foregroundColor(.blue)
+                            Text("Xem nhanh (Quick Look)")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("Bấm Space hoặc Esc để đóng")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary.opacity(0.8))
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                isQuickLookPresented = false
+                            }
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.secondary.opacity(0.6))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.primary.opacity(0.03))
+                    
+                    Divider()
+                    
+                    // Quick Look Body
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            // Header
+                            HStack(alignment: .top) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    if item.isGrammarFormula {
+                                        Text("CÔNG THỨC NGỮ PHÁP")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.blue)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.blue.opacity(0.1))
+                                            .cornerRadius(4)
+                                    } else if let ph = item.phonetic, !ph.isEmpty {
+                                        Text(ph)
+                                            .font(.system(size: 13, weight: .medium, design: .serif))
+                                            .foregroundColor(.orange)
+                                    }
+                                    
+                                    Text(item.cleanTitle)
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(.primary)
+                                }
+                                
+                                Spacer()
+                                
+                                HStack(spacing: 8) {
+                                    if !item.isGrammarFormula {
+                                        Button(action: {
+                                            speechService.speak(text: item.word, languageCode: "en-US", speakerID: "quicklook_\(item.id.uuidString)")
+                                        }) {
+                                            Label("Phát âm", systemImage: "speaker.wave.2")
+                                                .font(.system(size: 11))
+                                        }
+                                    }
+                                    
+                                    Button(action: {
+                                        vocabService.toggleFavorite(id: item.id)
+                                    }) {
+                                        Image(systemName: item.isFavorite ? "star.fill" : "star")
+                                            .foregroundColor(item.isFavorite ? .yellow : .secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    
+                                    Button(action: {
+                                        vocabService.toggleMastered(id: item.id)
+                                    }) {
+                                        Image(systemName: item.isMastered ? "checkmark.seal.fill" : "checkmark.seal")
+                                            .foregroundColor(item.isMastered ? .green : .secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            
+                            // Genre & Part of Speech Badges
+                            HStack(spacing: 8) {
+                                Label(item.aiThematicGenre.rawValue, systemImage: "folder")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.primary.opacity(0.04))
+                                    .cornerRadius(6)
+                                
+                                Label(item.aiPartOfSpeech.rawValue, systemImage: "tag")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(Color.primary.opacity(0.04))
+                                    .cornerRadius(6)
+                            }
+                            
+                            // Formula (if any)
+                            if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
+                                GroupBox {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("CÔNG THỨC")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.blue)
+                                        Text(formula)
+                                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                            .foregroundColor(.blue)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(4)
+                                }
+                            }
+                            
+                            // Meaning Box
+                            GroupBox {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(item.isGrammarFormula ? "Ý NGHĨA & CÁCH DÙNG" : "NGHĨA TIẾNG VIỆT")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(.secondary)
+                                    Text(item.translation)
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.primary)
+                                        .lineSpacing(2)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(4)
+                            }
+                            
+                            // Example Box
+                            if let ex = item.exampleEn, !ex.isEmpty {
+                                GroupBox {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("VÍ DỤ NGỮ CẢNH")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.secondary)
+                                        Text("\"\(ex)\"")
+                                            .font(.system(size: 13, design: .serif))
+                                            .foregroundColor(.primary)
+                                            .italic()
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(4)
+                                }
+                            }
+                        }
+                        .padding(20)
+                    }
+                }
+                .frame(width: 520, height: 440)
+                .background(VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow))
+                .cornerRadius(12)
+                .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                )
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
         }
     }
