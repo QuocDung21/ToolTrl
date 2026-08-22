@@ -84,7 +84,21 @@ public final class SmartDictionaryService {
             var request = URLRequest(url: url)
             request.timeoutInterval = 4.0
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                if let directTranslation = await TranslationService.shared.translate(text: rawWord, from: "auto", to: targetLanguage) {
+                    let fallbackEntry = RichWordEntry(
+                        word: rawWord.capitalized,
+                        phonetic: nil,
+                        mainTranslation: directTranslation,
+                        meanings: [],
+                        allSynonyms: [],
+                        allAntonyms: []
+                    )
+                    TranslationCache.shared.setDictionaryEntry(key: cacheKey, entry: fallbackEntry)
+                    return fallbackEntry
+                }
+                return nil
+            }
             
             let rawEntries = try JSONDecoder().decode([RawEntry].self, from: data)
             guard let firstEntry = rawEntries.first else { return nil }

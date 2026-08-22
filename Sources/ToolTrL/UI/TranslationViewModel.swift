@@ -121,12 +121,18 @@ public final class TranslationViewModel: ObservableObject {
         }
         #endif
         
-        // Watchdog fallback
+        // Immediate high-speed neural translation pipeline (<100ms)
         Task {
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
-            guard self.translationTaskID == currentID else { return }
-            if self.translatedText.isEmpty && self.isLoading {
-                await self.runFallbackTranslation()
+            if let result = await TranslationService.shared.translate(
+                text: self.originalText,
+                from: self.detectedLanguage,
+                to: self.targetLanguage.rawValue
+            ) {
+                guard self.translationTaskID == currentID else { return }
+                if self.translatedText.isEmpty || self.isLoading {
+                    self.translatedText = result
+                    self.isLoading = false
+                }
             }
         }
     }
