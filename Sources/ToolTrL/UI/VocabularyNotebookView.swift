@@ -786,8 +786,53 @@ public struct VocabularyNotebookView: View {
     // MARK: - 1. Original Saved Note & Dictionary Section
     @ViewBuilder
     private func originalContentSection(item: SavedWordItem) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // 1. Saved Formula (if any)
+        VStack(alignment: .leading, spacing: 12) {
+            // 1. Main Saved Translation
+            GroupBox {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(item.isGrammarFormula ? "Ý nghĩa & Cách dùng" : "Nghĩa tiếng Việt đã lưu", systemImage: "text.alignleft")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    Text(item.translation)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.primary)
+                        .lineSpacing(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(6)
+            }
+            
+            // 2. Saved Context Example
+            if let exEn = item.exampleEn, !exEn.isEmpty {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Label("Ví dụ ngữ cảnh đã lưu", systemImage: "quote.opening")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Button(action: {
+                                speechService.speak(text: exEn, languageCode: "en-US", speakerID: "ex_\(item.id.uuidString)")
+                            }) {
+                                Image(systemName: "speaker.wave.2")
+                                    .font(.system(size: 10.5))
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        Text("\"\(exEn)\"")
+                            .font(.system(size: 13, design: .serif))
+                            .foregroundColor(.primary)
+                            .italic()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(6)
+                }
+            }
+            
+            // 3. Saved Formula (if any)
             if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
                 GroupBox {
                     VStack(alignment: .leading, spacing: 6) {
@@ -812,50 +857,6 @@ public struct VocabularyNotebookView: View {
                         Text(formula)
                             .font(.system(size: 14, weight: .bold, design: .monospaced))
                             .foregroundColor(.blue)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(6)
-                }
-            }
-            
-            // 2. Main Saved Translation
-            GroupBox {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(item.isGrammarFormula ? "Ý nghĩa & Cách dùng" : "Nghĩa tiếng Việt đã lưu", systemImage: "text.alignleft")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.secondary)
-                    
-                    Text(item.translation)
-                        .font(.system(size: 14.5, weight: .medium))
-                        .foregroundColor(.primary)
-                        .lineSpacing(3)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(6)
-            }
-            
-            // 3. Saved Context Example
-            if let exEn = item.exampleEn, !exEn.isEmpty {
-                GroupBox {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Label("Ví dụ ngữ cảnh đã lưu", systemImage: "quote.opening")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            Button(action: {
-                                speechService.speak(text: exEn, languageCode: "en-US", speakerID: "ex_\(item.id.uuidString)")
-                            }) {
-                                Image(systemName: "speaker.wave.2")
-                                    .font(.system(size: 11))
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        
-                        Text("\"\(exEn)\"")
-                            .font(.system(size: 13.5, design: .serif))
-                            .foregroundColor(.primary)
-                            .italic()
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(6)
@@ -896,7 +897,7 @@ public struct VocabularyNotebookView: View {
                                     Spacer()
                                 }
                                 
-                                ForEach(Array(group.definitions.prefix(3))) { def in
+                                ForEach(Array(group.definitions.prefix(4))) { def in
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("• \(def.definitionEn)")
                                             .font(.system(size: 12.5))
@@ -951,11 +952,11 @@ public struct VocabularyNotebookView: View {
     // MARK: - 2. AI Deep Analysis Section
     @ViewBuilder
     private func aiContentSection(item: SavedWordItem) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             if let deepAnalysis = item.aiDetailedAnalysis, !deepAnalysis.isEmpty {
                 let parsed = AIAnalysisParser.parse(deepAnalysis)
                 
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
                     // Header Action Bar
                     HStack {
                         Label("KẾT QUẢ PHÂN TÍCH CHUYÊN SÂU TỪ AI", systemImage: "sparkles")
@@ -987,15 +988,15 @@ public struct VocabularyNotebookView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Label("Tầng nghĩa & Định nghĩa", systemImage: "text.book.closed")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.secondary)
                                 
                                 ForEach(parsed.meanings, id: \.self) { m in
                                     HStack(alignment: .top, spacing: 6) {
                                         Text("•")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(.blue.opacity(0.8))
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.secondary)
                                         Text(m)
-                                            .font(.system(size: 13))
+                                            .font(.system(size: 12.5))
                                             .foregroundColor(.primary)
                                             .lineSpacing(2)
                                     }
@@ -1012,12 +1013,12 @@ public struct VocabularyNotebookView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Họ từ (Word Family)", systemImage: "leaf.arrow.triangle.circlepath")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.secondary)
                                 
                                 ForEach(parsed.wordFamily) { item in
                                     HStack(spacing: 8) {
                                         Text(item.pos)
-                                            .font(.system(size: 10, weight: .bold))
+                                            .font(.system(size: 10.5, weight: .bold))
                                             .foregroundColor(.green)
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
@@ -1043,13 +1044,13 @@ public struct VocabularyNotebookView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Cụm từ hay đi kèm (Collocations)", systemImage: "link")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.orange)
+                                    .foregroundColor(.secondary)
                                 
                                 ForEach(parsed.collocations) { col in
                                     HStack(alignment: .top, spacing: 6) {
                                         Text("•")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(.orange.opacity(0.8))
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.secondary)
                                         
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(col.phrase)
@@ -1078,12 +1079,13 @@ public struct VocabularyNotebookView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Label("Sắc thái & Phân biệt", systemImage: "info.circle")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.indigo)
+                                    .foregroundColor(.secondary)
                                 
                                 ForEach(parsed.nuances, id: \.self) { n in
                                     HStack(alignment: .top, spacing: 6) {
-                                        Text("ℹ️")
-                                            .font(.system(size: 10))
+                                        Text("•")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.secondary)
                                         Text(n)
                                             .font(.system(size: 12.5))
                                             .foregroundColor(.primary)
@@ -1102,7 +1104,7 @@ public struct VocabularyNotebookView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Label("Ví dụ minh họa", systemImage: "quote.bubble")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.secondary)
                                 
                                 ForEach(Array(parsed.examples.enumerated()), id: \.offset) { _, ex in
                                     VStack(alignment: .leading, spacing: 3) {
@@ -1142,9 +1144,9 @@ public struct VocabularyNotebookView: View {
                     if let mnemonic = parsed.mnemonic, !mnemonic.isEmpty {
                         GroupBox {
                             VStack(alignment: .leading, spacing: 4) {
-                                Label("Mẹo ghi nhớ & Gốc từ", systemImage: "lightbulb.fill")
+                                Label("Mẹo ghi nhớ & Gốc từ", systemImage: "lightbulb")
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.yellow)
+                                    .foregroundColor(.secondary)
                                 
                                 Text(mnemonic)
                                     .font(.system(size: 12.5))
