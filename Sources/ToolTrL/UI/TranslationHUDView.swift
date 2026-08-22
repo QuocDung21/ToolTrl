@@ -6,6 +6,7 @@ import Translation
 public struct TranslationHUDView: View {
     @ObservedObject var viewModel: TranslationViewModel
     @ObservedObject var speechService = SpeechService.shared
+    @ObservedObject var iconService = AppIconService.shared
     var onClose: () -> Void
     
     @State private var manualInput: String = ""
@@ -71,15 +72,15 @@ public struct TranslationHUDView: View {
     }
     
     // MARK: - Top App Bar
-    // MARK: - Top App Bar
     private var topAppBar: some View {
         HStack(spacing: 5) {
             // App Branding
             HStack(spacing: 5) {
-                AppLogo.image
+                iconService.currentImage
                     .resizable()
                     .scaledToFit()
                     .frame(width: 17, height: 17)
+                    .foregroundColor(iconService.selectedType.accentColor)
                 
                 Text("ToolTrL")
                     .font(.system(size: 11.5, weight: .bold))

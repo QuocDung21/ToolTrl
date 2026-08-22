@@ -18,14 +18,23 @@ public final class MenuBarController: NSObject {
     
     private func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        updateStatusItemIcon()
         
-        if let button = statusItem?.button {
-            let catImg = AppLogo.nsImage
-            catImg.size = NSSize(width: 18, height: 18)
-            button.image = catImg
+        NotificationCenter.default.addObserver(forName: .appIconDidChange, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateStatusItemIcon()
+            }
         }
         
         buildMenu()
+    }
+    
+    public func updateStatusItemIcon() {
+        if let button = statusItem?.button {
+            let img = AppIconService.shared.currentNSImage
+            img.size = NSSize(width: 18, height: 18)
+            button.image = img
+        }
     }
     
     public func buildMenu() {

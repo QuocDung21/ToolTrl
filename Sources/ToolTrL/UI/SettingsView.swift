@@ -22,6 +22,7 @@ public struct SettingsView: View {
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var vocabService = VocabularyService.shared
+    @ObservedObject var iconService = AppIconService.shared
     
     @State private var selectedTab: SettingsTab = .display
     @State private var searchVocabText: String = ""
@@ -227,6 +228,106 @@ public struct SettingsView: View {
                         
                         Toggle("Hiển thị từ điển hệ thống macOS khi offline", isOn: $settings.showOfflineDictionary)
                             .font(.system(size: 12))
+                    }
+                }
+                
+                // Biểu Tượng Logo & Menu Bar (App Logo & Icons)
+                settingCard(title: "Biểu Tượng Logo & Menu Bar", icon: "app.badge.fill") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Chọn biểu tượng hiển thị trên Menu Bar và thanh công cụ ứng dụng:")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
+                            ForEach(AppIconType.allCases) { iconType in
+                                Button(action: {
+                                    if iconType == .custom && iconService.customImageName == nil {
+                                        iconService.importCustomImage()
+                                    } else {
+                                        iconService.selectIcon(iconType)
+                                    }
+                                }) {
+                                    VStack(spacing: 5) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(iconService.selectedType == iconType ? iconType.accentColor.opacity(0.15) : Color.primary.opacity(0.04))
+                                                .frame(width: 34, height: 34)
+                                            
+                                            if iconType == .defaultCat {
+                                                AppLogo.image
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(width: 22, height: 22)
+                                            } else if iconType == .custom {
+                                                if iconService.customImageName != nil {
+                                                    iconService.currentImage
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: 22, height: 22)
+                                                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                                                } else {
+                                                    Image(systemName: "plus.circle.fill")
+                                                        .font(.system(size: 16))
+                                                        .foregroundColor(.green)
+                                                }
+                                            } else if let sym = iconType.sfSymbol {
+                                                Image(systemName: sym)
+                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .foregroundColor(iconType.accentColor)
+                                            }
+                                        }
+                                        
+                                        Text(iconType.rawValue)
+                                            .font(.system(size: 10, weight: iconService.selectedType == iconType ? .bold : .regular))
+                                            .foregroundColor(iconService.selectedType == iconType ? .primary : .secondary)
+                                            .lineLimit(1)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 7)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(iconService.selectedType == iconType ? iconType.accentColor : Color.primary.opacity(0.08), lineWidth: iconService.selectedType == iconType ? 1.5 : 1)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        
+                        HStack(spacing: 8) {
+                            Button(action: {
+                                iconService.importCustomImage()
+                            }) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "folder.badge.plus")
+                                    Text(iconService.customImageName != nil ? "Đổi ảnh khác..." : "Tải ảnh từ máy (PNG/JPG)...")
+                                }
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 9)
+                                .padding(.vertical, 5)
+                                .background(Color.primary.opacity(0.06))
+                                .cornerRadius(6)
+                            }
+                            .buttonStyle(.plain)
+                            
+                            if iconService.selectedType != .defaultCat || iconService.customImageName != nil {
+                                Button(action: {
+                                    iconService.resetToDefault()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.counterclockwise")
+                                        Text("Khôi phục mặc định")
+                                    }
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundColor(.orange)
+                                    .padding(.horizontal, 9)
+                                    .padding(.vertical, 5)
+                                    .background(Color.orange.opacity(0.1))
+                                    .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.top, 4)
                     }
                 }
             }
