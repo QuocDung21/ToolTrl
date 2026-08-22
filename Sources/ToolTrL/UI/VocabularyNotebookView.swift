@@ -144,7 +144,7 @@ public struct VocabularyNotebookView: View {
                 quickLookModal
             }
         }
-        .frame(minWidth: 960, minHeight: 620)
+        .frame(minWidth: 700, minHeight: 460)
         .sheet(isPresented: $showAddGrammarSheet) {
             AddGrammarSheet()
         }
@@ -229,17 +229,17 @@ public struct VocabularyNotebookView: View {
             if layoutMode == .split {
                 NavigationSplitView {
                     sidebarView
-                        .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+                        .navigationSplitViewColumnWidth(min: 160, ideal: 185, max: 240)
                 } content: {
                     contentListView
-                        .navigationSplitViewColumnWidth(min: 250, ideal: 290, max: 380)
+                        .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 350)
                 } detail: {
                     detailView
                 }
             } else {
                 NavigationSplitView {
                     sidebarView
-                        .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 280)
+                        .navigationSplitViewColumnWidth(min: 160, ideal: 185, max: 240)
                 } detail: {
                     tableViewMode
                 }

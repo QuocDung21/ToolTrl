@@ -56,7 +56,7 @@ public struct MainDashboardView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(minWidth: 780, minHeight: 520)
+        .frame(minWidth: 700, minHeight: 460)
         .background(VisualEffectBackground(material: .sidebar, blendingMode: .behindWindow))
     }
     
@@ -70,7 +70,7 @@ public struct MainDashboardView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .frame(width: 440)
+            .frame(maxWidth: 440)
             
             Spacer()
             
