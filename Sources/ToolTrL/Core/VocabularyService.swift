@@ -1,4 +1,5 @@
 import Foundation
+import NaturalLanguage
 
 public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID = UUID()
@@ -40,6 +41,61 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var cleanTitle: String {
         return word.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
+    
+    public var aiPriority: ItemAIPriority {
+        if isGrammarFormula { return .grammar }
+        let clean = cleanTitle.lowercased()
+        if clean.contains(" ") || clean.contains("-") {
+            return .phrases
+        }
+        if clean.count >= 8 {
+            return .advanced
+        }
+        return .core
+    }
+    
+    public var aiPartOfSpeech: ItemAIPartOfSpeech {
+        if isGrammarFormula { return .grammar }
+        let clean = cleanTitle.lowercased()
+        if clean.contains(" ") {
+            return .adverb
+        }
+        
+        let tagger = NLTagger(tagSchemes: [.lexicalClass])
+        tagger.string = clean
+        let tag = tagger.tag(at: clean.startIndex, unit: .word, scheme: .lexicalClass).0
+        
+        switch tag {
+        case .noun: return .noun
+        case .verb: return .verb
+        case .adjective: return .adjective
+        case .adverb: return .adverb
+        default:
+            if translation.lowercased().contains("noun") || translation.lowercased().contains("danh từ") { return .noun }
+            if translation.lowercased().contains("verb") || translation.lowercased().contains("động từ") { return .verb }
+            if translation.lowercased().contains("adj") || translation.lowercased().contains("tính từ") { return .adjective }
+            return .noun
+        }
+    }
+}
+
+public enum ItemAIPriority: String, CaseIterable, Identifiable {
+    case core = "🌟 Từ Vựng Cốt Lõi"
+    case phrases = "💡 Cụm Từ & Thành Ngữ"
+    case advanced = "📖 Từ Vựng Nâng Cao"
+    case grammar = "📐 Công Thức Ngữ Pháp"
+    
+    public var id: String { rawValue }
+}
+
+public enum ItemAIPartOfSpeech: String, CaseIterable, Identifiable {
+    case noun = "🔵 Danh Từ (Noun)"
+    case verb = "🟢 Động Từ (Verb)"
+    case adjective = "🟣 Tính Từ (Adjective)"
+    case adverb = "🟡 Trạng Từ & Khác"
+    case grammar = "📐 Cấu Trúc Ngữ Pháp"
+    
+    public var id: String { rawValue }
 }
 
 @MainActor

@@ -50,6 +50,8 @@ public enum NotebookSidebarItem: Hashable, Identifiable {
 }
 
 public enum NotebookSortOption: String, CaseIterable, Identifiable {
+    case aiPriority = "🌟 Phân loại AI (Mức độ quan trọng)"
+    case aiPartOfSpeech = "🏷️ Phân loại AI (Theo Từ Loại)"
     case newestFirst = "Mới lưu nhất"
     case oldestFirst = "Cũ nhất"
     case alphabeticalAZ = "Bảng chữ cái (A → Z)"
@@ -61,6 +63,8 @@ public enum NotebookSortOption: String, CaseIterable, Identifiable {
     
     public var icon: String {
         switch self {
+        case .aiPriority: return "sparkles"
+        case .aiPartOfSpeech: return "tag.fill"
         case .newestFirst: return "clock.arrow.circlepath"
         case .oldestFirst: return "clock"
         case .alphabeticalAZ: return "textformat.abc"
@@ -78,7 +82,7 @@ public struct VocabularyNotebookView: View {
     @State private var selectedSidebarItem: NotebookSidebarItem? = .vocabulary
     @State private var selectedItemID: UUID? = nil
     @State private var searchText: String = ""
-    @State private var sortOption: NotebookSortOption = .newestFirst
+    @State private var sortOption: NotebookSortOption = .aiPriority
     @State private var isFlashcardMode: Bool = false
     @State private var flashcardIndex: Int = 0
     @State private var isCardFlipped: Bool = false
@@ -112,10 +116,43 @@ public struct VocabularyNotebookView: View {
         .searchable(text: $searchText, placement: .sidebar, prompt: "Tìm kiếm ghi chú...")
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                // Sorting Menu
+                // Sorting & AI Grouping Menu
                 Menu {
-                    Section("SẮP XẾP DANH SÁCH") {
-                        ForEach(NotebookSortOption.allCases) { opt in
+                    Section("PHÂN LOẠI & SẮP XẾP BẰNG AI") {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                sortOption = .aiPriority
+                            }
+                        }) {
+                            if sortOption == .aiPriority {
+                                Label("🌟 Phân loại AI (Mức độ quan trọng)", systemImage: "checkmark")
+                            } else {
+                                Label("🌟 Phân loại AI (Mức độ quan trọng)", systemImage: "sparkles")
+                            }
+                        }
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                sortOption = .aiPartOfSpeech
+                            }
+                        }) {
+                            if sortOption == .aiPartOfSpeech {
+                                Label("🏷️ Phân loại AI (Theo Từ Loại)", systemImage: "checkmark")
+                            } else {
+                                Label("🏷️ Phân loại AI (Theo Từ Loại)", systemImage: "tag.fill")
+                            }
+                        }
+                    }
+                    
+                    Section("SẮP XẾP TIÊU CHUẨN") {
+                        ForEach([
+                            NotebookSortOption.newestFirst,
+                            NotebookSortOption.oldestFirst,
+                            NotebookSortOption.alphabeticalAZ,
+                            NotebookSortOption.alphabeticalZA,
+                            NotebookSortOption.favoritesFirst,
+                            NotebookSortOption.learningFirst
+                        ]) { opt in
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.15)) {
                                     sortOption = opt
@@ -132,7 +169,7 @@ public struct VocabularyNotebookView: View {
                 } label: {
                     Label("Sắp xếp", systemImage: "arrow.up.arrow.down")
                 }
-                .help("Sắp xếp từ vựng và công thức (\(sortOption.rawValue))")
+                .help("Phân loại và sắp xếp ghi chú (\(sortOption.rawValue))")
                 
                 // AI Extraction Button
                 Button(action: {
@@ -197,7 +234,7 @@ public struct VocabularyNotebookView: View {
         }
     }
     
-    // MARK: - Middle Content List
+    // MARK: - Middle Content List (Supports AI Grouped Sections)
     private var contentListView: some View {
         Group {
             if filteredItems.isEmpty {
@@ -215,33 +252,37 @@ public struct VocabularyNotebookView: View {
                 }
             } else {
                 List(selection: $selectedItemID) {
-                    ForEach(filteredItems) { item in
-                        NavigationLink(value: item.id) {
-                            itemListRow(item: item)
-                        }
-                        .contextMenu {
-                            Button(action: {
-                                vocabService.toggleFavorite(id: item.id)
-                            }) {
-                                Label(item.isFavorite ? "Bỏ yêu thích" : "Yêu thích", systemImage: "star")
-                            }
-                            
-                            Button(action: {
-                                vocabService.toggleMastered(id: item.id)
-                            }) {
-                                Label(item.isMastered ? "Đánh dấu chưa thuộc" : "Đánh dấu đã thuộc", systemImage: "checkmark.circle")
-                            }
-                            
-                            Divider()
-                            
-                            Button(role: .destructive, action: {
-                                vocabService.removeWord(id: item.id)
-                                if selectedItemID == item.id {
-                                    selectedItemID = filteredItems.first?.id
+                    switch sortOption {
+                    case .aiPriority:
+                        // Group by AI Priority
+                        ForEach(ItemAIPriority.allCases) { priority in
+                            let group = filteredItems.filter { $0.aiPriority == priority }
+                            if !group.isEmpty {
+                                Section(header: Text("\(priority.rawValue) (\(group.count))")) {
+                                    ForEach(group) { item in
+                                        itemRowLink(item: item)
+                                    }
                                 }
-                            }) {
-                                Label("Xóa", systemImage: "trash")
                             }
+                        }
+                        
+                    case .aiPartOfSpeech:
+                        // Group by AI Part of Speech
+                        ForEach(ItemAIPartOfSpeech.allCases) { pos in
+                            let group = filteredItems.filter { $0.aiPartOfSpeech == pos }
+                            if !group.isEmpty {
+                                Section(header: Text("\(pos.rawValue) (\(group.count))")) {
+                                    ForEach(group) { item in
+                                        itemRowLink(item: item)
+                                    }
+                                }
+                            }
+                        }
+                        
+                    default:
+                        // Standard Flat List
+                        ForEach(filteredItems) { item in
+                            itemRowLink(item: item)
                         }
                     }
                 }
@@ -251,6 +292,36 @@ public struct VocabularyNotebookView: View {
         .onAppear {
             if selectedItemID == nil, let first = filteredItems.first {
                 selectedItemID = first.id
+            }
+        }
+    }
+    
+    private func itemRowLink(item: SavedWordItem) -> some View {
+        NavigationLink(value: item.id) {
+            itemListRow(item: item)
+        }
+        .contextMenu {
+            Button(action: {
+                vocabService.toggleFavorite(id: item.id)
+            }) {
+                Label(item.isFavorite ? "Bỏ yêu thích" : "Yêu thích", systemImage: "star")
+            }
+            
+            Button(action: {
+                vocabService.toggleMastered(id: item.id)
+            }) {
+                Label(item.isMastered ? "Đánh dấu chưa thuộc" : "Đánh dấu đã thuộc", systemImage: "checkmark.circle")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive, action: {
+                vocabService.removeWord(id: item.id)
+                if selectedItemID == item.id {
+                    selectedItemID = filteredItems.first?.id
+                }
+            }) {
+                Label("Xóa", systemImage: "trash")
             }
         }
     }
@@ -646,6 +717,12 @@ public struct VocabularyNotebookView: View {
         
         // Apply Sorting
         switch sortOption {
+        case .aiPriority:
+            // Grouping is handled in List Sections
+            break
+        case .aiPartOfSpeech:
+            // Grouping is handled in List Sections
+            break
         case .newestFirst:
             list.sort { $0.dateAdded > $1.dateAdded }
         case .oldestFirst:
