@@ -94,6 +94,7 @@ public enum NotebookSortOption: String, CaseIterable, Identifiable {
 public struct VocabularyNotebookView: View {
     @ObservedObject var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
+    private let dictService = SmartDictionaryService.shared
     
     @State private var selectedSidebarItem: NotebookSidebarItem? = .vocabulary
     @State private var selectedItemID: UUID? = nil
@@ -106,6 +107,11 @@ public struct VocabularyNotebookView: View {
     @State private var formulaCopied: Bool = false
     @State private var isQuickLookPresented: Bool = false
     @State private var keyMonitor: Any? = nil
+    
+    // AI Rich Dictionary Inspector State
+    @State private var richDictionaryEntry: RichWordEntry? = nil
+    @State private var isLoadingDictionary: Bool = false
+    @State private var lastAnalyzedWord: String = ""
     
     public init() {}
     
@@ -127,10 +133,33 @@ public struct VocabularyNotebookView: View {
             setupKeyMonitor()
             if selectedItemID == nil, let first = filteredItems.first {
                 selectedItemID = first.id
+                triggerDictionaryAnalysis(for: first.cleanTitle)
             }
         }
         .onDisappear {
             removeKeyMonitor()
+        }
+        .onChange(of: selectedItemID) { newID in
+            if let id = newID, let item = vocabService.savedWords.first(where: { $0.id == id }) {
+                triggerDictionaryAnalysis(for: item.cleanTitle)
+            }
+        }
+    }
+    
+    // MARK: - Dictionary Analysis Trigger
+    private func triggerDictionaryAnalysis(for word: String) {
+        let clean = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty && clean != lastAnalyzedWord else { return }
+        lastAnalyzedWord = clean
+        isLoadingDictionary = true
+        richDictionaryEntry = nil
+        
+        Task {
+            let entry = await dictService.fetchRichEntry(for: clean)
+            await MainActor.run {
+                self.richDictionaryEntry = entry
+                self.isLoadingDictionary = false
+            }
         }
     }
     
@@ -140,7 +169,6 @@ public struct VocabularyNotebookView: View {
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Spacebar is keyCode 49
             if event.keyCode == 49 {
-                // Ensure user is not currently typing in a search/text field
                 if let window = NSApp.keyWindow,
                    let firstResponder = window.firstResponder as? NSTextView,
                    firstResponder.isFieldEditor {
@@ -151,14 +179,14 @@ public struct VocabularyNotebookView: View {
                     withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                         isQuickLookPresented.toggle()
                     }
-                    return nil // Consume space event
+                    return nil
                 }
             } else if event.keyCode == 53 { // Esc key
                 if isQuickLookPresented {
                     withAnimation(.easeInOut(duration: 0.15)) {
                         isQuickLookPresented = false
                     }
-                    return nil // Consume Esc
+                    return nil
                 }
             }
             return event
@@ -392,7 +420,7 @@ public struct VocabularyNotebookView: View {
                         .font(.system(size: 12, weight: .bold))
                 }
                 
-                Text("• Bấm phím Space để xem nhanh chi tiết")
+                Text("• Bấm phím Space để xem từ điển chi tiết")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary.opacity(0.8))
                 
@@ -553,10 +581,10 @@ public struct VocabularyNotebookView: View {
                     // Quick Look Titlebar
                     HStack {
                         HStack(spacing: 6) {
-                            Image(systemName: "eye.fill")
+                            Image(systemName: "book.pages")
                                 .font(.system(size: 11))
                                 .foregroundColor(.blue)
-                            Text("Xem nhanh (Quick Look)")
+                            Text("Từ Điển Chi Tiết")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.secondary)
                         }
@@ -587,127 +615,16 @@ public struct VocabularyNotebookView: View {
                     // Quick Look Body
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
-                            // Header
-                            HStack(alignment: .top) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    if item.isGrammarFormula {
-                                        Text("CÔNG THỨC NGỮ PHÁP")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(.blue)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.blue.opacity(0.1))
-                                            .cornerRadius(4)
-                                    } else if let ph = item.phonetic, !ph.isEmpty {
-                                        Text(ph)
-                                            .font(.system(size: 13, weight: .medium, design: .serif))
-                                            .foregroundColor(.orange)
-                                    }
-                                    
-                                    Text(item.cleanTitle)
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(.primary)
-                                }
-                                
-                                Spacer()
-                                
-                                HStack(spacing: 8) {
-                                    if !item.isGrammarFormula {
-                                        Button(action: {
-                                            speechService.speak(text: item.word, languageCode: "en-US", speakerID: "quicklook_\(item.id.uuidString)")
-                                        }) {
-                                            Label("Phát âm", systemImage: "speaker.wave.2")
-                                                .font(.system(size: 11))
-                                        }
-                                    }
-                                    
-                                    Button(action: {
-                                        vocabService.toggleFavorite(id: item.id)
-                                    }) {
-                                        Image(systemName: item.isFavorite ? "star.fill" : "star")
-                                            .foregroundColor(item.isFavorite ? .yellow : .secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                    
-                                    Button(action: {
-                                        vocabService.toggleMastered(id: item.id)
-                                    }) {
-                                        Image(systemName: item.isMastered ? "checkmark.seal.fill" : "checkmark.seal")
-                                            .foregroundColor(item.isMastered ? .green : .secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
+                            wordHeaderView(item: item)
                             
-                            // Genre & Part of Speech Badges
-                            HStack(spacing: 8) {
-                                Label(item.aiThematicGenre.rawValue, systemImage: "folder")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Color.primary.opacity(0.04))
-                                    .cornerRadius(6)
-                                
-                                Label(item.aiPartOfSpeech.rawValue, systemImage: "tag")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Color.primary.opacity(0.04))
-                                    .cornerRadius(6)
-                            }
+                            Divider()
                             
-                            // Formula (if any)
-                            if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
-                                GroupBox {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("CÔNG THỨC")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(.blue)
-                                        Text(formula)
-                                            .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                            .foregroundColor(.blue)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(4)
-                                }
-                            }
-                            
-                            // Meaning Box
-                            GroupBox {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(item.isGrammarFormula ? "Ý NGHĨA & CÁCH DÙNG" : "NGHĨA TIẾNG VIỆT")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.secondary)
-                                    Text(item.translation)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.primary)
-                                        .lineSpacing(2)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(4)
-                            }
-                            
-                            // Example Box
-                            if let ex = item.exampleEn, !ex.isEmpty {
-                                GroupBox {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("VÍ DỤ NGỮ CẢNH")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(.secondary)
-                                        Text("\"\(ex)\"")
-                                            .font(.system(size: 13, design: .serif))
-                                            .foregroundColor(.primary)
-                                            .italic()
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(4)
-                                }
-                            }
+                            aiDictionaryContentSection(item: item)
                         }
                         .padding(20)
                     }
                 }
-                .frame(width: 520, height: 440)
+                .frame(width: 580, height: 500)
                 .background(VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow))
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 10)
@@ -716,6 +633,266 @@ public struct VocabularyNotebookView: View {
                         .stroke(Color.primary.opacity(0.12), lineWidth: 1)
                 )
                 .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+        }
+    }
+    
+    // MARK: - Word Header View
+    private func wordHeaderView(item: SavedWordItem) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                if item.isGrammarFormula {
+                    Text("CÔNG THỨC NGỮ PHÁP")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.blue)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(4)
+                } else if let ph = item.phonetic, !ph.isEmpty {
+                    Text(ph)
+                        .font(.system(size: 14, weight: .medium, design: .serif))
+                        .foregroundColor(.orange)
+                }
+                
+                Text(item.cleanTitle)
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                // Badges
+                HStack(spacing: 6) {
+                    Label(item.aiThematicGenre.rawValue, systemImage: "folder")
+                        .font(.system(size: 10.5, weight: .medium))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2.5)
+                        .background(Color.primary.opacity(0.04))
+                        .cornerRadius(5)
+                    
+                    Label(item.aiPartOfSpeech.rawValue, systemImage: "tag")
+                        .font(.system(size: 10.5, weight: .medium))
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2.5)
+                        .background(Color.primary.opacity(0.04))
+                        .cornerRadius(5)
+                }
+                .padding(.top, 2)
+            }
+            
+            Spacer()
+            
+            // Actions
+            HStack(spacing: 8) {
+                if !item.isGrammarFormula {
+                    Button(action: {
+                        speechService.speak(text: item.word, languageCode: "en-US", speakerID: "hdr_\(item.id.uuidString)")
+                    }) {
+                        Label("Phát âm", systemImage: (speechService.isSpeaking && speechService.currentSpeakerID == "hdr_\(item.id.uuidString)") ? "speaker.wave.3.fill" : "speaker.wave.2")
+                            .font(.system(size: 11))
+                    }
+                }
+                
+                Button(action: {
+                    vocabService.toggleFavorite(id: item.id)
+                }) {
+                    Image(systemName: item.isFavorite ? "star.fill" : "star")
+                        .foregroundColor(item.isFavorite ? .yellow : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help(item.isFavorite ? "Bỏ yêu thích" : "Yêu thích")
+                
+                Button(action: {
+                    vocabService.toggleMastered(id: item.id)
+                }) {
+                    Image(systemName: item.isMastered ? "checkmark.seal.fill" : "checkmark.seal")
+                        .foregroundColor(item.isMastered ? .green : .secondary)
+                }
+                .buttonStyle(.plain)
+                .help(item.isMastered ? "Đánh dấu chưa thuộc" : "Đánh dấu đã thuộc")
+                
+                Button(action: {
+                    QuickAIWindowController.shared.showAI(
+                        prompt: "Hãy phân tích chuyên sâu từ vựng '\(item.cleanTitle)':\n1. Định nghĩa chi tiết theo từng từ loại (Noun, Verb, Adj, Adv).\n2. Cụm từ hay gặp (Collocations) & Thành ngữ (Idioms).\n3. Họ từ (Word Family: Danh từ, Động từ, Tính từ, Trạng từ tương ứng).\n4. Từ đồng nghĩa & Trái nghĩa.\n5. Các câu ví dụ ngữ cảnh thực tế."
+                    )
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "bubble.left.and.text.bubble.right")
+                        Text("Hỏi AI")
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.purple)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3.5)
+                    .background(Color.purple.opacity(0.1))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                .help("Mở Trợ lý AI để phân tích sâu hơn nữa")
+            }
+        }
+    }
+    
+    // MARK: - AI Dictionary Content Section
+    @ViewBuilder
+    private func aiDictionaryContentSection(item: SavedWordItem) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // 1. Saved Meaning & Formula
+            if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Label("Công thức ngữ pháp", systemImage: "function")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.blue)
+                            Spacer()
+                            Button(action: {
+                                let pb = NSPasteboard.general
+                                pb.clearContents()
+                                pb.setString(formula, forType: .string)
+                                withAnimation { formulaCopied = true }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { formulaCopied = false }
+                            }) {
+                                Label(formulaCopied ? "Đã chép" : "Sao chép", systemImage: formulaCopied ? "checkmark" : "doc.on.doc")
+                                    .font(.system(size: 10.5))
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        Text(formula)
+                            .font(.system(size: 14, weight: .bold, design: .monospaced))
+                            .foregroundColor(.blue)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(4)
+                }
+            }
+            
+            GroupBox {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(item.isGrammarFormula ? "Ý nghĩa & Cách dùng" : "Nghĩa tiếng Việt đã lưu", systemImage: "text.alignleft")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.secondary)
+                    
+                    Text(item.translation)
+                        .font(.system(size: 14))
+                        .foregroundColor(.primary)
+                        .lineSpacing(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(4)
+            }
+            
+            // 2. Saved Context Sentence
+            if let exEn = item.exampleEn, !exEn.isEmpty {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Label("Ví dụ ngữ cảnh đã lưu", systemImage: "quote.opening")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Button(action: {
+                                speechService.speak(text: exEn, languageCode: "en-US", speakerID: "ex_\(item.id.uuidString)")
+                            }) {
+                                Image(systemName: "speaker.wave.2")
+                                    .font(.system(size: 11))
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        
+                        Text("\"\(exEn)\"")
+                            .font(.system(size: 13.5, design: .serif))
+                            .foregroundColor(.primary)
+                            .italic()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(4)
+                }
+            }
+            
+            // 3. AI Rich Dictionary Definitions by Part of Speech
+            if isLoadingDictionary {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                    Text("Đang phân tích từ điển chuyên sâu...")
+                        .font(.system(size: 11.5))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.vertical, 8)
+            } else if let entry = richDictionaryEntry, !entry.meanings.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Label("CÁC TẦNG NGHĨA THEO TỪ LOẠI (TỪ ĐIỂN AI)", systemImage: "books.vertical.fill")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.blue)
+                        Spacer()
+                    }
+                    .padding(.top, 4)
+                    
+                    ForEach(entry.meanings) { group in
+                        GroupBox {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(group.partOfSpeechDisplay)
+                                        .font(.system(size: 10.5, weight: .bold))
+                                        .foregroundColor(.blue)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(4)
+                                    
+                                    Spacer()
+                                }
+                                
+                                ForEach(Array(group.definitions.prefix(3))) { def in
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text("• \(def.definitionEn)")
+                                            .font(.system(size: 12.5))
+                                            .foregroundColor(.primary)
+                                        
+                                        if let ex = def.exampleEn, !ex.isEmpty {
+                                            HStack(alignment: .top, spacing: 4) {
+                                                Text("Ví dụ:")
+                                                    .font(.system(size: 10, weight: .bold))
+                                                    .foregroundColor(.secondary)
+                                                Text("\"\(ex)\"")
+                                                    .font(.system(size: 11.5, design: .serif))
+                                                    .foregroundColor(.secondary)
+                                                    .italic()
+                                                
+                                                Button(action: {
+                                                    speechService.speak(text: ex, languageCode: "en-US", speakerID: "def_\(def.id.uuidString)")
+                                                }) {
+                                                    Image(systemName: "speaker.wave.2")
+                                                        .font(.system(size: 9))
+                                                        .foregroundColor(.blue)
+                                                }
+                                                .buttonStyle(.plain)
+                                            }
+                                            .padding(.leading, 8)
+                                        }
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                                
+                                // Synonyms / Antonyms in this group
+                                if !group.synonyms.isEmpty {
+                                    HStack(alignment: .top, spacing: 4) {
+                                        Text("Đồng nghĩa:")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.green)
+                                        Text(group.synonyms.prefix(5).joined(separator: ", "))
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.top, 2)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(6)
+                        }
+                    }
+                }
             }
         }
     }
@@ -965,147 +1142,11 @@ public struct VocabularyNotebookView: View {
                let item = vocabService.savedWords.first(where: { $0.id == id }) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        // Header Area
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                if item.isGrammarFormula {
-                                    Text("CÔNG THỨC NGỮ PHÁP")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.blue)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.1))
-                                        .cornerRadius(4)
-                                } else if let ph = item.phonetic, !ph.isEmpty {
-                                    Text(ph)
-                                        .font(.system(size: 14, weight: .medium, design: .serif))
-                                        .foregroundColor(.orange)
-                                }
-                                
-                                Text(item.cleanTitle)
-                                    .font(.system(size: 26, weight: .bold))
-                                    .foregroundColor(.primary)
-                            }
-                            
-                            Spacer()
-                            
-                            // Native Action Group
-                            HStack(spacing: 8) {
-                                if !item.isGrammarFormula {
-                                    Button(action: {
-                                        speechService.speak(text: item.word, languageCode: "en-US", speakerID: "detail_\(item.id.uuidString)")
-                                    }) {
-                                        Label("Phát âm", systemImage: (speechService.isSpeaking && speechService.currentSpeakerID == "detail_\(item.id.uuidString)") ? "speaker.wave.3.fill" : "speaker.wave.2")
-                                    }
-                                }
-                                
-                                Button(action: {
-                                    vocabService.toggleFavorite(id: item.id)
-                                }) {
-                                    Image(systemName: item.isFavorite ? "star.fill" : "star")
-                                        .foregroundColor(item.isFavorite ? .yellow : .secondary)
-                                }
-                                .help(item.isFavorite ? "Bỏ yêu thích" : "Yêu thích")
-                                
-                                Button(action: {
-                                    vocabService.toggleMastered(id: item.id)
-                                }) {
-                                    Image(systemName: item.isMastered ? "checkmark.seal.fill" : "checkmark.seal")
-                                        .foregroundColor(item.isMastered ? .green : .secondary)
-                                }
-                                .help(item.isMastered ? "Đánh dấu chưa thuộc" : "Đánh dấu đã thuộc")
-                                
-                                Button(role: .destructive, action: {
-                                    vocabService.removeWord(id: item.id)
-                                    selectedItemID = filteredItems.first?.id
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.secondary)
-                                }
-                                .help("Xóa ghi chú này")
-                            }
-                        }
+                        wordHeaderView(item: item)
                         
                         Divider()
                         
-                        // Formula Box (If Grammar)
-                        if item.isGrammarFormula, let formula = item.phonetic, !formula.isEmpty {
-                            GroupBox {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Label("Công thức", systemImage: "function")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.blue)
-                                        
-                                        Spacer()
-                                        
-                                        Button(action: {
-                                            let pb = NSPasteboard.general
-                                            pb.clearContents()
-                                            pb.setString(formula, forType: .string)
-                                            withAnimation { formulaCopied = true }
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { formulaCopied = false }
-                                        }) {
-                                            Label(formulaCopied ? "Đã chép" : "Sao chép", systemImage: formulaCopied ? "checkmark" : "doc.on.doc")
-                                                .font(.system(size: 10.5))
-                                        }
-                                        .buttonStyle(.borderless)
-                                    }
-                                    
-                                    Text(formula)
-                                        .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                        .foregroundColor(.blue)
-                                        .padding(.vertical, 2)
-                                }
-                                .padding(4)
-                            }
-                        }
-                        
-                        // Meaning & Explanation Box
-                        GroupBox {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Label(item.isGrammarFormula ? "Ý nghĩa & Cách dùng" : "Ý nghĩa tiếng Việt", systemImage: "text.alignleft")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.secondary)
-                                
-                                Text(item.translation)
-                                    .font(.system(size: 14.5))
-                                    .foregroundColor(.primary)
-                                    .lineSpacing(3)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(4)
-                        }
-                        
-                        // Example Sentence Box
-                        if let exEn = item.exampleEn, !exEn.isEmpty {
-                            GroupBox {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Label("Ví dụ trong đoạn văn", systemImage: "quote.opening")
-                                            .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.secondary)
-                                        
-                                        Spacer()
-                                        
-                                        Button(action: {
-                                            speechService.speak(text: exEn, languageCode: "en-US", speakerID: "ex_\(item.id.uuidString)")
-                                        }) {
-                                            Image(systemName: "speaker.wave.2")
-                                                .font(.system(size: 11))
-                                        }
-                                        .buttonStyle(.borderless)
-                                    }
-                                    
-                                    Text("\"\(exEn)\"")
-                                        .font(.system(size: 13.5, design: .serif))
-                                        .foregroundColor(.primary)
-                                        .italic()
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(4)
-                            }
-                        }
+                        aiDictionaryContentSection(item: item)
                     }
                     .padding(24)
                 }
@@ -1314,7 +1355,6 @@ public struct VocabularyNotebookView: View {
         // Apply Sorting
         switch sortOption {
         case .aiPriority, .thematicGenre, .aiPartOfSpeech:
-            // Section-based grouping handles sorting within sections
             break
         case .newestFirst:
             list.sort { $0.dateAdded > $1.dateAdded }
