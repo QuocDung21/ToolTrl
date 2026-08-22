@@ -110,6 +110,37 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         """
     }
     
+    public static func buildStrictEnforcedGrammarPrompt(title: String, context: String? = nil, customNote: String? = nil) -> String {
+        var extra = ""
+        if let ctx = context, !ctx.isEmpty {
+            extra += "\n- Câu ví dụ ngữ cảnh người dùng cung cấp: \"\(ctx)\""
+        }
+        if let note = customNote, !note.isEmpty {
+            extra += "\n- Yêu cầu/ghi chú bổ sung: \(note)"
+        }
+        
+        return """
+        Hãy phân tích và thiết lập CÔNG THỨC & QUY TẮC NGỮ PHÁP cho cấu trúc '\(title)'\(extra) theo đúng 5 phần chuẩn sau để lưu trực tiếp vào Sổ Tay:
+
+        ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
+        [Ghi công thức tổng quát dạng toán học, ví dụ: S + had + V3/ed + by the time + S + V2/ed, hoặc It + is + adj + that + S + (should) + V-inf]
+
+        ### 2. 💡 Ý NGHĨA & CÁCH DÙNG
+        - Giải thích bản chất, hoàn cảnh sử dụng và các trạng từ / từ nhận biết đi kèm.
+
+        ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
+        - Thể khẳng định (+): ... ➔ Dịch nghĩa tiếng Việt
+        - Thể phủ định (-): ... ➔ Dịch nghĩa tiếng Việt
+        - Thể nghi vấn (?): ... ➔ Dịch nghĩa tiếng Việt
+
+        ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
+        - Bẫy ngữ pháp thường xuất hiện trong đề thi TOEIC/IELTS hoặc giao tiếp khi dùng cấu trúc này.
+
+        ### 5. 🧠 MẸO GHI NHỚ THẦN TỐC
+        - Mẹo ngắn gọn hoặc câu thần chú giúp thuộc công thức tức thì.
+        """
+    }
+    
     public var isGrammarFormula: Bool {
         return word.contains("📐") || (phonetic?.contains("+") == true) || translation.contains("Công thức:")
     }

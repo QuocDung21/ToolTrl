@@ -127,6 +127,7 @@ public struct VocabularyNotebookView: View {
     @State private var richDictionaryEntry: RichWordEntry? = nil
     @State private var isLoadingDictionary: Bool = false
     @State private var lastAnalyzedWord: String = ""
+    @State private var showAddGrammarSheet: Bool = false
     
     public init() {}
     
@@ -144,6 +145,9 @@ public struct VocabularyNotebookView: View {
             }
         }
         .frame(minWidth: 960, minHeight: 620)
+        .sheet(isPresented: $showAddGrammarSheet) {
+            AddGrammarSheet()
+        }
         .onAppear {
             setupKeyMonitor()
             if selectedItemID == nil, let first = filteredItems.first {
@@ -315,6 +319,14 @@ public struct VocabularyNotebookView: View {
                     Label("Sắp xếp", systemImage: "arrow.up.arrow.down")
                 }
                 .help("Phân loại và sắp xếp ghi chú (\(sortOption.rawValue))")
+                
+                // Add Grammar Button
+                Button(action: {
+                    showAddGrammarSheet = true
+                }) {
+                    Label("Thêm Ngữ Pháp", systemImage: "plus.circle.fill")
+                }
+                .help("Thêm cấu trúc ngữ pháp mới và để AI phân tích chuẩn hóa công thức")
                 
                 // Quick Look Spacebar Button
                 Button(action: {
