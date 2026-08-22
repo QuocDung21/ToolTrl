@@ -109,6 +109,22 @@ public struct QuickAIAssistantView: View {
             
             // Right Action Buttons
             HStack(spacing: 5) {
+                // Pin Window Button
+                Button(action: {
+                    QuickAIWindowController.shared.togglePin()
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: QuickAIWindowController.shared.isPinned ? "pin.fill" : "pin")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .padding(6)
+                    .background(QuickAIWindowController.shared.isPinned ? Color.orange.opacity(0.18) : Color.primary.opacity(0.06))
+                    .foregroundColor(QuickAIWindowController.shared.isPinned ? .orange : .secondary)
+                    .cornerRadius(5)
+                }
+                .buttonStyle(.plain)
+                .help(QuickAIWindowController.shared.isPinned ? "Đang ghim cửa sổ trên cùng (Bấm để bỏ ghim)" : "Ghim cửa sổ trên cùng để giữ phiên chat liên tục")
+                
                 Button(action: {
                     webView?.reload()
                 }) {

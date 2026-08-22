@@ -49,9 +49,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsWindowController.shared.showSettings()
         }
         
-        let hudView = TranslationHUDView(viewModel: viewModel) { [weak panel] in
-            panel?.hidePanel()
-        }
+        let hudView = TranslationHUDView(
+            viewModel: viewModel,
+            onTogglePin: { [weak panel] in
+                panel?.togglePin()
+            },
+            onClose: { [weak panel] in
+                panel?.hidePanel()
+            }
+        )
         
         panel.contentView = NSHostingView(rootView: hudView)
         self.floatingPanel = panel

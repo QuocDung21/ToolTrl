@@ -5,6 +5,8 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     private var outsideClickMonitor: Any?
     private var localKeyMonitor: Any?
     
+    public var isPinned: Bool = false
+    
     public var onCopyRequested: (() -> Void)?
     public var onSpeakRequested: (() -> Void)?
     public var onBookmarkRequested: (() -> Void)?
@@ -57,7 +59,14 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     }
     
     public func windowDidResignKey(_ notification: Notification) {
-        hidePanel()
+        if !isPinned {
+            hidePanel()
+        }
+    }
+    
+    public func togglePin() {
+        isPinned.toggle()
+        self.level = isPinned ? .statusBar : .popUpMenu
     }
     
     public func showNearCursorOrCenter() {
@@ -110,10 +119,10 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     
     private func startOutsideClickMonitor() {
         stopOutsideClickMonitor()
-        guard AppSettings.shared.clickOutsideDismiss else { return }
+        guard AppSettings.shared.clickOutsideDismiss && !isPinned else { return }
         outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
             guard let self = self, self.isVisible else { return }
-            guard AppSettings.shared.clickOutsideDismiss else { return }
+            guard AppSettings.shared.clickOutsideDismiss && !self.isPinned else { return }
             let clickLocation = NSEvent.mouseLocation
             if !NSMouseInRect(clickLocation, self.frame, false) {
                 DispatchQueue.main.async {

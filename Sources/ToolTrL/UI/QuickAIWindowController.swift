@@ -2,8 +2,10 @@ import AppKit
 import SwiftUI
 
 @MainActor
-public final class QuickAIWindowController: NSObject, NSWindowDelegate {
+public final class QuickAIWindowController: NSObject, ObservableObject, NSWindowDelegate {
     public static let shared = QuickAIWindowController()
+    
+    @Published public var isPinned: Bool = false
     
     private var window: NSWindow?
     private var localKeyMonitor: Any?
@@ -35,7 +37,7 @@ public final class QuickAIWindowController: NSObject, NSWindowDelegate {
         win.titleVisibility = .hidden
         win.isReleasedWhenClosed = false
         win.delegate = self
-        win.level = .floating
+        win.level = isPinned ? .statusBar : .floating
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         win.isMovableByWindowBackground = true
         win.backgroundColor = .clear
@@ -60,6 +62,13 @@ public final class QuickAIWindowController: NSObject, NSWindowDelegate {
         startLocalKeyMonitor()
     }
     
+    public func togglePin() {
+        isPinned.toggle()
+        if let win = window {
+            win.level = isPinned ? .statusBar : .floating
+        }
+    }
+    
     public func closeWindow() {
         stopLocalKeyMonitor()
         window?.orderOut(nil)
@@ -72,8 +81,10 @@ public final class QuickAIWindowController: NSObject, NSWindowDelegate {
     private func startLocalKeyMonitor() {
         stopLocalKeyMonitor()
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if event.keyCode == 53 { // ESC
-                self?.closeWindow()
+            guard let self = self else { return event }
+            // If pinned, don't dismiss on ESC unless user explicitly clicks close
+            if event.keyCode == 53 && !self.isPinned { // ESC
+                self.closeWindow()
                 return nil
             }
             return event

@@ -8,12 +8,15 @@ public struct TranslationHUDView: View {
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var iconService = AppIconService.shared
     var onClose: () -> Void
+    var onTogglePin: (() -> Void)?
     
+    @State private var isPinned: Bool = false
     @State private var manualInput: String = ""
     @State private var copied: Bool = false
     
-    public init(viewModel: TranslationViewModel, onClose: @escaping () -> Void) {
+    public init(viewModel: TranslationViewModel, onTogglePin: (() -> Void)? = nil, onClose: @escaping () -> Void) {
         self.viewModel = viewModel
+        self.onTogglePin = onTogglePin
         self.onClose = onClose
     }
     
@@ -141,6 +144,17 @@ public struct TranslationHUDView: View {
                 .lineLimit(1)
                 .fixedSize()
                 .help("Mở Trợ lý AI (ChatGPT / Gemini) để phân tích sâu đoạn văn này")
+                
+                Button(action: {
+                    isPinned.toggle()
+                    onTogglePin?()
+                }) {
+                    Image(systemName: isPinned ? "pin.fill" : "pin")
+                        .font(.system(size: 11))
+                        .foregroundColor(isPinned ? .orange : .secondary.opacity(0.75))
+                }
+                .buttonStyle(.plain)
+                .help(isPinned ? "Đang ghim cửa sổ dịch trên cùng (Bấm để bỏ ghim)" : "Ghim cửa sổ trên cùng không tự tắt khi click ra ngoài")
                 
                 Button(action: {
                     VocabularyWindowController.shared.showNotebook()
