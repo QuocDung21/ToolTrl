@@ -28,7 +28,14 @@ public struct ParsedAIAnalysis {
     public var rawContent: String = ""
     
     public var isEmpty: Bool {
-        formula == nil && meanings.isEmpty && wordFamily.isEmpty && collocations.isEmpty && nuances.isEmpty && commonMistakes.isEmpty && examples.isEmpty && mnemonic == nil
+        (formula == nil || formula!.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) &&
+        meanings.isEmpty &&
+        wordFamily.isEmpty &&
+        collocations.isEmpty &&
+        nuances.isEmpty &&
+        commonMistakes.isEmpty &&
+        examples.isEmpty &&
+        mnemonic == nil
     }
 }
 
@@ -39,7 +46,7 @@ public enum AIAnalysisParser {
         result.rawContent = rawText
         
         let lines = rawText.components(separatedBy: .newlines)
-        var currentSection = 0 // 1: Meanings, 2: Word Family, 3: Collocations, 4: Nuances, 5: Examples, 6: Mnemonic, 7: Formula, 8: Common Mistakes
+        var currentSection = 0 // 1: Meanings/Usage, 2: Word Family, 3: Collocations, 4: Nuances, 5: Examples, 6: Mnemonic, 7: Formula, 8: Common Mistakes
         
         for rawLine in lines {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
@@ -47,11 +54,11 @@ public enum AIAnalysisParser {
             
             let lower = line.lowercased()
             
-            // Section Headers Detection
+            // Section Headers Detection (Markdown ### or numbered headers)
             if lower.contains("công thức") || lower.contains("formula") || lower.contains("cấu trúc chuẩn") {
                 currentSection = 7
                 continue
-            } else if lower.contains("từ loại") || lower.contains("tầng nghĩa") || lower.contains("định nghĩa") || lower.contains("cách dùng") {
+            } else if lower.contains("từ loại") || lower.contains("tầng nghĩa") || lower.contains("định nghĩa") || lower.contains("ý nghĩa & cách dùng") || lower.contains("cách dùng") || lower.contains("dấu hiệu nhận biết") {
                 currentSection = 1
                 continue
             } else if lower.contains("họ từ") || lower.contains("word family") {
@@ -77,12 +84,14 @@ public enum AIAnalysisParser {
             // Content processing by active section
             switch currentSection {
             case 7:
-                // Grammar Formula section
+                // Grammar Formula section: Collect all lines into multiline formula
                 let cleaned = cleanBullet(line)
-                if !cleaned.isEmpty && result.formula == nil {
-                    result.formula = cleaned
-                } else if !cleaned.isEmpty {
-                    result.meanings.append(cleaned)
+                if !cleaned.isEmpty {
+                    if let existing = result.formula {
+                        result.formula = existing + "\n" + cleaned
+                    } else {
+                        result.formula = cleaned
+                    }
                 }
                 
             case 1:
@@ -163,7 +172,7 @@ public enum AIAnalysisParser {
     
     private static func cleanBullet(_ text: String) -> String {
         var s = text.trimmingCharacters(in: .whitespaces)
-        // Remove leading numbers or bullets like "1.", "2.", "•", "-", "*", "###"
+        // Remove leading numbers or markdown headers like "###", "##", "#", or bullet points "1.", "2.", "•", "-", "*"
         if let match = s.range(of: #"^(\d+\.|\*|-|•|\+|###|##|#)\s*"#, options: .regularExpression) {
             s.removeSubrange(match)
         }

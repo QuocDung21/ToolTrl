@@ -359,8 +359,13 @@ public final class VocabularyService: ObservableObject {
         if let index = savedWords.firstIndex(where: { $0.id == wordId }) {
             savedWords[index].aiDetailedAnalysis = analysis
             let parsed = AIAnalysisParser.parse(analysis)
-            if let formula = parsed.formula, !formula.isEmpty {
+            if let formula = parsed.formula, !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 savedWords[index].phonetic = formula
+            }
+            if let firstMeaning = parsed.meanings.first, !firstMeaning.isEmpty {
+                if savedWords[index].translation.hasPrefix("Cấu trúc ngữ pháp:") || savedWords[index].translation.isEmpty {
+                    savedWords[index].translation = firstMeaning
+                }
             }
             saveWords()
         }
@@ -371,8 +376,13 @@ public final class VocabularyService: ObservableObject {
         if let index = savedWords.firstIndex(where: { $0.cleanTitle.lowercased() == clean }) {
             savedWords[index].aiDetailedAnalysis = analysis
             let parsed = AIAnalysisParser.parse(analysis)
-            if let formula = parsed.formula, !formula.isEmpty {
+            if let formula = parsed.formula, !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 savedWords[index].phonetic = formula
+            }
+            if let firstMeaning = parsed.meanings.first, !firstMeaning.isEmpty {
+                if savedWords[index].translation.hasPrefix("Cấu trúc ngữ pháp:") || savedWords[index].translation.isEmpty {
+                    savedWords[index].translation = firstMeaning
+                }
             }
             saveWords()
         }
