@@ -210,7 +210,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func checkAccessibilityOnLaunch() {
         if !TextGrabber.isAccessibilityTrusted(prompt: true) {
-            print("⚠️ Quyền Trợ năng (Accessibility) chưa được cấp. Đã gửi yêu cầu cấp quyền.")
+            AppLog.app.notice("Quyền Trợ năng (Accessibility) chưa được cấp — đã gửi yêu cầu cấp quyền.")
         }
     }
 

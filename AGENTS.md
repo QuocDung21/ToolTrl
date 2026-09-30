@@ -20,8 +20,8 @@ This document defines the strict architectural contracts, domain models, system 
 ```
 Sources/NekoTrans/
 ├── App/
-│   ├── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), HotKeys, Window Controllers.
-│   └── NekoTransApp.swift           # Legacy duplicate @main struct, excluded from the package build.
+│   └── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), HotKeys, Window Controllers.
+│                                    # The SwiftUI entry point lives in Sources/NekoTransLauncher.
 │
 ├── Core/
 │   ├── KeyStore/
@@ -43,6 +43,7 @@ Sources/NekoTrans/
 │   └── Helpers/
 │       ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] Prompt Factory.
 │       ├── AIAnalysisParser.swift       # Multiline regex LLM parser -> ParsedAIAnalysis.
+│       ├── AppLog.swift                 # os.Logger categories; use instead of `print`.
 │       ├── DataCompression.swift        # Apple LZFSE / ZLIB Compression Engine.
 │       └── TextGrabber.swift            # Accessibility text selection extractor.
 │
@@ -111,6 +112,12 @@ if item.isGrammarFormula {
   - `Windows/` (Future platform planning directory; do NOT modify or mix with macOS Swift codebase)
   - `Resources/AppIcon.iconset/`, `Resources/*.png` (Binary assets)
   - `.git/`, `.env*`, `*.key`, `*.p12`, `*.pem` (Credentials & VCS internals)
+
+### RULE 7: NO `print` IN SHIPPING CODE
+- Diagnostic output **MUST** go through `AppLog` (`os.Logger`), never `print()`. stdout is discarded when the app is launched from Finder, so `print` messages are invisible exactly when they matter.
+- Pick the existing category (`app`, `settings`, `vocabulary`, `spotlight`, `history`, `dictionary`, `translation`, `continuity`, `sync`) or add one to `AppLog`.
+- User-supplied content (word titles, translated text) **MUST** stay `.private`; mark only error descriptions and identifiers `.public`.
+- Inspect logs with: `log stream --predicate 'subsystem == "com.nekotrans.mac"' --level debug`
 
 ---
 

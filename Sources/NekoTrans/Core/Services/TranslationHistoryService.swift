@@ -107,7 +107,7 @@ public final class TranslationHistoryService: ObservableObject {
             let decoded = try JSONDecoder().decode([TranslationHistoryItem].self, from: data)
             self.items = decoded
         } catch {
-            print("[TranslationHistoryService] Failed to load history: \(error)")
+            AppLog.history.error("Failed to load history: \(error.localizedDescription, privacy: .public)")
         }
     }
     
@@ -128,7 +128,7 @@ public final class TranslationHistoryService: ObservableObject {
             let data = try encoder.encode(items)
             try data.write(to: url, options: [.atomic])
         } catch {
-            print("[TranslationHistoryService] Failed to save history: \(error)")
+            AppLog.history.error("Failed to save history: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

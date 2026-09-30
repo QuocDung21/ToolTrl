@@ -624,7 +624,7 @@ public final class AppSettings: ObservableObject {
                 }
                 self.launchAtLogin = (SMAppService.mainApp.status == .enabled)
             } catch {
-                print("Launch at login error: \(error)")
+                AppLog.settings.error("Launch at login toggle failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

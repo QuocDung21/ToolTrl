@@ -209,7 +209,7 @@ public struct TranslationModifier: ViewModifier {
                             viewModel.setTranslatedText(response.targetText)
                         }
                     } catch {
-                        print("Native translation session error: \(error)")
+                        AppLog.translation.error("Native Translation session failed, falling back: \(error.localizedDescription, privacy: .public)")
                         await viewModel.runFallbackTranslation()
                     }
                 }

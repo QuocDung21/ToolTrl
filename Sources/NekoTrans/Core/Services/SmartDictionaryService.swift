@@ -498,7 +498,7 @@ public final class SmartDictionaryService {
             )
             return richEntry
         } catch {
-            print("SmartDictionaryService error: \(error)")
+            AppLog.dictionary.error("Lookup failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
