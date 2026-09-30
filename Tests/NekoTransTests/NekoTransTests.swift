@@ -558,4 +558,185 @@ final class NekoTransTests: XCTestCase {
         XCTAssertTrue(accounts.contains(KeyStore.Secret.githubPAT))
         XCTAssertTrue(accounts.contains(KeyStore.Secret.openAI))
     }
+    
+    // MARK: - 11. SafeURL Encoding Tests
+    func testSafeURLDoesNotDoubleEncodeMyMemoryURL() {
+        // Regression: MyMemory's `langpair=en|vi` contains a raw "|", which made
+        // URL(string:) re-encode the WHOLE string, turning "%20" into "%2520". The server
+        // then received literal percent escapes and echoed them back as the translation:
+        //   "In the past 12 months" -> "Trong%20the% 20past%2012%20tháng"
+        guard let url = SafeURL.make(
+            host: "api.mymemory.translated.net",
+            path: "/get",
+            queryItems: [
+                URLQueryItem(name: "q", value: "In the past 12 months"),
+                URLQueryItem(name: "langpair", value: "en|vi")
+            ]
+        ) else {
+            return XCTFail("URL must build")
+        }
+        
+        let absolute = url.absoluteString
+        XCTAssertTrue(absolute.contains("q=In%20the%20past%2012%20months"), absolute)
+        XCTAssertTrue(absolute.contains("langpair=en%7Cvi"), "The raw '|' must be escaped by us, not by Foundation: \(absolute)")
+        XCTAssertFalse(absolute.contains("%2520"), "Query must be escaped exactly once: \(absolute)")
+    }
+    
+    func testSafeURLRoundTripsReservedCharacters() {
+        let samples = [
+            "In the past 12 months",
+            "100% sure",
+            "C++ & \"quotes\" | pipe",
+            "a=b&c|d#e?f",
+            "résumé — dấu tiếng Việt"
+        ]
+        
+        for sample in samples {
+            guard let url = SafeURL.make(
+                host: "example.com",
+                path: "/get",
+                queryItems: [URLQueryItem(name: "q", value: sample)]
+            ) else {
+                return XCTFail("Failed to build URL for \(sample)")
+            }
+            
+            let decoded = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "q" })?.value
+            XCTAssertEqual(decoded, sample, "Query value must survive the round trip: \(url.absoluteString)")
+        }
+    }
+    
+    func testSafeURLKeepsLiteralPlusOutOfFormDecoding() {
+        // A bare "+" is decoded as a space by form-style query parsing, so "C++" would
+        // reach the engines as "C  ".
+        guard let url = SafeURL.make(
+            host: "example.com",
+            path: "/get",
+            queryItems: [URLQueryItem(name: "q", value: "C++")]
+        ) else {
+            return XCTFail("URL must build")
+        }
+        
+        XCTAssertTrue(url.absoluteString.contains("q=C%2B%2B"), url.absoluteString)
+    }
+    
+    func testSafeURLEscapesPathSegment() {
+        guard let url = SafeURL.make(
+            host: "api.dictionaryapi.dev",
+            pathPrefix: "/api/v2/entries/en/",
+            segment: "100% résumé"
+        ) else {
+            return XCTFail("URL must build")
+        }
+        
+        XCTAssertTrue(url.absoluteString.hasSuffix("/api/v2/entries/en/100%25%20r%C3%A9sum%C3%A9"), url.absoluteString)
+    }
+    
+    // MARK: - 12. MyMemory Response Validation Tests
+    func testMyMemoryParsesSuccessfulTranslation() {
+        let outcome = MyMemoryResponse.parse([
+            "responseStatus": 200,
+            "responseData": ["translatedText": "Được các thương hiệu hàng đầu tin tưởng"]
+        ])
+        XCTAssertEqual(outcome, .translation("Được các thương hiệu hàng đầu tin tưởng"))
+    }
+    
+    func testMyMemoryRejectsRefusalSentencesServedAsTranslations() {
+        // MyMemory returns HTTP 200 with responseStatus 403 and the error sentence in
+        // translatedText; the app used to display that sentence as the Vietnamese result.
+        let sameLanguage = MyMemoryResponse.parse([
+            "responseStatus": 403,
+            "responseDetails": "PLEASE SELECT TWO DISTINCT LANGUAGES",
+            "responseData": ["translatedText": "PLEASE SELECT TWO DISTINCT LANGUAGES"]
+        ])
+        XCTAssertEqual(sameLanguage, .rejected(reason: "status 403: PLEASE SELECT TWO DISTINCT LANGUAGES"))
+        
+        let tooLong = MyMemoryResponse.parse([
+            "responseStatus": 403,
+            "responseDetails": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+            "responseData": ["translatedText": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS"]
+        ])
+        guard case .rejected = tooLong else {
+            return XCTFail("Expected a rejection, got \(tooLong)")
+        }
+    }
+    
+    func testMyMemoryRejectsExhaustedQuota() {
+        let outcome = MyMemoryResponse.parse([
+            "responseStatus": 200,
+            "quotaFinished": true,
+            "responseData": ["translatedText": "anything"]
+        ])
+        XCTAssertEqual(outcome, .rejected(reason: "daily quota exhausted"))
+    }
+    
+    func testMyMemoryRejectsErrorSentenceEvenWithStatus200() {
+        let outcome = MyMemoryResponse.parse([
+            "responseStatus": 200,
+            "responseData": ["translatedText": "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY"]
+        ])
+        guard case .rejected = outcome else {
+            return XCTFail("Expected a rejection, got \(outcome)")
+        }
+    }
+    
+    func testMyMemoryRejectsMalformedPayloads() {
+        XCTAssertEqual(MyMemoryResponse.parse([:]), .unparsable)
+        XCTAssertEqual(MyMemoryResponse.parse(["responseStatus": 200]), .unparsable)
+        XCTAssertEqual(
+            MyMemoryResponse.parse(["responseStatus": 200, "responseData": ["translatedText": "   "]]),
+            .unparsable
+        )
+    }
+    
+    // MARK: - 13. Translation Cache Version Tests
+    func testCacheDecoderRejectsUntrustedPayloads() throws {
+        // Version 2 exists because older files may hold percent-encoded junk that was
+        // cached as a "translation" — replaying them would keep showing the garbage.
+        let encoder = JSONEncoder()
+        let entry = RichWordEntry(
+            word: "resilience",
+            phonetic: "/rɪˈzɪl.jəns/",
+            mainTranslation: "Sự kiên cường",
+            meanings: [],
+            allSynonyms: [],
+            allAntonyms: [],
+            baseLemma: nil
+        )
+        
+        // A file written before the version field existed (shipped builds omit nil optionals).
+        let versionless = try encoder.encode(
+            TranslationCache.PersistentCacheData(
+                version: nil,
+                translations: ["k": "MindMeister%20is%20great"],
+                dictionaries: ["resilience": entry]
+            )
+        )
+        
+        guard let migrated = TranslationCache.decodeCache(versionless) else {
+            return XCTFail("An unversioned file must still decode")
+        }
+        XCTAssertTrue(migrated.translations.isEmpty, "Poisoned translations must be dropped")
+        XCTAssertEqual(migrated.dictionaries["resilience"]?.word, "resilience", "Dictionary entries are unaffected and worth keeping")
+        XCTAssertEqual(migrated.version, TranslationCache.currentCacheVersion)
+        
+        let stale = try encoder.encode(
+            TranslationCache.PersistentCacheData(version: 1, translations: ["k": "v"], dictionaries: [:])
+        )
+        XCTAssertEqual(TranslationCache.decodeCache(stale)?.translations.isEmpty, true)
+        
+        let current = try encoder.encode(
+            TranslationCache.PersistentCacheData(
+                version: TranslationCache.currentCacheVersion,
+                translations: ["k": "v"],
+                dictionaries: [:]
+            )
+        )
+        XCTAssertEqual(TranslationCache.decodeCache(current)?.translations["k"], "v")
+    }
+    
+    func testCacheDecoderRejectsGarbage() {
+        XCTAssertNil(TranslationCache.decodeCache(Data("not json".utf8)))
+        XCTAssertNil(TranslationCache.decodeCache(Data()))
+    }
 }

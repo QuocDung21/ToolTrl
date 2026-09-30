@@ -44,6 +44,7 @@ Sources/NekoTrans/
 │       ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] Prompt Factory.
 │       ├── AIAnalysisParser.swift       # Multiline regex LLM parser -> ParsedAIAnalysis.
 │       ├── AppLog.swift                 # os.Logger categories; use instead of `print`.
+│       ├── SafeURL.swift                # URL builder; NEVER interpolate into URL(string:).
 │       ├── DataCompression.swift        # Apple LZFSE / ZLIB Compression Engine.
 │       └── TextGrabber.swift            # Accessibility text selection extractor.
 │
@@ -118,6 +119,13 @@ if item.isGrammarFormula {
 - Pick the existing category (`app`, `settings`, `vocabulary`, `spotlight`, `history`, `dictionary`, `translation`, `continuity`, `sync`) or add one to `AppLog`.
 - User-supplied content (word titles, translated text) **MUST** stay `.private`; mark only error descriptions and identifiers `.public`.
 - Inspect logs with: `log stream --predicate 'subsystem == "com.nekotrans.mac"' --level debug`
+
+### RULE 8: NEVER INTERPOLATE INTO `URL(string:)`
+- Any request URL that **embeds a value** (user text, an API key, an id, a user-typed endpoint) **MUST** be built with `SafeURL.make(...)` (`Core/Helpers/SafeURL.swift`) or `URLComponents`. Never write `URL(string: "https://host/path?q=\(value)")`.
+- `URL(string:)` stays fine for a literal constant (`URL(string: "https://api.github.com/user")`) or for a URL already produced/validated elsewhere.
+- Reason: `URL(string:)` percent-encodes the **entire** string the moment it contains a character Foundation rejects. Interpolating an already-escaped value then escapes the escapes (`%20` → `%2520`) and the server receives literal `%20` text. MyMemory's `langpair=en|vi` carries a raw `|`, so every query it received was double-encoded and echoed back as the "translation".
+- Pass **raw** values to `SafeURL`; pre-escaping them reintroduces the bug.
+- Third-party responses **MUST** be validated before being trusted: MyMemory answers `HTTP 200` with `responseStatus: 403` and puts the error sentence in `translatedText` (see `MyMemoryResponse`). Never surface a payload field to the user without checking the payload's own status.
 
 ---
 

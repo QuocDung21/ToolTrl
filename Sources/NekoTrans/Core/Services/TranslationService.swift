@@ -271,8 +271,15 @@ public final class TranslationService {
     // MARK: - Engine 1: Google Web Mobile Engine (High Speed, Ultra Reliable)
     private func translateViaGoogleWeb(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let sl = (sourceLang == "en" || sourceLang == "vi" || sourceLang == "ja" || sourceLang == "zh" || sourceLang == "ko" || sourceLang == "fr" || sourceLang == "de" || sourceLang == "es") ? sourceLang : "auto"
-        guard let encoded = encodeQueryParam(text),
-              let url = URL(string: "https://translate.google.com/m?sl=\(sl)&tl=\(targetLang)&q=\(encoded)") else {
+        guard let url = SafeURL.make(
+            host: "translate.google.com",
+            path: "/m",
+            queryItems: [
+                URLQueryItem(name: "sl", value: sl),
+                URLQueryItem(name: "tl", value: targetLang),
+                URLQueryItem(name: "q", value: text)
+            ]
+        ) else {
             return nil
         }
         
@@ -318,8 +325,17 @@ public final class TranslationService {
     // MARK: - Engine 2: Google GTX API (Fast JSON Translation)
     private func translateViaGoogleGTX(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let sl = sourceLang.isEmpty ? "auto" : sourceLang
-        guard let encoded = encodeQueryParam(text),
-              let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=\(sl)&tl=\(targetLang)&dt=t&q=\(encoded)") else {
+        guard let url = SafeURL.make(
+            host: "translate.googleapis.com",
+            path: "/translate_a/single",
+            queryItems: [
+                URLQueryItem(name: "client", value: "gtx"),
+                URLQueryItem(name: "sl", value: sl),
+                URLQueryItem(name: "tl", value: targetLang),
+                URLQueryItem(name: "dt", value: "t"),
+                URLQueryItem(name: "q", value: text)
+            ]
+        ) else {
             return nil
         }
         
@@ -353,9 +369,14 @@ public final class TranslationService {
     // MARK: - Engine 3: MyMemory Translation API
     private func translateViaMyMemory(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let sl = sourceLang == "auto" ? "en" : sourceLang
-        let langpair = "\(sl)|\(targetLang)"
-        guard let encoded = encodeQueryParam(text),
-              let url = URL(string: "https://api.mymemory.translated.net/get?q=\(encoded)&langpair=\(langpair)") else {
+        guard let url = SafeURL.make(
+            host: "api.mymemory.translated.net",
+            path: "/get",
+            queryItems: [
+                URLQueryItem(name: "q", value: text),
+                URLQueryItem(name: "langpair", value: "\(sl)|\(targetLang)")
+            ]
+        ) else {
             return nil
         }
         
@@ -368,11 +389,16 @@ public final class TranslationService {
                 return nil
             }
             
-            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let resData = json["responseData"] as? [String: Any],
-               let translated = resData["translatedText"] as? String {
-                let cleaned = decodeHTMLEntities(translated).trimmingCharacters(in: .whitespacesAndNewlines)
-                return cleaned.isEmpty ? nil : cleaned
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                switch MyMemoryResponse.parse(json) {
+                case .translation(let text):
+                    return text
+                case .rejected(let reason):
+                    AppLog.translation.notice("MyMemory refused the request: \(reason, privacy: .public)")
+                    return nil
+                case .unparsable:
+                    return nil
+                }
             }
         } catch {
             // Error
@@ -382,13 +408,6 @@ public final class TranslationService {
     
     public func translateFallback(text: String, from sourceLang: String = "auto", to targetLang: String = "vi") async -> String? {
         return await translate(text: text, from: sourceLang, to: targetLang)
-    }
-    
-    // MARK: - Safe URL Query Encoding Helper
-    private func encodeQueryParam(_ text: String) -> String? {
-        var allowed = CharacterSet.urlQueryAllowed
-        allowed.remove(charactersIn: "!*'();:@&=+$,/?%#[]")
-        return text.addingPercentEncoding(withAllowedCharacters: allowed)
     }
     
     // MARK: - Comprehensive HTML Entity Decoder Helper
@@ -441,5 +460,59 @@ public final class TranslationService {
             }
         }
         return result
+    }
+}
+
+// MARK: - MyMemory Response Parsing
+
+/// Parses a MyMemory `/get` payload.
+///
+/// MyMemory answers **HTTP 200 even when it refuses the request**: the real outcome lives
+/// in `responseStatus`, and `translatedText` then carries the error sentence instead of a
+/// translation. Those sentences were being displayed to users as if they were the
+/// Vietnamese result (`PLEASE SELECT TWO DISTINCT LANGUAGES`, `QUERY LENGTH LIMIT
+/// EXCEEDED...`), so the payload must be validated before it is trusted.
+enum MyMemoryResponse {
+    enum Outcome: Equatable {
+        case translation(String)
+        /// Refused: carries a loggable reason.
+        case rejected(reason: String)
+        /// Malformed or empty payload.
+        case unparsable
+    }
+
+    static func parse(_ json: [String: Any]) -> Outcome {
+        if let status = json["responseStatus"] as? Int, status != 200 {
+            let detail = json["responseDetails"] as? String ?? "no details"
+            return .rejected(reason: "status \(status): \(detail)")
+        }
+
+        if let quotaFinished = json["quotaFinished"] as? Bool, quotaFinished {
+            return .rejected(reason: "daily quota exhausted")
+        }
+
+        guard let responseData = json["responseData"] as? [String: Any],
+              let translated = responseData["translatedText"] as? String else {
+            return .unparsable
+        }
+
+        let cleaned = translated.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return .unparsable }
+
+        // Defence in depth: some refusals still come back with status 200.
+        if isErrorSentence(cleaned) {
+            return .rejected(reason: cleaned)
+        }
+
+        return .translation(cleaned)
+    }
+
+    /// True for the human-readable refusal sentences MyMemory puts in `translatedText`.
+    static func isErrorSentence(_ text: String) -> Bool {
+        let upper = text.uppercased()
+        return upper.hasPrefix("PLEASE SELECT TWO DISTINCT LANGUAGES")
+            || upper.hasPrefix("QUERY LENGTH LIMIT EXCEEDED")
+            || upper.hasPrefix("MYMEMORY WARNING")
+            || upper.hasPrefix("INVALID EMAIL PROVIDED")
     }
 }

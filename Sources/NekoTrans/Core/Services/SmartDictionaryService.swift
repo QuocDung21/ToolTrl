@@ -306,8 +306,11 @@ public final class SmartDictionaryService {
         semanticWords: [String],
         baseLemma: String?
     ) async -> RichWordEntry? {
-        guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
-              let url = URL(string: "https://api.dictionaryapi.dev/api/v2/entries/en/\(encoded)") else {
+        guard let url = SafeURL.make(
+            host: "api.dictionaryapi.dev",
+            pathPrefix: "/api/v2/entries/en/",
+            segment: word
+        ) else {
             return nil
         }
         

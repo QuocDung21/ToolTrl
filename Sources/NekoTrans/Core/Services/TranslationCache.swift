@@ -120,20 +120,55 @@ public actor TranslationCache {
     }
     
     // MARK: - Structured Disk Persistence
-    private struct PersistentCacheData: Codable {
+    struct PersistentCacheData: Codable {
+        /// Cache schema/quality version. Files written before the percent-encoding fix
+        /// have no version and may hold values that are not translations at all.
+        var version: Int? = nil
         var translations: [String: String]
         var dictionaries: [String: RichWordEntry]
     }
     
+    /// Bumped whenever the *content* of the cache stops being trustworthy.
+    ///
+    /// Version 2 discards everything written while MyMemory was handed double-encoded
+    /// queries: it echoed the percent escapes back, and those strings were cached as
+    /// translations — so re-looking-up the same text would keep replaying the garbage.
+    static let currentCacheVersion = 2
+    
+    /// Decodes persisted cache data.
+    ///
+    /// When the version does not match, the **translations** are dropped: older files may
+    /// hold values that are not translations at all (the percent-encoding bug cached the
+    /// engine's echoed query). The **dictionary** entries are kept — they come from a
+    /// different API, were never affected, and are expensive to refetch.
+    static func decodeCache(_ data: Data) -> PersistentCacheData? {
+        guard let decoded = try? JSONDecoder().decode(PersistentCacheData.self, from: data) else {
+            return nil
+        }
+        guard decoded.version == currentCacheVersion else {
+            return PersistentCacheData(
+                version: currentCacheVersion,
+                translations: [:],
+                dictionaries: decoded.dictionaries
+            )
+        }
+        return decoded
+    }
+    
     private static func loadInitialData() -> PersistentCacheData {
+        let empty = PersistentCacheData(version: currentCacheVersion, translations: [:], dictionaries: [:])
         guard let url = cacheFileURL,
               FileManager.default.fileExists(atPath: url.path),
               let data = try? Data(contentsOf: url),
-              let decoded = try? JSONDecoder().decode(PersistentCacheData.self, from: data) else {
-            return PersistentCacheData(translations: [:], dictionaries: [:])
+              let decoded = decodeCache(data) else {
+            return empty
         }
         let cleanDicts = decoded.dictionaries.filter { !$0.value.meanings.isEmpty }
-        return PersistentCacheData(translations: decoded.translations, dictionaries: cleanDicts)
+        return PersistentCacheData(
+            version: currentCacheVersion,
+            translations: decoded.translations,
+            dictionaries: cleanDicts
+        )
     }
     
     private func scheduleSaveToDisk() {
@@ -156,6 +191,7 @@ public actor TranslationCache {
         }
         
         let dataObj = PersistentCacheData(
+            version: Self.currentCacheVersion,
             translations: diskTranslations,
             dictionaries: diskDictionaries
         )
