@@ -1,6 +1,12 @@
 import Foundation
 import NaturalLanguage
 
+/// Persisted classification of a notebook entry. Drives the RULE 1 rendering split.
+public enum VocabularyItemType: String, Codable, Sendable, CaseIterable {
+    case vocabulary
+    case grammar
+}
+
 public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID = UUID()
     public var word: String
@@ -12,6 +18,9 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var isFavorite: Bool
     public var isMastered: Bool
     public var aiDetailedAnalysis: String?
+    /// Persisted entry type. `nil` only for rows saved before this field existed;
+    /// `VocabularyService.loadWords()` backfills those exactly once.
+    public var itemType: VocabularyItemType?
     
     public init(
         id: UUID = UUID(),
@@ -23,7 +32,8 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         dateAdded: Date = Date(),
         isFavorite: Bool = false,
         isMastered: Bool = false,
-        aiDetailedAnalysis: String? = nil
+        aiDetailedAnalysis: String? = nil,
+        itemType: VocabularyItemType? = nil
     ) {
         self.id = id
         self.word = word
@@ -35,6 +45,7 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         self.isFavorite = isFavorite
         self.isMastered = isMastered
         self.aiDetailedAnalysis = aiDetailedAnalysis
+        self.itemType = itemType
     }
     
     public static func buildStructuredWordPrompt(for word: String) -> String {
@@ -53,8 +64,27 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         return AIPromptBuilder.strictEnforcedGrammarPrompt(title: title, context: context, customNote: customNote)
     }
     
+    /// Grammar-vs-vocabulary classification consumed by every rendering pipeline.
+    ///
+    /// Reads the **persisted** flag so re-classification can never flip an existing
+    /// entry. Rows written before `itemType` existed fall back to the creation-time
+    /// heuristic until `VocabularyService.loadWords()` backfills them.
     public var isGrammarFormula: Bool {
-        return word.contains("📐") || (phonetic?.contains("+") == true) || translation.contains("Công thức:")
+        let resolved = itemType ?? SavedWordItem.inferredItemType(
+            word: word,
+            phonetic: phonetic,
+            translation: translation
+        )
+        return resolved == .grammar
+    }
+    
+    /// Heuristic used **only** when an entry is first created (and to migrate legacy rows).
+    /// Callers that know the intent must pass `itemType` explicitly instead.
+    public static func inferredItemType(word: String, phonetic: String?, translation: String) -> VocabularyItemType {
+        if word.contains("📐") { return .grammar }
+        if let phonetic, phonetic.contains("+") { return .grammar }
+        if translation.contains("Công thức:") { return .grammar }
+        return .vocabulary
     }
     
     public var cleanTitle: String {
@@ -162,36 +192,40 @@ public final class VocabularyService: ObservableObject {
         }
         
         // Auto-Deduplicate & Normalize legacy items (e.g. "Leadership" -> "leadership")
+        // and backfill `itemType` for rows saved before that field existed.
         var normalizedList: [SavedWordItem] = []
         var seenKeys: Set<String> = []
+        var didMigrate = false
         
         for item in items {
             let normalizedWord = VocabularyService.normalizeWordTitle(item.word)
             let key = normalizedWord.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            if !seenKeys.contains(key) {
-                seenKeys.insert(key)
-                if item.word != normalizedWord {
-                    let updated = SavedWordItem(
-                        id: item.id,
-                        word: normalizedWord,
-                        phonetic: item.phonetic,
-                        translation: item.translation,
-                        exampleEn: item.exampleEn,
-                        exampleVi: item.exampleVi,
-                        dateAdded: item.dateAdded,
-                        isFavorite: item.isFavorite,
-                        isMastered: item.isMastered,
-                        aiDetailedAnalysis: item.aiDetailedAnalysis
-                    )
-                    normalizedList.append(updated)
-                } else {
-                    normalizedList.append(item)
-                }
+            guard !seenKeys.contains(key) else {
+                didMigrate = true
+                continue
             }
+            seenKeys.insert(key)
+            
+            var resolvedItem = item
+            if resolvedItem.itemType == nil {
+                resolvedItem.itemType = SavedWordItem.inferredItemType(
+                    word: normalizedWord,
+                    phonetic: resolvedItem.phonetic,
+                    translation: resolvedItem.translation
+                )
+                didMigrate = true
+            }
+            
+            if resolvedItem.word != normalizedWord {
+                resolvedItem.word = normalizedWord
+                didMigrate = true
+            }
+            
+            normalizedList.append(resolvedItem)
         }
         
         self.savedWords = normalizedList
-        if items.count != normalizedList.count {
+        if didMigrate {
             saveWords()
         }
     }
@@ -264,7 +298,12 @@ public final class VocabularyService: ObservableObject {
                 phonetic: phonetic,
                 translation: translation,
                 exampleEn: exampleEn,
-                exampleVi: exampleVi
+                exampleVi: exampleVi,
+                itemType: SavedWordItem.inferredItemType(
+                    word: normalized,
+                    phonetic: phonetic,
+                    translation: translation
+                )
             )
             savedWords.insert(newItem, at: 0)
         }
@@ -277,12 +316,19 @@ public final class VocabularyService: ObservableObject {
         phonetic: String? = nil,
         translation: String,
         exampleEn: String? = nil,
-        exampleVi: String? = nil
+        exampleVi: String? = nil,
+        itemType: VocabularyItemType? = nil
     ) -> UUID? {
         let clean = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return nil }
         let normalized = VocabularyService.normalizeWordTitle(clean)
         let lower = normalized.replacingOccurrences(of: "📐", with: "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        // Explicit caller intent wins; otherwise classify once, at creation time.
+        let resolvedType = itemType ?? SavedWordItem.inferredItemType(
+            word: normalized,
+            phonetic: phonetic,
+            translation: translation
+        )
         let itemId: UUID
         if let idx = savedWords.firstIndex(where: { $0.cleanTitle.lowercased() == lower || $0.word.lowercased() == lower }) {
             var existing = savedWords[idx]
@@ -298,6 +344,13 @@ public final class VocabularyService: ObservableObject {
             if let exVi = exampleVi, !exVi.isEmpty {
                 existing.exampleVi = exVi
             }
+            // Promote to grammar when the caller re-adds the entry as a formula,
+            // but never silently demote an existing grammar entry to vocabulary.
+            if resolvedType == .grammar {
+                existing.itemType = .grammar
+            } else if existing.itemType == nil {
+                existing.itemType = resolvedType
+            }
             savedWords[idx] = existing
             itemId = existing.id
         } else {
@@ -306,7 +359,8 @@ public final class VocabularyService: ObservableObject {
                 phonetic: phonetic,
                 translation: translation,
                 exampleEn: exampleEn,
-                exampleVi: exampleVi
+                exampleVi: exampleVi,
+                itemType: resolvedType
             )
             savedWords.insert(newItem, at: 0)
             itemId = newItem.id
@@ -362,7 +416,11 @@ public final class VocabularyService: ObservableObject {
         if let index = savedWords.firstIndex(where: { $0.id == wordId }) {
             savedWords[index].aiDetailedAnalysis = analysis
             let parsed = AIAnalysisParser.parse(analysis)
-            if let formula = parsed.formula, !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // RULE 1: only a grammar entry stores its formula in `phonetic`.
+            // Overwriting a vocabulary entry's IPA with a formula would destroy it.
+            if savedWords[index].isGrammarFormula,
+               let formula = parsed.formula,
+               !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 savedWords[index].phonetic = formula
             }
             if let firstMeaning = parsed.meanings.first, !firstMeaning.isEmpty {
@@ -379,7 +437,10 @@ public final class VocabularyService: ObservableObject {
         if let index = savedWords.firstIndex(where: { $0.cleanTitle.lowercased() == clean }) {
             savedWords[index].aiDetailedAnalysis = analysis
             let parsed = AIAnalysisParser.parse(analysis)
-            if let formula = parsed.formula, !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            // RULE 1: only a grammar entry stores its formula in `phonetic`.
+            if savedWords[index].isGrammarFormula,
+               let formula = parsed.formula,
+               !formula.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 savedWords[index].phonetic = formula
             }
             if let firstMeaning = parsed.meanings.first, !firstMeaning.isEmpty {

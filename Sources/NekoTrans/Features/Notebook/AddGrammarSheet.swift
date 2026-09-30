@@ -147,7 +147,8 @@ public struct AddGrammarSheet: View {
                 phonetic: nil,
                 translation: note.isEmpty ? "Cấu trúc ngữ pháp: \(cleanTitle)" : note,
                 exampleEn: exEn,
-                exampleVi: nil
+                exampleVi: nil,
+                itemType: .grammar
             )
             vocabService.savedWords.insert(newItem, at: 0)
             vocabService.saveWords()

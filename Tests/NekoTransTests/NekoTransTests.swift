@@ -194,6 +194,98 @@ final class NekoTransTests: XCTestCase {
         XCTAssertEqual(normalWord.cleanTitle, "Serendipity")
     }
     
+    // MARK: - 6b. Persisted itemType (RULE 1) Tests
+    func testPersistedItemTypeOverridesContentHeuristic() {
+        // A vocabulary entry whose IPA happens to contain "+" must stay vocabulary.
+        let word = SavedWordItem(
+            word: "leadership",
+            phonetic: "/ˈliː.də+ʃɪp/",
+            translation: "khả năng lãnh đạo",
+            itemType: .vocabulary
+        )
+        XCTAssertEqual(word.itemType, .vocabulary)
+        XCTAssertFalse(word.isGrammarFormula, "Persisted type must win over the phonetic heuristic")
+        
+        // A grammar entry without the 📐 marker or a "+" formula must stay grammar.
+        let grammar = SavedWordItem(
+            word: "Câu điều kiện loại 1",
+            phonetic: nil,
+            translation: "Diễn tả khả năng có thể xảy ra ở hiện tại",
+            itemType: .grammar
+        )
+        XCTAssertTrue(grammar.isGrammarFormula, "Persisted type must win over the content heuristic")
+    }
+    
+    func testLegacyItemWithoutItemTypeFallsBackToHeuristic() {
+        let legacy = SavedWordItem(
+            word: "📐 Hiện tại đơn",
+            phonetic: "S + V(s/es)",
+            translation: "Thói quen lặp lại"
+        )
+        XCTAssertNil(legacy.itemType, "Rows created before the field existed start unmigrated")
+        XCTAssertTrue(legacy.isGrammarFormula, "Unmigrated rows keep rendering correctly")
+        
+        let legacyWord = SavedWordItem(word: "Serendipity", phonetic: "/ˌser.ənˈdɪp.ə.t̬i/", translation: "Sự may mắn")
+        XCTAssertNil(legacyWord.itemType)
+        XCTAssertFalse(legacyWord.isGrammarFormula)
+    }
+    
+    func testInferredItemTypeClassification() {
+        XCTAssertEqual(
+            SavedWordItem.inferredItemType(word: "📐 Quá khứ hoàn thành", phonetic: nil, translation: "x"),
+            .grammar
+        )
+        XCTAssertEqual(
+            SavedWordItem.inferredItemType(word: "wish", phonetic: "S + wish + S + V-past", translation: "ước"),
+            .grammar
+        )
+        XCTAssertEqual(
+            SavedWordItem.inferredItemType(word: "clause", phonetic: nil, translation: "Công thức: S + V"),
+            .grammar
+        )
+        XCTAssertEqual(
+            SavedWordItem.inferredItemType(word: "apple", phonetic: "/ˈæp.əl/", translation: "quả táo"),
+            .vocabulary
+        )
+    }
+    
+    func testItemTypeSurvivesCodableRoundTrip() throws {
+        let original = SavedWordItem(
+            word: "📐 Câu bị động",
+            phonetic: "S + be + V3/ed",
+            translation: "Nhấn mạnh đối tượng chịu tác động",
+            itemType: .grammar
+        )
+        
+        let data = try JSONEncoder().encode([original])
+        let decoded = try JSONDecoder().decode([SavedWordItem].self, from: data)
+        
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded[0].itemType, .grammar)
+        XCTAssertTrue(decoded[0].isGrammarFormula)
+    }
+    
+    func testLegacyJSONWithoutItemTypeStillDecodes() throws {
+        // Shape produced by builds that predate `itemType` (no key at all).
+        let legacyJSON = """
+        [{
+            "id": "3F2504E0-4F89-11D3-9A0C-0305E82C3301",
+            "word": "📐 Quá khứ hoàn thành",
+            "phonetic": "S + had + V3/ed",
+            "translation": "Diễn tả hành động xảy ra trước một hành động khác",
+            "dateAdded": 0,
+            "isFavorite": false,
+            "isMastered": false
+        }]
+        """
+        let data = legacyJSON.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode([SavedWordItem].self, from: data)
+        
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertNil(decoded[0].itemType, "A missing key must decode as nil, not throw")
+        XCTAssertTrue(decoded[0].isGrammarFormula)
+    }
+    
     // MARK: - 7. Apple LZFSE DataCompression Tests
     func testDataCompressionRoundtrip() {
         let sampleText = "NekoTrans AI Dictionary & Translator: " + String(repeating: "Quick brown fox jumps over the lazy dog. ", count: 50)
