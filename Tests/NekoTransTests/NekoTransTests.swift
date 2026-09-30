@@ -325,6 +325,47 @@ final class NekoTransTests: XCTestCase {
         XCTAssertEqual(String(data: decompressed!, encoding: .utf8), sampleText)
     }
     
+    func testDataCompressionHandlesIncompressiblePayload() {
+        // Regression: the old fixed `data.count + 1024` destination could not hold the
+        // expansion of incompressible input, so `compress` returned nil and the cloud
+        // backup failed silently for already-compressed or random data.
+        var bytes = [UInt8](repeating: 0, count: 1_048_576)
+        for index in bytes.indices {
+            bytes[index] = UInt8.random(in: 0...255)
+        }
+        let payload = Data(bytes)
+        
+        guard let compressed = DataCompression.compress(data: payload) else {
+            return XCTFail("Compressing incompressible data must not fail")
+        }
+        
+        XCTAssertEqual(DataCompression.decompress(data: compressed), payload)
+    }
+    
+    func testDataCompressionRejectsOversizedDecompression() {
+        let payload = Data(repeating: 0x41, count: 512 * 1024)
+        guard let compressed = DataCompression.compress(data: payload) else {
+            return XCTFail("Compression failed")
+        }
+        
+        // Must refuse rather than silently truncate to the cap.
+        XCTAssertNil(DataCompression.decompress(data: compressed, maxExpectedSize: 1024))
+        
+        // A cap that fits must still round-trip.
+        let exact = DataCompression.decompress(data: compressed, maxExpectedSize: payload.count)
+        XCTAssertEqual(exact?.count, payload.count)
+    }
+    
+    func testDataCompressionRejectsCorruptInput() {
+        let garbage = Data([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
+        XCTAssertNil(DataCompression.decompress(data: garbage), "Corrupt payloads must fail, not crash or truncate")
+    }
+    
+    func testDataCompressionEmptyInputPassesThrough() {
+        XCTAssertEqual(DataCompression.compress(data: Data()), Data())
+        XCTAssertEqual(DataCompression.decompress(data: Data()), Data())
+    }
+    
     // MARK: - 8. Advanced Direct AI & Contextual Translation Tests
     func testContextualTranslationPromptGeneration() {
         let prompt = AIPromptBuilder.contextualTranslationPrompt(
