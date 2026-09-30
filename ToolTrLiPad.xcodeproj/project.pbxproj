@@ -1,0 +1,283 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10001 /* App/ToolTrLiPadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* App/ToolTrLiPadApp.swift */; };
+		A10002 /* Views/PencilKitCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* Views/PencilKitCanvasView.swift */; };
+		A10003 /* Views/iPadStudioMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* Views/iPadStudioMainView.swift */; };
+		A10004 /* Services/iPadSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004 /* Services/iPadSyncClient.swift */; };
+		A10005 /* Views/QRCodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10006 /* Views/QRCodeScannerView.swift */; };
+		A10006 /* Views/RadarDeviceDiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10007 /* Views/RadarDeviceDiscoveryView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B10000 /* ToolTrLiPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToolTrLiPad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10001 /* App/ToolTrLiPadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/ToolTrLiPadApp.swift; sourceTree = "<group>"; };
+		B10002 /* Views/PencilKitCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/PencilKitCanvasView.swift; sourceTree = "<group>"; };
+		B10003 /* Views/iPadStudioMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/iPadStudioMainView.swift; sourceTree = "<group>"; };
+		B10004 /* Services/iPadSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/iPadSyncClient.swift; sourceTree = "<group>"; };
+		B10005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B10006 /* Views/QRCodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/QRCodeScannerView.swift; sourceTree = "<group>"; };
+		B10007 /* Views/RadarDeviceDiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/RadarDeviceDiscoveryView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C10001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D10000 = {
+			isa = PBXGroup;
+			children = (
+				D10001 /* ToolTrLiPad */,
+				D10002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D10001 /* ToolTrLiPad */ = {
+			isa = PBXGroup;
+			children = (
+				B10001 /* App/ToolTrLiPadApp.swift */,
+				B10002 /* Views/PencilKitCanvasView.swift */,
+				B10003 /* Views/iPadStudioMainView.swift */,
+				B10004 /* Services/iPadSyncClient.swift */,
+				B10006 /* Views/QRCodeScannerView.swift */,
+				B10007 /* Views/RadarDeviceDiscoveryView.swift */,
+				B10005 /* Info.plist */,
+			);
+			name = ToolTrLiPad;
+			path = Sources/ToolTrLiPad;
+			sourceTree = SOURCE_ROOT;
+		};
+		D10002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B10000 /* ToolTrLiPad.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000 /* ToolTrLiPad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000 /* Build configuration list for PBXNativeTarget "ToolTrLiPad" */;
+			buildPhases = (
+				C10000 /* Sources */,
+				C10001 /* Frameworks */,
+				C10002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ToolTrLiPad;
+			productName = ToolTrLiPad;
+			productReference = B10000 /* ToolTrLiPad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		010000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					E10000 = {
+						CreatedOnToolsVersion = 15.0;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 010001 /* Build configuration list for PBXProject "ToolTrLiPad" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D10000;
+			productRefGroup = D10002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E10000 /* ToolTrLiPad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C10002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C10000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10001 /* App/ToolTrLiPadApp.swift in Sources */,
+				A10002 /* Views/PencilKitCanvasView.swift in Sources */,
+				A10003 /* Views/iPadStudioMainView.swift in Sources */,
+				A10004 /* Services/iPadSyncClient.swift in Sources */,
+				A10005 /* Views/QRCodeScannerView.swift in Sources */,
+				A10006 /* Views/RadarDeviceDiscoveryView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		010002 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		010003 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F10001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 266F5S6AUZ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/ToolTrLiPad/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.quocdung.ToolTrLiPad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		F10002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 266F5S6AUZ;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/ToolTrLiPad/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.quocdung.ToolTrLiPad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		010001 /* Build configuration list for PBXProject "ToolTrLiPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				010002 /* Debug */,
+				010003 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F10000 /* Build configuration list for PBXNativeTarget "ToolTrLiPad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F10001 /* Debug */,
+				F10002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 010000 /* Project object */;
+}

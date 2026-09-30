@@ -1,14 +1,14 @@
 # AI AGENT INSTRUCTIONS & ARCHITECTURAL SPECIFICATION (AGENTS.md)
 
-This document defines the strict architectural contracts, domain models, system invariants, and coding standards for Autonomous AI Agents (Antigravity, Cursor, Copilot, Claude, GPT) operating on the **ToolTrL** codebase.
+This document defines the strict architectural contracts, domain models, system invariants, and coding standards for Autonomous AI Agents (Antigravity, Cursor, Copilot, Claude, GPT) operating on the **NekoTrans** codebase.
 
 ---
 
 ## 1. PROJECT SPECIFICATION
 
-- **Application Name**: `ToolTrL`
-- **Target OS**: `macOS 13.0+ (Ventura, Sonoma, Sequoia)`
-- **Core Frameworks**: `SwiftUI`, `AppKit`, `WebKit`, `NaturalLanguage`, `Vision`, `AVFoundation`, `Carbon`
+- **Application Name**: `NekoTrans`
+- **Target OS**: `macOS 14.0+ (Sonoma, Sequoia)`
+- **Core Frameworks**: `SwiftUI`, `AppKit`, `WebKit`, `NaturalLanguage`, `Vision`, `AVFoundation`, `Compression`, `Carbon`
 - **Language & Runtime**: `Swift 5.9+ / Swift 6 Sendable Mode`
 - **Architecture Pattern**: `Clean Modular Architecture (MVVM + Service Layer + Centralized Prompt Factory)`
 
@@ -17,32 +17,39 @@ This document defines the strict architectural contracts, domain models, system 
 ## 2. CODEBASE TOPOLOGY & FILE CONTRACTS
 
 ```
-Sources/ToolTrL/
+Sources/NekoTrans/
 ├── App/
-│   ├── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), Global Event Monitor / HotKeys, Window Controllers.
-│   └── ToolTrLApp.swift             # SwiftUI Application entry point.
+│   ├── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), HotKeys, Window Controllers.
+│   └── NekoTransApp.swift           # SwiftUI Application entry point.
 │
 ├── Core/
-│   ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] All LLM Prompt Templates & Schema Enforcement strings.
-│   ├── AIAnalysisParser.swift       # Multiline regex-based LLM Text Parser -> ParsedAIAnalysis struct.
-│   ├── VocabularyService.swift      # Persistence Engine (JSON), domain mutations, AI classification (Priority, Genre, POS).
-│   ├── SmartDictionaryService.swift # Async REST client for Free Dictionary API (definitions, phonetics, audio URLs).
-│   ├── SpeechService.swift          # Text-To-Speech (AVSpeechSynthesizer) with dynamic speakerID state tracking.
-│   ├── TranslationService.swift     # Google Translate / MyMemory API client with LRU TranslationCache.
-│   ├── HotKeyManager.swift          # Carbon RegisterEventHotKey global keyboard shortcut listener.
-│   ├── ScreenOCRService.swift       # Vision framework VNRecognizeTextRequest screen capture OCR.
-│   ├── TextAnalysisService.swift    # NaturalLanguage NLTokenizer sentence and token breakdown.
-│   └── QuickPromptService.swift     # User customizable dynamic quick prompt template management.
+│   ├── Models/
+│   │   └── KeyShortcut.swift        # Carbon KeyCode & ModifierFlags domain model.
+│   ├── Services/
+│   │   ├── VocabularyService.swift      # JSON Persistence, domain mutations, AI tagging.
+│   │   ├── GitHubSyncService.swift      # GitHub Secret Gist cloud 2-way sync & LZFSE backup engine.
+│   │   ├── SpeechService.swift          # Text-To-Speech (AVSpeechSynthesizer) state tracking.
+│   │   ├── AudioPlayerService.swift     # Native pronunciation audio player with 0ms prefetch.
+│   │   ├── SmartDictionaryService.swift # REST client for Dictionary API (definitions, IPA).
+│   │   ├── TranslationService.swift     # Multi-engine translation with LRU TranslationCache.
+│   │   ├── TranslationCache.swift       # In-memory LRU translation cache.
+│   │   ├── HotKeyManager.swift          # Carbon global keyboard shortcut listener.
+│   │   ├── QuickPromptService.swift     # Dynamic prompt template management.
+│   │   └── AppSettings.swift            # App configuration defaults and persistence.
+│   └── Helpers/
+│       ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] Prompt Factory.
+│       ├── AIAnalysisParser.swift       # Multiline regex LLM parser -> ParsedAIAnalysis.
+│       ├── DataCompression.swift        # Apple LZFSE / ZLIB Compression Engine.
+│       └── TextGrabber.swift            # Accessibility text selection extractor.
 │
-└── UI/
-    ├── VocabularyNotebookView.swift # 3-Pane NavigationSplitView & Table mode notebook, search, filter, QuickLook spacebar.
-    ├── GrammarDetailView.swift      # [MODULAR COMPONENT] Standalone 5-section Grammar Document view.
-    ├── AddGrammarSheet.swift        # [MODULAR COMPONENT] Modal sheet to input grammar rule and auto-trigger AI Prompt Enforcement.
-    ├── QuickAIAssistantView.swift   # Multi-provider Floating AI Assistant (ChatGPT, Gemini, Claude, Perplexity).
-    ├── AIWebView.swift              # WKWebView with SPA polling retry loop and synthetic DOM event prompt injection.
-    ├── TranslationHUDView.swift     # Global floating HUD panel showing instant translation.
-    ├── SmartTextAnalysisSheet.swift # Paragraph extraction & vocabulary breakdown modal.
-    └── FlashcardStudyView...        # 3D interactive flip-card study mode.
+└── Features/
+    ├── Translation/          # TranslationHUDView, Header, Dictionary, Sentence, ViewModel, FloatingPanel.
+    ├── Notebook/             # VocabularyNotebookView, TableView, Flashcard, QuickLook, WordDetail, Grammar.
+    ├── OCR/                  # ScreenOCRService, ScreenSnipController.
+    ├── AI/                   # QuickAIAssistantView, AIWebView, TextAnalysisSheet.
+    ├── Stats/                # LearningStatsDashboardView, LookupStatsService.
+    ├── Settings/             # SettingsView, GitHubSyncSettingsSection, ShortcutRecorder.
+    └── Common/               # CommonUIComponents (LiveSpokenTextView, VisualEffectBackground).
 ```
 
 ---
@@ -97,7 +104,7 @@ if item.isGrammarFormula {
 Always execute the following shell pipeline after code modifications:
 
 ```bash
-./Scripts/build_app.sh && killall ToolTrL 2>/dev/null || true && sleep 1 && open build/ToolTrL.app
+./Scripts/build_app.sh && (killall NekoTrans 2>/dev/null || killall ToolTrL 2>/dev/null || true) && sleep 1 && open build/NekoTrans.app
 ```
 
 ---

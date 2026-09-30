@@ -2,45 +2,61 @@
 import PackageDescription
 
 let package = Package(
-    name: "ToolTrL",
+    name: "NekoTrans",
     platforms: [
-        .macOS(.v15)
+        .macOS(.v15),
+        .iOS(.v17)
     ],
     products: [
         .executable(
-            name: "ToolTrL",
-            targets: ["ToolTrL"]
+            name: "NekoTrans",
+            targets: ["NekoTrans"]
         ),
         .library(
-            name: "ToolTrLKit",
-            targets: ["ToolTrLKit"]
+            name: "NekoTransKit",
+            targets: ["NekoTransKit"]
+        ),
+        .library(
+            name: "NekoTransiPad",
+            targets: ["NekoTransiPad"]
         )
     ],
     dependencies: [],
     targets: [
         .target(
-            name: "ToolTrLKit",
+            name: "NekoTransKit",
             dependencies: [],
-            path: "Sources/ToolTrL",
+            path: "Sources/NekoTrans",
             exclude: [
-                "App/ToolTrLApp.swift"
+                "App/NekoTransApp.swift"
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5)
+            ]
+        ),
+        .target(
+            name: "NekoTransiPad",
+            dependencies: [],
+            path: "Sources/NekoTransiPad",
+            exclude: [
+                "Info.plist"
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
         ),
         .executableTarget(
-            name: "ToolTrL",
-            dependencies: ["ToolTrLKit"],
-            path: "Sources/ToolTrLLauncher",
+            name: "NekoTrans",
+            dependencies: ["NekoTransKit"],
+            path: "Sources/NekoTransLauncher",
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]
         ),
         .testTarget(
-            name: "ToolTrLTests",
-            dependencies: ["ToolTrLKit"],
-            path: "Tests/ToolTrLTests",
+            name: "NekoTransTests",
+            dependencies: ["NekoTransKit"],
+            path: "Tests/NekoTransTests",
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]

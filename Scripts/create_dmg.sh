@@ -4,11 +4,11 @@ set -e
 # 1. Build .app bundle first
 ./Scripts/build_app.sh
 
-echo "📦 Bắt đầu tạo bộ cài đặt DMG cho ToolTrL..."
+echo "📦 Bắt đầu tạo bộ cài đặt DMG cho NekoTrans..."
 
-DMG_NAME="ToolTrL-1.0.0.dmg"
+DMG_NAME="NekoTrans-1.0.0.dmg"
 BUILD_DIR="build"
-APP_PATH="$BUILD_DIR/ToolTrL.app"
+APP_PATH="$BUILD_DIR/NekoTrans.app"
 DMG_STAGE_DIR="$BUILD_DIR/dmg_stage"
 OUTPUT_DMG="$BUILD_DIR/$DMG_NAME"
 
@@ -23,7 +23,7 @@ ln -s /Applications "$DMG_STAGE_DIR/Applications"
 
 # Create disk image
 echo "💿 Đang nén thành file DMG ($DMG_NAME)..."
-hdiutil create -volname "ToolTrL Installer" -srcfolder "$DMG_STAGE_DIR" -ov -format UDZO "$OUTPUT_DMG"
+hdiutil create -volname "NekoTrans Installer" -srcfolder "$DMG_STAGE_DIR" -ov -format UDZO "$OUTPUT_DMG"
 
 # Clean up stage
 rm -rf "$DMG_STAGE_DIR"

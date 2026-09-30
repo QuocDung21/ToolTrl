@@ -1,0 +1,343 @@
+import XCTest
+@testable import NekoTransKit
+
+final class NekoTransTests: XCTestCase {
+    
+    // MARK: - 1. AIPromptBuilder Tests
+    func testAIPromptBuilderGeneratesCorrectGrammarPrompt() {
+        let title = "Hiện tại đơn"
+        let context = "I study English every day."
+        let prompt = AIPromptBuilder.strictEnforcedGrammarPrompt(title: title, context: context, customNote: "Chi tiết cho TOEIC")
+        
+        XCTAssertTrue(prompt.contains("CÔNG THỨC CHUẨN (FORMULA)"))
+        XCTAssertTrue(prompt.contains("Ý NGHĨA & CÁCH DÙNG"))
+        XCTAssertTrue(prompt.contains("CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)"))
+        XCTAssertTrue(prompt.contains("LỖI SAI HAY GẶP & BẪY ĐỀ THI"))
+        XCTAssertTrue(prompt.contains("MẸO GHI NHỚ THẦN TỐC"))
+        XCTAssertTrue(prompt.contains(title))
+        XCTAssertTrue(prompt.contains(context))
+        XCTAssertTrue(prompt.contains("Chi tiết cho TOEIC"))
+    }
+    
+    func testAIPromptBuilderGeneratesStructuredWordPrompt() {
+        let word = "Resilience"
+        let prompt = AIPromptBuilder.structuredWordPrompt(for: word)
+        
+        XCTAssertTrue(prompt.contains(word))
+        XCTAssertTrue(prompt.contains("TỪ LOẠI & TẦNG NGHĨA CHÍNH"))
+        XCTAssertTrue(prompt.contains("HỌ TỪ (WORD FAMILY)"))
+        XCTAssertTrue(prompt.contains("COLLOCATIONS & THÀNH NGỮ"))
+        XCTAssertTrue(prompt.contains("SẮC THÁI & PHÂN BIỆT (NUANCES)"))
+    }
+    
+    // MARK: - 2. AIAnalysisParser Multiline Tests
+    func testAIAnalysisParserMultilineFormula() {
+        let rawAI = """
+        ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
+        - Thể khẳng định (+): S + V(s/es) + O
+        - Thể phủ định (-): S + do/does not + V_inf + O
+        - Thể nghi vấn (?): Do/Does + S + V_inf + O?
+        - Với To Be: S + am/is/are + N/Adj
+
+        ### 2. 💡 Ý NGHĨA & CÁCH DÙNG
+        - Diễn tả chân lý, sự thật hiển nhiên.
+        - Diễn tả thói quen lặp đi lặp lại.
+
+        ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
+        - She plays piano very well. ➔ Cô ấy chơi piano rất giỏi.
+        - They do not go out. ➔ Họ không ra ngoài.
+
+        ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
+        - Quên chia 's/es' với chủ ngữ ngôi thứ 3 số ít (He/She/It).
+
+        ### 5. 🧠 MẸO GHI NHỚ THẦN TỐC
+        - Nhìn thấy always, usually, often ➔ chia ngay Hiện tại đơn!
+        """
+        
+        let parsed = AIAnalysisParser.parse(rawAI)
+        
+        XCTAssertFalse(parsed.isEmpty)
+        XCTAssertNotNil(parsed.formula)
+        XCTAssertTrue(parsed.formula!.contains("S + V(s/es) + O"))
+        XCTAssertTrue(parsed.formula!.contains("S + do/does not + V_inf + O"))
+        XCTAssertTrue(parsed.formula!.contains("S + am/is/are + N/Adj"))
+        
+        XCTAssertEqual(parsed.meanings.count, 2)
+        XCTAssertEqual(parsed.examples.count, 2)
+        XCTAssertEqual(parsed.commonMistakes.count, 1)
+        XCTAssertNotNil(parsed.mnemonic)
+        XCTAssertTrue(parsed.mnemonic!.contains("always"))
+    }
+    
+    func testAIAnalysisParserVocabularyStructure() {
+        let rawAI = """
+        ### 1. 🏷️ TỪ LOẠI & TẦNG NGHĨA CHÍNH
+        - Danh từ: Sự kiên cường, khả năng phục hồi.
+
+        ### 2. 🌿 HỌ TỪ (WORD FAMILY)
+        - Noun: Resilience
+        - Adj: Resilient
+
+        ### 3. 💡 COLLOCATIONS & THÀNH NGỮ
+        - Show resilience: Thể hiện sự kiên cường.
+        - Build resilience: Xây dựng sức bền.
+
+        ### 4. ⚖️ SẮC THÁI & PHÂN BIỆT (NUANCES)
+        - Khác với Endurance (sức chịu đựng về thể chất), Resilience nhấn mạnh khả năng bật dậy sau thất bại.
+        """
+        
+        let parsed = AIAnalysisParser.parse(rawAI)
+        
+        XCTAssertEqual(parsed.meanings.count, 1)
+        XCTAssertTrue(parsed.wordFamily.count >= 2)
+        XCTAssertTrue(parsed.collocations.count >= 2)
+        XCTAssertFalse(parsed.nuances.isEmpty)
+        XCTAssertTrue(parsed.nuances.first?.contains("Endurance") == true)
+    }
+    
+    // MARK: - 3. TranslationCache & 2-Tier Persistence Tests
+    func testTranslationCacheSetAndGet() async {
+        let cache = TranslationCache.shared
+        let key = "test_word_\(UUID().uuidString)"
+        let translation = "từ thử nghiệm"
+        
+        await cache.setTranslation(key: key, value: translation)
+        let retrieved = await cache.getTranslation(key: key)
+        
+        XCTAssertEqual(retrieved, translation)
+    }
+    
+    func testTranslationCacheDictionaryEntryPersistence() async {
+        let cache = TranslationCache.shared
+        let key = "resilience_vi"
+        let entry = RichWordEntry(
+            word: "Resilience",
+            phonetic: "/rɪˈzɪl.jəns/",
+            mainTranslation: "Sự kiên cường",
+            meanings: [],
+            allSynonyms: ["flexibility", "toughness"],
+            allAntonyms: ["fragility"],
+            baseLemma: nil
+        )
+        
+        await cache.setDictionaryEntry(key: key, entry: entry)
+        let retrieved = await cache.getDictionaryEntry(key: key)
+        
+        XCTAssertNotNil(retrieved)
+        XCTAssertEqual(retrieved?.word, "Resilience")
+        XCTAssertEqual(retrieved?.mainTranslation, "Sự kiên cường")
+        XCTAssertEqual(retrieved?.allSynonyms.count, 2)
+    }
+    
+    // MARK: - 4. SmartDictionary Lemmatization Tests
+    @MainActor
+    func testSmartDictionaryLemmatization() {
+        let service = SmartDictionaryService.shared
+        
+        XCTAssertEqual(service.findLemma(for: "went"), "go")
+        XCTAssertEqual(service.findLemma(for: "running"), "run")
+        XCTAssertEqual(service.findLemma(for: "swimming"), "swim")
+        XCTAssertEqual(service.findLemma(for: "boxes"), "box")
+        XCTAssertEqual(service.findLemma(for: "taken"), "take")
+        
+        // Base words should return nil (no inflected reduction needed)
+        XCTAssertNil(service.findLemma(for: "go"))
+        XCTAssertNil(service.findLemma(for: "apple"))
+    }
+    
+    // MARK: - 5. TranslationViewModel Nested Navigation Tests
+    @MainActor
+    func testTranslationViewModelNestedLookupHistory() {
+        let viewModel = TranslationViewModel()
+        
+        viewModel.processText("apple")
+        XCTAssertFalse(viewModel.canGoBack)
+        XCTAssertEqual(viewModel.originalText, "apple")
+        
+        viewModel.processNestedWord("fruit")
+        XCTAssertTrue(viewModel.canGoBack)
+        XCTAssertEqual(viewModel.originalText, "fruit")
+        
+        viewModel.processNestedWord("seed")
+        XCTAssertTrue(viewModel.canGoBack)
+        XCTAssertEqual(viewModel.originalText, "seed")
+        
+        viewModel.goBack()
+        XCTAssertEqual(viewModel.originalText, "fruit")
+        XCTAssertTrue(viewModel.canGoBack)
+        
+        viewModel.goBack()
+        XCTAssertEqual(viewModel.originalText, "apple")
+        XCTAssertFalse(viewModel.canGoBack)
+    }
+    
+    // MARK: - 6. SavedWordItem Domain Logic Tests
+    func testSavedWordItemGrammarIdentification() {
+        let grammarWord = SavedWordItem(
+            word: "📐 Quá khứ hoàn thành",
+            phonetic: "S + had + V3/ed",
+            translation: "Diễn tả hành động xảy ra trước một hành động khác",
+            exampleEn: "He had left before I arrived."
+        )
+        
+        XCTAssertTrue(grammarWord.isGrammarFormula)
+        XCTAssertEqual(grammarWord.cleanTitle, "Quá khứ hoàn thành")
+        
+        let normalWord = SavedWordItem(
+            word: "Serendipity",
+            phonetic: "/ˌser.ənˈdɪp.ə.t̬i/",
+            translation: "Sự may mắn tình cờ",
+            exampleEn: "Finding this book was pure serendipity."
+        )
+        
+        XCTAssertFalse(normalWord.isGrammarFormula)
+        XCTAssertEqual(normalWord.cleanTitle, "Serendipity")
+    }
+    
+    // MARK: - 7. Apple LZFSE DataCompression Tests
+    func testDataCompressionRoundtrip() {
+        let sampleText = "NekoTrans AI Dictionary & Translator: " + String(repeating: "Quick brown fox jumps over the lazy dog. ", count: 50)
+        let sampleData = sampleText.data(using: .utf8)!
+        
+        let compressed = DataCompression.compress(data: sampleData)
+        XCTAssertNotNil(compressed)
+        XCTAssertTrue(compressed!.count < sampleData.count)
+        
+        let decompressed = DataCompression.decompress(data: compressed!)
+        XCTAssertNotNil(decompressed)
+        XCTAssertEqual(String(data: decompressed!, encoding: .utf8), sampleText)
+    }
+    
+    // MARK: - 8. Advanced Direct AI & Contextual Translation Tests
+    func testContextualTranslationPromptGeneration() {
+        let prompt = AIPromptBuilder.contextualTranslationPrompt(
+            text: "The quick brown fox jumps over the lazy dog.",
+            sourceLang: "en",
+            targetLang: "vi",
+            domain: "Công nghệ & IT",
+            tone: "Học thuật & IELTS"
+        )
+        
+        XCTAssertTrue(prompt.contains("The quick brown fox jumps over the lazy dog."))
+        XCTAssertTrue(prompt.contains("Công nghệ & IT"))
+        XCTAssertTrue(prompt.contains("Học thuật & IELTS"))
+        XCTAssertTrue(prompt.contains("Translate the following text from 'en' to 'vi'"))
+    }
+    
+    func testGrammarAndPolishingPromptGeneration() {
+        let prompt = AIPromptBuilder.grammarAndPolishingPrompt(text: "He go to school yesterday.", targetLang: "vi")
+        XCTAssertTrue(prompt.contains("He go to school yesterday."))
+        XCTAssertTrue(prompt.contains("academic_version"))
+        XCTAssertTrue(prompt.contains("business_version"))
+        XCTAssertTrue(prompt.contains("casual_version"))
+    }
+    
+    func testWordInContextPromptGeneration() {
+        let prompt = AIPromptBuilder.wordInContextPrompt(
+            word: "bank",
+            sentence: "He sat on the river bank watching the sunset.",
+            targetLang: "vi"
+        )
+        XCTAssertTrue(prompt.contains("bank"))
+        XCTAssertTrue(prompt.contains("He sat on the river bank watching the sunset."))
+    }
+    
+    func testGrammarRewriteResultJSONDecoding() {
+        let jsonString = """
+        {
+            "has_errors": true,
+            "correction": "He went to school yesterday.",
+            "explanation_vi": "Chia sai thì quá khứ của động từ 'go'.",
+            "academic_version": "He attended school yesterday.",
+            "business_version": "He was present at school yesterday.",
+            "casual_version": "He went to school yesterday."
+        }
+        """
+        
+        let data = jsonString.data(using: .utf8)!
+        let result = try? JSONDecoder().decode(GrammarRewriteResult.self, from: data)
+        
+        XCTAssertNotNil(result)
+        XCTAssertTrue(result!.hasErrors)
+        XCTAssertEqual(result!.correction, "He went to school yesterday.")
+        XCTAssertEqual(result!.academicVersion, "He attended school yesterday.")
+        XCTAssertEqual(result!.businessVersion, "He was present at school yesterday.")
+    }
+    
+    func testTranslationEngineAndToneEnums() {
+        XCTAssertEqual(TranslationEngine.allCases.count, 5)
+        XCTAssertEqual(TranslationTone.allCases.count, 5)
+        XCTAssertEqual(DirectAIProvider.allCases.count, 6)
+        
+        XCTAssertEqual(DirectAIProvider.openAI.defaultModel, "gpt-4o-mini")
+        XCTAssertEqual(DirectAIProvider.googleGemini.defaultModel, "gemini-1.5-flash")
+    }
+    
+    // MARK: - 8. TranslationHistoryService Tests
+    @MainActor
+    func testTranslationHistoryServiceRecordAndDeduplicate() {
+        let history = TranslationHistoryService.shared
+        history.clearAll()
+        XCTAssertEqual(history.items.count, 0)
+        
+        history.record(
+            originalText: "Hello world",
+            translatedText: "Xin chào thế giới",
+            sourceLang: "en",
+            targetLang: "vi",
+            engine: "Google Translate"
+        )
+        XCTAssertEqual(history.items.count, 1)
+        XCTAssertEqual(history.items.first?.originalText, "Hello world")
+        XCTAssertEqual(history.items.first?.translatedText, "Xin chào thế giới")
+        
+        // Record same word again: should update/move to top and not duplicate
+        history.record(
+            originalText: "hello world",
+            translatedText: "Xin chào thế giới mới",
+            sourceLang: "en",
+            targetLang: "vi",
+            engine: "Direct AI"
+        )
+        XCTAssertEqual(history.items.count, 1)
+        XCTAssertEqual(history.items.first?.translatedText, "Xin chào thế giới mới")
+        
+        // Record another word
+        history.record(
+            originalText: "Apple",
+            translatedText: "Quả táo",
+            sourceLang: "en",
+            targetLang: "vi",
+            engine: "Google Translate"
+        )
+        XCTAssertEqual(history.items.count, 2)
+        XCTAssertEqual(history.items.first?.originalText, "Apple")
+        
+        // Delete item
+        if let firstId = history.items.first?.id {
+            history.delete(id: firstId)
+            XCTAssertEqual(history.items.count, 1)
+            XCTAssertEqual(history.items.first?.originalText, "hello world")
+        }
+        
+        // Clear all
+        history.clearAll()
+        XCTAssertEqual(history.items.count, 0)
+    }
+    
+    // MARK: - 9. TranslationService Circuit Breaker Tests
+    @MainActor
+    func testTranslationServiceCircuitBreaker() {
+        let service = TranslationService.shared
+        service.resetCircuitBreaker()
+        XCTAssertFalse(service.isCircuitOpen)
+        
+        // Trip circuit
+        service.tripGoogleWebCircuit(duration: 60)
+        XCTAssertTrue(service.isCircuitOpen)
+        
+        // Reset circuit
+        service.resetCircuitBreaker()
+        XCTAssertFalse(service.isCircuitOpen)
+    }
+}

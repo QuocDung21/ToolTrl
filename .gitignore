@@ -5,8 +5,11 @@ Packages/
 Package.resolved
 .swiftpm/
 xcuserdata/
+*.xcuserstate
 *.xcworkspace
-*.xcodeproj
+
+# IDE
+.vscode/
 
 # macOS
 .DS_Store
