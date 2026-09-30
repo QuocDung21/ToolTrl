@@ -130,29 +130,91 @@ public actor TranslationCache {
     
     /// Bumped whenever the *content* of the cache stops being trustworthy.
     ///
-    /// Version 2 discards everything written while MyMemory was handed double-encoded
-    /// queries: it echoed the percent escapes back, and those strings were cached as
-    /// translations — so re-looking-up the same text would keep replaying the garbage.
+    /// Version 2 discards the **translation** tier written while MyMemory was handed
+    /// double-encoded queries: it echoed the percent escapes back, and those strings were
+    /// cached as translations — so re-looking-up the same text would keep replaying the
+    /// garbage. The dictionary tier is cleaned per value by `looksLikeEncodedJunk` instead,
+    /// because a version bump alone provably missed entries there.
     static let currentCacheVersion = 2
     
     /// Decodes persisted cache data.
     ///
     /// When the version does not match, the **translations** are dropped: older files may
     /// hold values that are not translations at all (the percent-encoding bug cached the
-    /// engine's echoed query). The **dictionary** entries are kept — they come from a
-    /// different API, were never affected, and are expensive to refetch.
+    /// engine's echoed query).
+    ///
+    /// Independently of the version, both tiers are then passed through
+    /// `looksLikeEncodedJunk`, because the dictionary tier is not safe either: entries whose
+    /// headline translation came from the same broken pipeline survive a version bump (the
+    /// user's cache held `live typing playground_vi` -> `Trực tiếp%20Typing%20Playground`).
     static func decodeCache(_ data: Data) -> PersistentCacheData? {
         guard let decoded = try? JSONDecoder().decode(PersistentCacheData.self, from: data) else {
             return nil
         }
-        guard decoded.version == currentCacheVersion else {
-            return PersistentCacheData(
-                version: currentCacheVersion,
-                translations: [:],
-                dictionaries: decoded.dictionaries
-            )
+
+        let translations = decoded.version == currentCacheVersion ? decoded.translations : [:]
+
+        return PersistentCacheData(
+            version: currentCacheVersion,
+            translations: translations.filter { !looksLikeEncodedJunk($0.value) },
+            dictionaries: decoded.dictionaries.compactMapValues { sanitize($0) }
+        )
+    }
+
+    /// True when a cached string looks like a percent-encoded request rather than a
+    /// translation.
+    ///
+    /// A double-encoded query kept its spaces as `%20`, so the engines echoed strings such
+    /// as `Trực tiếp%20Typing%20Playground`. Natural prose does not contain runs of percent
+    /// escapes, so such a value is treated as corrupt: dropping it only costs one request
+    /// and can never surface a wrong translation.
+    static func looksLikeEncodedJunk(_ text: String) -> Bool {
+        guard text.contains("%") else { return false }
+
+        let characters = Array(text.uppercased())
+        var escapes = 0
+        var spaceEscapes = 0
+        var index = 0
+
+        while index + 2 < characters.count {
+            if characters[index] == "%", characters[index + 1].isHexDigit, characters[index + 2].isHexDigit {
+                escapes += 1
+                if characters[index + 1] == "2", characters[index + 2] == "0" {
+                    spaceEscapes += 1
+                }
+                index += 3
+                continue
+            }
+            index += 1
         }
-        return decoded
+
+        return escapes >= 2 && spaceEscapes >= 1
+    }
+
+    /// Drops percent-encoded junk from a cached entry.
+    ///
+    /// Returns `nil` when the headline translation is junk, so the entry is re-fetched.
+    /// Vietnamese fields inside definitions are cleared individually, keeping the English
+    /// half of the entry usable.
+    private static func sanitize(_ entry: RichWordEntry) -> RichWordEntry? {
+        guard !looksLikeEncodedJunk(entry.mainTranslation) else { return nil }
+
+        var cleaned = entry
+        cleaned.meanings = entry.meanings.map { group in
+            var group = group
+            group.definitions = group.definitions.map { definition in
+                var definition = definition
+                if let translation = definition.definitionVi, looksLikeEncodedJunk(translation) {
+                    definition.definitionVi = nil
+                }
+                if let example = definition.exampleVi, looksLikeEncodedJunk(example) {
+                    definition.exampleVi = nil
+                }
+                return definition
+            }
+            return group
+        }
+        return cleaned
     }
     
     private static func loadInitialData() -> PersistentCacheData {

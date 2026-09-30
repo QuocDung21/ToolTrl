@@ -739,4 +739,109 @@ final class NekoTransTests: XCTestCase {
         XCTAssertNil(TranslationCache.decodeCache(Data("not json".utf8)))
         XCTAssertNil(TranslationCache.decodeCache(Data()))
     }
+    
+    // MARK: - 14. Percent-Encoded Junk Detection Tests
+    func testEncodedJunkDetector() {
+        // Verbatim values from the shipped cache and history.
+        XCTAssertTrue(TranslationCache.looksLikeEncodedJunk("Trực tiếp%20Typing%20Playground"))
+        XCTAssertTrue(TranslationCache.looksLikeEncodedJunk("MindMeister%20is%20great%20for%20creating"))
+        XCTAssertTrue(TranslationCache.looksLikeEncodedJunk("Trong%20the% 20past%2012%20tháng"))
+        XCTAssertTrue(TranslationCache.looksLikeEncodedJunk("Đáng tin cậy%20by%20industry-leading%20brands"))
+        
+        // Real prose must survive.
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk("Sự kiên cường"))
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk("Giảm 20% so với năm ngoái"))
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk("Được các thương hiệu hàng đầu tin tưởng"))
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk(""))
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk("50% và 30%"))
+        // A single escape is not enough evidence — a technical translation may mention "%20".
+        XCTAssertFalse(TranslationCache.looksLikeEncodedJunk("mã hóa %20 trong URL"))
+    }
+    
+    func testCacheDecoderDropsPoisonedDictionaryEntries() throws {
+        // This entry survived the version bump, so looking the phrase up again kept showing
+        // "Trực tiếp%20Typing%20Playground".
+        let poisoned = RichWordEntry(
+            word: "live typing playground",
+            phonetic: nil,
+            mainTranslation: "Trực tiếp%20Typing%20Playground",
+            meanings: [],
+            allSynonyms: [],
+            allAntonyms: [],
+            baseLemma: nil
+        )
+        let clean = RichWordEntry(
+            word: "resilience",
+            phonetic: "/rɪˈzɪl.jəns/",
+            mainTranslation: "Sự kiên cường",
+            meanings: [],
+            allSynonyms: [],
+            allAntonyms: [],
+            baseLemma: nil
+        )
+        
+        let data = try JSONEncoder().encode(
+            TranslationCache.PersistentCacheData(
+                version: TranslationCache.currentCacheVersion,
+                translations: [:],
+                dictionaries: ["live typing playground_vi": poisoned, "resilience_vi": clean]
+            )
+        )
+        
+        let decoded = TranslationCache.decodeCache(data)
+        XCTAssertNil(decoded?.dictionaries["live typing playground_vi"], "Poisoned entry must be dropped so it gets re-fetched")
+        XCTAssertEqual(decoded?.dictionaries["resilience_vi"]?.mainTranslation, "Sự kiên cường")
+    }
+    
+    func testCacheDecoderStripsJunkDefinitionsButKeepsEnglish() throws {
+        let definition = DefinitionItem(
+            definitionEn: "to make something known",
+            definitionVi: "tiết lộ%20điều%20gì đó",
+            exampleEn: "he revealed the truth",
+            exampleVi: "anh ấy%20tiết lộ%20sự thật"
+        )
+        let entry = RichWordEntry(
+            word: "reveal",
+            phonetic: nil,
+            mainTranslation: "tiết lộ",
+            meanings: [
+                MeaningGroup(partOfSpeech: "verb", definitions: [definition], synonyms: [], antonyms: [])
+            ],
+            allSynonyms: [],
+            allAntonyms: [],
+            baseLemma: nil
+        )
+        
+        let data = try JSONEncoder().encode(
+            TranslationCache.PersistentCacheData(
+                version: TranslationCache.currentCacheVersion,
+                translations: [:],
+                dictionaries: ["reveal_vi": entry]
+            )
+        )
+        
+        let sanitized = TranslationCache.decodeCache(data)?.dictionaries["reveal_vi"]
+        XCTAssertNotNil(sanitized, "The headline translation is clean, so the entry stays usable")
+        XCTAssertNil(sanitized?.meanings.first?.definitions.first?.definitionVi, "Junk Vietnamese must be cleared")
+        XCTAssertNil(sanitized?.meanings.first?.definitions.first?.exampleVi, "Junk example translation must be cleared")
+        XCTAssertEqual(sanitized?.meanings.first?.definitions.first?.definitionEn, "to make something known", "English content is untouched")
+        XCTAssertEqual(sanitized?.meanings.first?.definitions.first?.exampleEn, "he revealed the truth")
+    }
+    
+    func testCacheDecoderFiltersJunkFromTranslationTier() throws {
+        let data = try JSONEncoder().encode(
+            TranslationCache.PersistentCacheData(
+                version: TranslationCache.currentCacheVersion,
+                translations: [
+                    "good": "Sự kiên cường",
+                    "bad": "MindMeister%20is%20great%20for%20creating"
+                ],
+                dictionaries: [:]
+            )
+        )
+        
+        let decoded = TranslationCache.decodeCache(data)
+        XCTAssertEqual(decoded?.translations["good"], "Sự kiên cường")
+        XCTAssertNil(decoded?.translations["bad"])
+    }
 }
