@@ -40,7 +40,8 @@ public struct ToolTrLBackupPayload: Codable, Sendable {
 public final class GitHubSyncService: ObservableObject {
     public static let shared = GitHubSyncService()
     
-    private let tokenKey = "tooltrl_github_pat_token"
+    /// Keychain account holding the GitHub PAT (raw value also the legacy UserDefaults key).
+    private let tokenKey = KeyStore.Secret.githubPAT
     private let gistIdKey = "tooltrl_github_gist_id"
     private let lastSyncKey = "tooltrl_github_last_sync_date"
     private let autoSyncKey = "tooltrl_github_auto_sync_enabled"
@@ -68,7 +69,9 @@ public final class GitHubSyncService: ObservableObject {
     }
     
     private init() {
-        self.token = UserDefaults.standard.string(forKey: tokenKey) ?? ""
+        // The PAT lives in the Keychain; migrate a pre-Keychain value first.
+        KeychainStore.migrateFromUserDefaults(account: tokenKey)
+        self.token = KeychainStore.string(for: tokenKey) ?? ""
         self.gistId = UserDefaults.standard.string(forKey: gistIdKey) ?? ""
         
         if UserDefaults.standard.object(forKey: autoSyncKey) == nil {
@@ -187,7 +190,7 @@ public final class GitHubSyncService: ObservableObject {
         
         if success {
             self.token = cleanToken
-            UserDefaults.standard.set(cleanToken, forKey: tokenKey)
+            KeychainStore.set(cleanToken, for: tokenKey)
             if UserDefaults.standard.object(forKey: autoSyncKey) == nil {
                 self.autoSyncEnabled = true
             }
@@ -242,7 +245,7 @@ public final class GitHubSyncService: ObservableObject {
         self.lastSyncDate = nil
         self.lastErrorMessage = nil
         
-        UserDefaults.standard.removeObject(forKey: tokenKey)
+        KeychainStore.remove(account: tokenKey)
         UserDefaults.standard.removeObject(forKey: gistIdKey)
         UserDefaults.standard.removeObject(forKey: lastSyncKey)
         UserDefaults.standard.removeObject(forKey: userKey)

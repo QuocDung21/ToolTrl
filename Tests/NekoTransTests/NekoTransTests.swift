@@ -340,4 +340,64 @@ final class NekoTransTests: XCTestCase {
         service.resetCircuitBreaker()
         XCTAssertFalse(service.isCircuitOpen)
     }
+    
+    // MARK: - 10. Keychain Secret Storage Tests
+    /// Unique probe account so tests never read or write a real user credential.
+    private func makeProbeAccount() -> String {
+        "nekotrans_tests_probe_\(UUID().uuidString)"
+    }
+    
+    func testKeychainStoreRoundTrip() {
+        let account = makeProbeAccount()
+        defer { KeychainStore.remove(account: account) }
+        
+        XCTAssertNil(KeychainStore.string(for: account), "A fresh account must be empty")
+        
+        XCTAssertTrue(KeychainStore.set("sk-secret-value", for: account))
+        XCTAssertEqual(KeychainStore.string(for: account), "sk-secret-value")
+        
+        // Overwriting an existing item must update in place, not duplicate or fail.
+        XCTAssertTrue(KeychainStore.set("sk-rotated-value", for: account))
+        XCTAssertEqual(KeychainStore.string(for: account), "sk-rotated-value")
+        
+        XCTAssertTrue(KeychainStore.remove(account: account))
+        XCTAssertNil(KeychainStore.string(for: account))
+    }
+    
+    func testKeychainSetEmptyStringRemovesItem() {
+        let account = makeProbeAccount()
+        defer { KeychainStore.remove(account: account) }
+        
+        KeychainStore.set("temporary", for: account)
+        XCTAssertNotNil(KeychainStore.string(for: account))
+        
+        // Clearing the field in Settings must delete the secret, not store "".
+        KeychainStore.set("", for: account)
+        XCTAssertNil(KeychainStore.string(for: account))
+    }
+    
+    func testKeychainMigrationMovesLegacyUserDefaultsValue() {
+        let account = makeProbeAccount()
+        let suiteName = "nekotrans_tests_suite_\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer {
+            KeychainStore.remove(account: account)
+            defaults.removePersistentDomain(forName: suiteName)
+        }
+        
+        defaults.set("legacy-plaintext-token", forKey: account)
+        
+        KeychainStore.migrateFromUserDefaults(account: account, defaults: defaults)
+        
+        XCTAssertEqual(KeychainStore.string(for: account), "legacy-plaintext-token")
+        XCTAssertNil(defaults.string(forKey: account), "Legacy UserDefaults copy must be dropped after a successful Keychain write")
+    }
+    
+    func testSecretAccountsAreUniqueAndComplete() {
+        let accounts = KeyStore.Secret.allAccounts
+        XCTAssertEqual(accounts.count, Set(accounts).count, "Secret accounts must be unique")
+        XCTAssertEqual(accounts.count, 7, "6 API keys + 1 GitHub PAT")
+        XCTAssertTrue(accounts.contains(KeyStore.Secret.githubPAT))
+        XCTAssertTrue(accounts.contains(KeyStore.Secret.openAI))
+    }
 }

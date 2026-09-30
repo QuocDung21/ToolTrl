@@ -237,6 +237,11 @@ public enum WorkspaceSidebarItem: String, CaseIterable, Identifiable, Sendable {
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
     
+    /// Reads a secret from the Keychain, returning an empty string when unset.
+    private static func secret(_ account: String) -> String {
+        KeychainStore.string(for: account) ?? ""
+    }
+    
     @Published public var selectedSidebarItem: WorkspaceSidebarItem = .translate
     
     @Published public var appFontSize: AppFontSize {
@@ -392,37 +397,37 @@ public final class AppSettings: ObservableObject {
     
     @Published public var openAIKey: String {
         didSet {
-            UserDefaults.standard.set(openAIKey, forKey: "openai_api_key")
+            KeychainStore.set(openAIKey, for: KeyStore.Secret.openAI)
         }
     }
     
     @Published public var anthropicKey: String {
         didSet {
-            UserDefaults.standard.set(anthropicKey, forKey: "anthropic_api_key")
+            KeychainStore.set(anthropicKey, for: KeyStore.Secret.anthropic)
         }
     }
     
     @Published public var geminiKey: String {
         didSet {
-            UserDefaults.standard.set(geminiKey, forKey: "gemini_api_key")
+            KeychainStore.set(geminiKey, for: KeyStore.Secret.gemini)
         }
     }
     
     @Published public var groqKey: String {
         didSet {
-            UserDefaults.standard.set(groqKey, forKey: "groq_api_key")
+            KeychainStore.set(groqKey, for: KeyStore.Secret.groq)
         }
     }
     
     @Published public var deepSeekKey: String {
         didSet {
-            UserDefaults.standard.set(deepSeekKey, forKey: "deepseek_api_key")
+            KeychainStore.set(deepSeekKey, for: KeyStore.Secret.deepSeek)
         }
     }
     
     @Published public var deepLKey: String {
         didSet {
-            UserDefaults.standard.set(deepLKey, forKey: "deepl_api_key")
+            KeychainStore.set(deepLKey, for: KeyStore.Secret.deepL)
         }
     }
     
@@ -569,12 +574,16 @@ public final class AppSettings: ObservableObject {
         let savedTone = UserDefaults.standard.string(forKey: "translation_tone") ?? TranslationTone.standard.rawValue
         self.translationTone = TranslationTone(rawValue: savedTone) ?? .standard
         
-        self.openAIKey = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-        self.anthropicKey = UserDefaults.standard.string(forKey: "anthropic_api_key") ?? ""
-        self.geminiKey = UserDefaults.standard.string(forKey: "gemini_api_key") ?? ""
-        self.groqKey = UserDefaults.standard.string(forKey: "groq_api_key") ?? ""
-        self.deepSeekKey = UserDefaults.standard.string(forKey: "deepseek_api_key") ?? ""
-        self.deepLKey = UserDefaults.standard.string(forKey: "deepl_api_key") ?? ""
+        // Secrets are stored in the Keychain. Migrate any pre-Keychain UserDefaults
+        // value exactly once, then read the authoritative copy back.
+        KeychainStore.migrateAllSecretsFromUserDefaults()
+
+        self.openAIKey = AppSettings.secret(KeyStore.Secret.openAI)
+        self.anthropicKey = AppSettings.secret(KeyStore.Secret.anthropic)
+        self.geminiKey = AppSettings.secret(KeyStore.Secret.gemini)
+        self.groqKey = AppSettings.secret(KeyStore.Secret.groq)
+        self.deepSeekKey = AppSettings.secret(KeyStore.Secret.deepSeek)
+        self.deepLKey = AppSettings.secret(KeyStore.Secret.deepL)
         self.ollamaEndpoint = UserDefaults.standard.string(forKey: "ollama_endpoint") ?? "http://localhost:11434"
         self.customAIModel = UserDefaults.standard.string(forKey: "custom_ai_model") ?? ""
         
