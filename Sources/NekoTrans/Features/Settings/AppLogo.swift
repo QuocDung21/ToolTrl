@@ -14,12 +14,8 @@ public struct AppLogo {
         if let icon = NSImage(named: "AppIcon") {
             return icon
         }
-        // 3. Load from project Resources as fallback
-        let fallbackPath = "/Users/dungnguyenquoc/Dev/ToolTrL/Resources/AppIcon.png"
-        if let img = NSImage(contentsOfFile: fallbackPath) {
-            return img
-        }
-        // 4. Base64 fallback
+        // 3. Base64 fallback: travels inside the binary, so there is no
+        //    machine-specific path to depend on.
         if let data = Data(base64Encoded: base64Data),
            let img = NSImage(data: data) {
             return img

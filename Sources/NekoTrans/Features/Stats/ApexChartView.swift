@@ -199,14 +199,13 @@ public struct ApexChartView: NSViewRepresentable {
         }
         
         private func loadApexChartsScript() -> String {
+            // Bundled copy (Scripts/build_app.sh puts it in Contents/Resources).
             if let bundleURL = Bundle.main.url(forResource: "apexcharts.min", withExtension: "js"),
                let content = try? String(contentsOf: bundleURL, encoding: .utf8) {
                 return content
             }
-            let devPath = "/Users/dungnguyenquoc/Dev/ToolTrL/Resources/apexcharts.min.js"
-            if let content = try? String(contentsOfFile: devPath, encoding: .utf8) {
-                return content
-            }
+            // Empty result makes the caller fall back to the pinned CDN build,
+            // so the chart still renders in a bare `swift run` without the bundle.
             return ""
         }
         
