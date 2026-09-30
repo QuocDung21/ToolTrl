@@ -14,7 +14,7 @@ public struct GitHubUser: Codable, Sendable {
     }
 }
 
-public struct ToolTrLBackupPayload: Codable, Sendable {
+public struct NekoTransBackupPayload: Codable, Sendable {
     public let appVersion: String
     public let timestamp: Date
     public let savedWords: [SavedWordItem]
@@ -42,6 +42,10 @@ public final class GitHubSyncService: ObservableObject {
     
     /// Keychain account holding the GitHub PAT (raw value also the legacy UserDefaults key).
     private let tokenKey = KeyStore.Secret.githubPAT
+    
+    // Frozen on purpose: these keys hold the user's live gist id and connection state.
+    // Renaming them without a migration would silently disconnect every existing user,
+    // so the ToolTrL prefix stays part of the persisted contract.
     private let gistIdKey = "tooltrl_github_gist_id"
     private let lastSyncKey = "tooltrl_github_last_sync_date"
     private let autoSyncKey = "tooltrl_github_auto_sync_enabled"
@@ -49,6 +53,8 @@ public final class GitHubSyncService: ObservableObject {
     
     private let compressedBackupFileName = "nekotrans_backup.lzfse.b64"
     private let primaryBackupFileName = "nekotrans_backup_data.json"
+    /// Name of the file inside the remote gist; kept so backups written by older
+    /// builds are still found and restored.
     private let legacyBackupFileName = "tooltrl_backup_data.json"
     
     @Published public private(set) var token: String = ""
@@ -313,7 +319,7 @@ public final class GitHubSyncService: ObservableObject {
         isSyncing = true
         lastErrorMessage = nil
         
-        let payload = ToolTrLBackupPayload(
+        let payload = NekoTransBackupPayload(
             savedWords: VocabularyService.shared.savedWords,
             lookupRecords: LookupStatsService.shared.records,
             dailyGoal: LookupStatsService.shared.dailyGoal
@@ -483,7 +489,7 @@ public final class GitHubSyncService: ObservableObject {
                 return false
             }
             
-            let payload = try JSONDecoder().decode(ToolTrLBackupPayload.self, from: rawData)
+            let payload = try JSONDecoder().decode(NekoTransBackupPayload.self, from: rawData)
             
             // Merge or Replace Vocabulary
             if merge {

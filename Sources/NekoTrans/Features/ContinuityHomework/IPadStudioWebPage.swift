@@ -9,7 +9,7 @@ public enum IPadStudioWebPage {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>ToolTrL • iPad Apple Pencil Studio</title>
+            <title>NekoTrans • iPad Apple Pencil Studio</title>
             <style>
                 :root {
                     --bg-color: #0f172a;
@@ -275,7 +275,7 @@ public enum IPadStudioWebPage {
                 <div class="brand">
                     <div class="brand-icon">✏️</div>
                     <div class="brand-text">
-                        <h1 id="headerTitle">ToolTrL iPad Studio</h1>
+                        <h1 id="headerTitle">NekoTrans iPad Studio</h1>
                         <p id="headerSubtitle">Apple Pencil • Trình làm bài siêu nhẹ</p>
                     </div>
                 </div>
@@ -577,7 +577,7 @@ public enum IPadStudioWebPage {
                         const data = await res.json();
                         currentTaskId = data.taskId;
 
-                        document.getElementById('headerTitle').innerText = data.pdfFileName || 'ToolTrL iPad Studio';
+                        document.getElementById('headerTitle').innerText = data.pdfFileName || 'NekoTrans iPad Studio';
                         document.getElementById('headerSubtitle').innerText = data.text || (data.hasPDF ? `Tài liệu PDF (${data.pdfPagesCount || 1} trang)` : 'Bài tập iPad');
 
                         if (data.hasPDF && data.pdfPagesCount > 0) {

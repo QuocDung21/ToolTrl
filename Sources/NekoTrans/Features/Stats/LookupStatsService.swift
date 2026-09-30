@@ -66,6 +66,8 @@ public struct LookupRecord: Identifiable, Codable, Sendable {
 public final class LookupStatsService: ObservableObject {
     public static let shared = LookupStatsService()
     
+    // Frozen on purpose: these keys hold the user's live lookup history and daily
+    // goal. Renaming them without a migration would silently reset their statistics.
     private let storageKey = "tooltrl_lookup_records_v2"
     private let goalKey = "tooltrl_daily_lookup_goal"
     
@@ -77,7 +79,7 @@ public final class LookupStatsService: ObservableObject {
     }
     
     private let calendar = Calendar.current
-    private let saveQueue = DispatchQueue(label: "com.tooltrl.lookupstats.io", qos: .utility)
+    private let saveQueue = DispatchQueue(label: "com.nekotrans.mac.lookupstats.io", qos: .utility)
     private var saveWorkItem: DispatchWorkItem?
     
     private var statsFileURL: URL? {

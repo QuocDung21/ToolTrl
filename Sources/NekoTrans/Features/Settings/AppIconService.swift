@@ -55,9 +55,13 @@ public final class AppIconService: ObservableObject {
     
     @Published public var customImageName: String? = nil
     
+    /// Directory name is frozen on purpose: it holds the user's custom app icon on
+    /// disk, so renaming it would make existing custom icons disappear.
+    private static let customIconsDirectory = "ToolTrL/CustomIcons"
+    
     private var customImageFileURL: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = appSupport.appendingPathComponent("ToolTrL/CustomIcons", isDirectory: true)
+        let dir = appSupport.appendingPathComponent(AppIconService.customIconsDirectory, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("custom_logo.png")
     }
@@ -67,7 +71,9 @@ public final class AppIconService: ObservableObject {
         self.selectedType = AppIconType(rawValue: saved) ?? .defaultCat
         
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let customFile = appSupport.appendingPathComponent("ToolTrL/CustomIcons/custom_logo.png")
+        let customFile = appSupport
+            .appendingPathComponent(AppIconService.customIconsDirectory, isDirectory: true)
+            .appendingPathComponent("custom_logo.png")
         if FileManager.default.fileExists(atPath: customFile.path) {
             self.customImageName = "custom_logo.png"
         }
@@ -161,5 +167,5 @@ public final class AppIconService: ObservableObject {
 }
 
 public extension Notification.Name {
-    static let appIconDidChange = Notification.Name("ToolTrLAppIconDidChangeNotification")
+    static let appIconDidChange = Notification.Name("NekoTransAppIconDidChangeNotification")
 }

@@ -24,7 +24,7 @@ public final class ContinuityHomeworkServer: ObservableObject {
     private var currentPDFDocument: PDFDocument? = nil
     private let pageCache = NSCache<NSNumber, NSData>()
     private var listener: NWListener?
-    private let queue = DispatchQueue(label: "com.tooltrl.continuity.server", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "com.nekotrans.mac.continuity.server", qos: .userInitiated)
 
     private init() {
         pageCache.countLimit = 6 // Cache max 6 pages in memory to keep RAM usage ultra-low (< 20MB)
@@ -41,7 +41,10 @@ public final class ContinuityHomeworkServer: ObservableObject {
 
             // Broadcast Bonjour Service across Apple Local Ecosystem
             let hostName = Host.current().localizedName ?? "Mac"
-            newListener.service = NWListener.Service(name: "ToolTrL-\(hostName)", type: "_tooltrl._tcp")
+            // The service *type* is frozen: it is the discovery protocol shared with the
+            // iPad app, so changing it here alone would break pairing with any build
+            // already installed on the tablet. Only the display name is rebranded.
+            newListener.service = NWListener.Service(name: "NekoTrans-\(hostName)", type: "_tooltrl._tcp")
 
             newListener.stateUpdateHandler = { [weak self] state in
                 DispatchQueue.main.async {
@@ -63,7 +66,7 @@ public final class ContinuityHomeworkServer: ObservableObject {
             self.listener = newListener
             newListener.start(queue: queue)
         } catch {
-            print("ContinuityHomeworkServer start failed: \(error)")
+            AppLog.continuity.error("Server start failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -396,7 +399,7 @@ public final class ContinuityHomeworkServer: ObservableObject {
             let responseData = (try? JSONSerialization.data(withJSONObject: successResult, options: [])) ?? Data()
             self.sendResponse(connection: connection, statusCode: 200, contentType: "application/json", body: responseData)
         } else {
-            let infoJSON = "{\"app\":\"ToolTrL iPad Studio API\",\"version\":\"3.0\"}".data(using: .utf8)!
+            let infoJSON = "{\"app\":\"NekoTrans iPad Studio API\",\"version\":\"3.0\"}".data(using: .utf8)!
             sendResponse(connection: connection, statusCode: 200, contentType: "application/json", body: infoJSON)
         }
     }

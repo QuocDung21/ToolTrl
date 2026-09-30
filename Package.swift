@@ -27,9 +27,6 @@ let package = Package(
             name: "NekoTransKit",
             dependencies: [],
             path: "Sources/NekoTrans",
-            exclude: [
-                "App/NekoTransApp.swift"
-            ],
             swiftSettings: [
                 .swiftLanguageMode(.v5)
             ]

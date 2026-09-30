@@ -357,7 +357,11 @@ final class BonjourMacDiscovery: NSObject, NetServiceBrowserDelegate, NetService
     }
     
     func netServiceDidResolveAddress(_ sender: NetService) {
-        let cleanName = sender.name.replacingOccurrences(of: "ToolTrL-", with: "")
+        // Strip either prefix: "NekoTrans-" from current Mac builds, "ToolTrL-" from
+        // an older Mac running the pre-rename version.
+        let cleanName = sender.name
+            .replacingOccurrences(of: "NekoTrans-", with: "")
+            .replacingOccurrences(of: "ToolTrL-", with: "")
         let port = sender.port > 0 ? sender.port : 8099
         
         // Priority 1: Real IPv4 address from network interface (fastest, most reliable)

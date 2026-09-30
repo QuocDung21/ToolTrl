@@ -674,7 +674,7 @@ public struct ContinuityHomeworkView: View {
                 if let tiff = img.tiffRepresentation,
                    let rep = NSBitmapImageRep(data: tiff),
                    let png = rep.representation(using: .png, properties: [:]) {
-                    let fileURL = folderURL.appendingPathComponent("ToolTrL_Homework_\(timestamp)_Page\(idx + 1).png")
+                    let fileURL = folderURL.appendingPathComponent("NekoTrans_Homework_\(timestamp)_Page\(idx + 1).png")
                     try? png.write(to: fileURL)
                 }
             }

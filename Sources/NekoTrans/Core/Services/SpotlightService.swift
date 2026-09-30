@@ -2,11 +2,14 @@ import Foundation
 import CoreSpotlight
 import UniformTypeIdentifiers
 
-/// Service integrating ToolTrL Saved Vocabulary & Grammar directly into macOS Spotlight (Cmd + Space)
+/// Service integrating NekoTrans Saved Vocabulary & Grammar directly into macOS Spotlight (Cmd + Space)
 public final class SpotlightService: @unchecked Sendable {
     public static let shared = SpotlightService()
     
     private let index = CSSearchableIndex.default()
+    /// Frozen on purpose: this identifier owns every item already indexed on a user's
+    /// Mac. Renaming it orphans those entries in Spotlight until the legacy domain is
+    /// explicitly deleted, so it is not part of the ToolTrL -> NekoTrans rename.
     private let domainIdentifier = "com.quocdung.tooltrl.vocabulary"
     
     private init() {}
@@ -32,7 +35,7 @@ public final class SpotlightService: @unchecked Sendable {
             item.aiThematicGenre.rawValue,
             item.aiPartOfSpeech.rawValue,
             item.isGrammarFormula ? "Ngữ pháp" : "Từ vựng",
-            "ToolTrL"
+            "NekoTrans"
         ]
         
         let searchableItem = CSSearchableItem(
@@ -43,7 +46,7 @@ public final class SpotlightService: @unchecked Sendable {
         
         index.indexSearchableItems([searchableItem]) { error in
             if let error = error {
-                print("Spotlight indexing error for [\(item.cleanTitle)]: \(error)")
+                AppLog.spotlight.error("Indexing failed for [\(item.cleanTitle, privacy: .private)]: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -87,7 +90,7 @@ public final class SpotlightService: @unchecked Sendable {
         
         index.indexSearchableItems(searchableItems) { error in
             if let error = error {
-                print("Spotlight batch indexing error: \(error)")
+                AppLog.spotlight.error("Batch indexing failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -96,16 +99,16 @@ public final class SpotlightService: @unchecked Sendable {
     public func removeItem(id: UUID) {
         index.deleteSearchableItems(withIdentifiers: [id.uuidString]) { error in
             if let error = error {
-                print("Spotlight item deletion error: \(error)")
+                AppLog.spotlight.error("Item deletion failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
     
-    /// Clear all ToolTrL indexed data from macOS Spotlight
+    /// Clear all NekoTrans indexed data from macOS Spotlight
     public func clearAllIndex() {
         index.deleteSearchableItems(withDomainIdentifiers: [domainIdentifier]) { error in
             if let error = error {
-                print("Spotlight clear all error: \(error)")
+                AppLog.spotlight.error("Clear-index failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

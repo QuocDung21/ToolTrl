@@ -151,7 +151,7 @@ public struct iPadStudioMainView: View {
                     }
                 }
             }
-            .navigationTitle(isHeaderHidden ? "" : "ToolTrL • iPad Apple Pencil Studio")
+            .navigationTitle(isHeaderHidden ? "" : "NekoTrans • iPad Apple Pencil Studio")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarHidden(isHeaderHidden)
             .toolbar {
@@ -478,7 +478,7 @@ public struct iPadStudioMainView: View {
                     }
                 }
             }
-            .navigationTitle("Kết Nối ToolTrL Mac")
+            .navigationTitle("Kết Nối NekoTrans Mac")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

@@ -240,7 +240,7 @@ public final class VocabularyService: ObservableObject {
         return (normalizedList, didMigrate)
     }
     
-    private let saveQueue = DispatchQueue(label: "com.tooltrl.vocabulary.save", qos: .utility)
+    private let saveQueue = DispatchQueue(label: "com.nekotrans.mac.vocabulary.save", qos: .utility)
     private var saveWorkItem: DispatchWorkItem?
     
     public func saveWords() {

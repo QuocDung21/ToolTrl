@@ -24,6 +24,9 @@ public struct HomeworkRecord: Identifiable, Codable, Sendable {
 public final class HomeworkStatsService: ObservableObject {
     public static let shared = HomeworkStatsService()
     
+    // Keys and the App Support folder are frozen on purpose: they hold the user's
+    // live homework records. Renaming them without a migration would silently reset
+    // their statistics, so the ToolTrL prefix stays part of the persisted contract.
     private let storageKey = "tooltrl_homework_records_v1"
     private let goalKey = "tooltrl_daily_homework_goal"
     
@@ -35,7 +38,7 @@ public final class HomeworkStatsService: ObservableObject {
     }
     
     private let calendar = Calendar.current
-    private let saveQueue = DispatchQueue(label: "com.tooltrl.homeworkstats.io", qos: .utility)
+    private let saveQueue = DispatchQueue(label: "com.nekotrans.mac.homeworkstats.io", qos: .utility)
     private var saveWorkItem: DispatchWorkItem?
     
     private var statsFileURL: URL? {

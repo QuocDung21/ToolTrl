@@ -4,6 +4,10 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
+    <!-- CFBundleExecutable / CFBundleIdentifier are frozen on purpose: the executable
+         name matches PRODUCT_NAME in ToolTrLiPad.xcodeproj, and the bundle identifier is
+         the app's identity on the App Store and on users' devices. Renaming either
+         would ship a different app and drop continuity with installed builds. -->
     <key>CFBundleExecutable</key>
     <string>ToolTrLiPad</string>
     <key>CFBundleIdentifier</key>
@@ -11,7 +15,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>ToolTrL iPad</string>
+    <string>NekoTrans iPad</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -36,9 +40,9 @@
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>NSCameraUsageDescription</key>
-    <string>ToolTrL cần quyền truy cập Camera để quét mã QR kết nối nhanh với máy Mac.</string>
+    <string>NekoTrans cần quyền truy cập Camera để quét mã QR kết nối nhanh với máy Mac.</string>
     <key>NSLocalNetworkUsageDescription</key>
-    <string>ToolTrL cần truy cập mạng cục bộ để tự động phát hiện và kết nối với máy Mac trong hệ sinh thái Apple.</string>
+    <string>NekoTrans cần truy cập mạng cục bộ để tự động phát hiện và kết nối với máy Mac trong hệ sinh thái Apple.</string>
     <key>NSBonjourServices</key>
     <array>
         <string>_tooltrl._tcp</string>

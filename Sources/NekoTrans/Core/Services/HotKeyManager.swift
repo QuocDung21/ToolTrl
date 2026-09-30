@@ -3,7 +3,7 @@ import Carbon
 import AppKit
 
 public extension Notification.Name {
-    static let hotKeysDidChange = Notification.Name("ToolTrLHotKeysDidChangeNotification")
+    static let hotKeysDidChange = Notification.Name("NekoTransHotKeysDidChangeNotification")
 }
 
 @MainActor
