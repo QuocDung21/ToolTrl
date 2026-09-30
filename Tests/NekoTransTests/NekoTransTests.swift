@@ -265,6 +265,31 @@ final class NekoTransTests: XCTestCase {
         XCTAssertTrue(decoded[0].isGrammarFormula)
     }
     
+    @MainActor
+    func testLegacyItemsAreMigratedAndMigrationIsIdempotent() {
+        let legacy = [
+            SavedWordItem(word: "📐 Quá khứ hoàn thành", phonetic: "S + had + V3/ed", translation: "Diễn tả hành động trước đó"),
+            SavedWordItem(word: "Leadership", phonetic: "/ˈliː.dəʃɪp/", translation: "khả năng lãnh đạo"),
+            // Duplicate of the row above once the title is normalized.
+            SavedWordItem(word: "leadership", phonetic: nil, translation: "bản trùng")
+        ]
+        
+        let first = VocabularyService.migrateLegacyItems(legacy)
+        
+        XCTAssertTrue(first.didMigrate)
+        XCTAssertEqual(first.items.count, 2, "Duplicate rows must be dropped")
+        XCTAssertEqual(first.items[0].itemType, .grammar)
+        XCTAssertEqual(first.items[1].itemType, .vocabulary)
+        XCTAssertEqual(first.items[1].word, "leadership", "Titles are normalized while migrating")
+        
+        // Idempotence: re-running over the migrated output must be a no-op, otherwise
+        // every launch would rewrite the notebook.
+        let second = VocabularyService.migrateLegacyItems(first.items)
+        XCTAssertFalse(second.didMigrate)
+        XCTAssertEqual(second.items.count, 2)
+        XCTAssertEqual(second.items.map(\.itemType), [.grammar, .vocabulary])
+    }
+    
     func testLegacyJSONWithoutItemTypeStillDecodes() throws {
         // Shape produced by builds that predate `itemType` (no key at all).
         let legacyJSON = """

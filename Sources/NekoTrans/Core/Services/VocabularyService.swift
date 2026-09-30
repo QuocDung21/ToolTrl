@@ -193,6 +193,19 @@ public final class VocabularyService: ObservableObject {
         
         // Auto-Deduplicate & Normalize legacy items (e.g. "Leadership" -> "leadership")
         // and backfill `itemType` for rows saved before that field existed.
+        let migrated = VocabularyService.migrateLegacyItems(items)
+        self.savedWords = migrated.items
+        if migrated.didMigrate {
+            saveWords()
+        }
+    }
+    
+    /// Normalizes titles, drops duplicates and backfills `itemType` on rows saved
+    /// before that field existed.
+    ///
+    /// Pure and idempotent, so the migration can be unit tested without touching
+    /// `UserDefaults`. A second pass over its own output reports `didMigrate == false`.
+    public static func migrateLegacyItems(_ items: [SavedWordItem]) -> (items: [SavedWordItem], didMigrate: Bool) {
         var normalizedList: [SavedWordItem] = []
         var seenKeys: Set<String> = []
         var didMigrate = false
@@ -224,10 +237,7 @@ public final class VocabularyService: ObservableObject {
             normalizedList.append(resolvedItem)
         }
         
-        self.savedWords = normalizedList
-        if didMigrate {
-            saveWords()
-        }
+        return (normalizedList, didMigrate)
     }
     
     private let saveQueue = DispatchQueue(label: "com.tooltrl.vocabulary.save", qos: .utility)
