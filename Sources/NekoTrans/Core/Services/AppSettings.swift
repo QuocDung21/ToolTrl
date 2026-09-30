@@ -246,152 +246,152 @@ public final class AppSettings: ObservableObject {
     
     @Published public var appFontSize: AppFontSize {
         didSet {
-            UserDefaults.standard.set(appFontSize.rawValue, forKey: "app_font_size")
+            UserDefaults.standard.set(appFontSize.rawValue, forKey: KeyStore.Defaults.appFontSize)
         }
     }
     
     @Published public var speechRate: Double {
         didSet {
-            UserDefaults.standard.set(speechRate, forKey: "speech_rate")
+            UserDefaults.standard.set(speechRate, forKey: KeyStore.Defaults.speechRate)
         }
     }
     
     @Published public var speechPitch: Double {
         didSet {
-            UserDefaults.standard.set(speechPitch, forKey: "speech_pitch")
+            UserDefaults.standard.set(speechPitch, forKey: KeyStore.Defaults.speechPitch)
         }
     }
     
     @Published public var speechVolume: Double {
         didSet {
-            UserDefaults.standard.set(speechVolume, forKey: "speech_volume")
+            UserDefaults.standard.set(speechVolume, forKey: KeyStore.Defaults.speechVolume)
         }
     }
     
     @Published public var autoSpeakWord: Bool {
         didSet {
-            UserDefaults.standard.set(autoSpeakWord, forKey: "auto_speak_word")
+            UserDefaults.standard.set(autoSpeakWord, forKey: KeyStore.Defaults.autoSpeakWord)
         }
     }
     
     @Published public var clickOutsideDismiss: Bool {
         didSet {
-            UserDefaults.standard.set(clickOutsideDismiss, forKey: "click_outside_dismiss")
+            UserDefaults.standard.set(clickOutsideDismiss, forKey: KeyStore.Defaults.clickOutsideDismiss)
         }
     }
     
     // Hành vi khi nhấn Cmd+Q hoặc đóng ứng dụng (Luôn hỏi / Chạy dưới nền / Thoát hoàn toàn)
     @Published public var quitActionPreference: QuitActionPreference {
         didSet {
-            UserDefaults.standard.set(quitActionPreference.rawValue, forKey: "quit_action_preference")
+            UserDefaults.standard.set(quitActionPreference.rawValue, forKey: KeyStore.Defaults.quitActionPreference)
         }
     }
     
     @Published public var targetLanguage: String {
         didSet {
-            UserDefaults.standard.set(targetLanguage, forKey: "target_language")
+            UserDefaults.standard.set(targetLanguage, forKey: KeyStore.Defaults.targetLanguage)
         }
     }
     
     // Tự động dịch trực tiếp khi bôi đen từ lúc ghim cửa sổ (không cần Option + D)
     @Published public var autoTranslateOnSelectionWhenPinned: Bool {
         didSet {
-            UserDefaults.standard.set(autoTranslateOnSelectionWhenPinned, forKey: "auto_translate_on_selection_when_pinned")
+            UserDefaults.standard.set(autoTranslateOnSelectionWhenPinned, forKey: KeyStore.Defaults.autoTranslateOnSelectionWhenPinned)
         }
     }
     
     // Chế độ hiển thị bản dịch (Từng từ tương ứng / Chỉ tiếng Việt / Tiêu chuẩn / Cú pháp)
     @Published public var translationDisplayMode: TranslationDisplayMode {
         didSet {
-            UserDefaults.standard.set(translationDisplayMode.rawValue, forKey: "translation_display_mode")
+            UserDefaults.standard.set(translationDisplayMode.rawValue, forKey: KeyStore.Defaults.translationDisplayMode)
         }
     }
     
     // Ngữ cảnh dịch chuyên ngành (IT, Kinh tế, IELTS, Y khoa, v.v.)
     @Published public var translationDomain: TranslationDomain {
         didSet {
-            UserDefaults.standard.set(translationDomain.rawValue, forKey: "translation_domain")
+            UserDefaults.standard.set(translationDomain.rawValue, forKey: KeyStore.Defaults.translationDomain)
         }
     }
     
     // Tùy chọn hiển thị từ điển
     @Published public var showPhonetics: Bool {
         didSet {
-            UserDefaults.standard.set(showPhonetics, forKey: "show_phonetics")
+            UserDefaults.standard.set(showPhonetics, forKey: KeyStore.Defaults.showPhonetics)
         }
     }
     
     @Published public var showExamples: Bool {
         didSet {
-            UserDefaults.standard.set(showExamples, forKey: "show_examples")
+            UserDefaults.standard.set(showExamples, forKey: KeyStore.Defaults.showExamples)
         }
     }
     
     @Published public var showSynonyms: Bool {
         didSet {
-            UserDefaults.standard.set(showSynonyms, forKey: "show_synonyms")
+            UserDefaults.standard.set(showSynonyms, forKey: KeyStore.Defaults.showSynonyms)
         }
     }
     
     @Published public var showOfflineDictionary: Bool {
         didSet {
-            UserDefaults.standard.set(showOfflineDictionary, forKey: "show_offline_dict")
+            UserDefaults.standard.set(showOfflineDictionary, forKey: KeyStore.Defaults.showOfflineDict)
         }
     }
     
     // MARK: - 🧩 Tùy chọn hiển thị Menu Tính Năng Nâng Cao
     @Published public var showAIAssistantInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showAIAssistantInMenu, forKey: "menu_show_ai_assistant")
+            UserDefaults.standard.set(showAIAssistantInMenu, forKey: KeyStore.Defaults.menuShowAiAssistant)
         }
     }
     
     @Published public var showAIVocabGrammarInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showAIVocabGrammarInMenu, forKey: "menu_show_ai_vocab_grammar")
+            UserDefaults.standard.set(showAIVocabGrammarInMenu, forKey: KeyStore.Defaults.menuShowAiVocabGrammar)
         }
     }
     
     @Published public var showOCRInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showOCRInMenu, forKey: "menu_show_ocr")
+            UserDefaults.standard.set(showOCRInMenu, forKey: KeyStore.Defaults.menuShowOcr)
         }
     }
     
     @Published public var showiPadContinuityInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showiPadContinuityInMenu, forKey: "menu_show_ipad_continuity")
+            UserDefaults.standard.set(showiPadContinuityInMenu, forKey: KeyStore.Defaults.menuShowIpadContinuity)
         }
     }
     
     @Published public var showDomainSelectorInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showDomainSelectorInMenu, forKey: "menu_show_domain_selector")
+            UserDefaults.standard.set(showDomainSelectorInMenu, forKey: KeyStore.Defaults.menuShowDomainSelector)
         }
     }
     
     @Published public var showNotebookInMenu: Bool {
         didSet {
-            UserDefaults.standard.set(showNotebookInMenu, forKey: "menu_show_notebook")
+            UserDefaults.standard.set(showNotebookInMenu, forKey: KeyStore.Defaults.menuShowNotebook)
         }
     }
     
     // MARK: - 🚀 Translation Engine, AI & Stylistic Tones
     @Published public var translationEngine: TranslationEngine {
         didSet {
-            UserDefaults.standard.set(translationEngine.rawValue, forKey: "translation_engine")
+            UserDefaults.standard.set(translationEngine.rawValue, forKey: KeyStore.Defaults.translationEngine)
         }
     }
     
     @Published public var aiProvider: DirectAIProvider {
         didSet {
-            UserDefaults.standard.set(aiProvider.rawValue, forKey: "ai_provider")
+            UserDefaults.standard.set(aiProvider.rawValue, forKey: KeyStore.Defaults.aiProvider)
         }
     }
     
     @Published public var translationTone: TranslationTone {
         didSet {
-            UserDefaults.standard.set(translationTone.rawValue, forKey: "translation_tone")
+            UserDefaults.standard.set(translationTone.rawValue, forKey: KeyStore.Defaults.translationTone)
         }
     }
     
@@ -433,32 +433,32 @@ public final class AppSettings: ObservableObject {
     
     @Published public var ollamaEndpoint: String {
         didSet {
-            UserDefaults.standard.set(ollamaEndpoint, forKey: "ollama_endpoint")
+            UserDefaults.standard.set(ollamaEndpoint, forKey: KeyStore.Defaults.ollamaEndpoint)
         }
     }
     
     @Published public var customAIModel: String {
         didSet {
-            UserDefaults.standard.set(customAIModel, forKey: "custom_ai_model")
+            UserDefaults.standard.set(customAIModel, forKey: KeyStore.Defaults.customAiModel)
         }
     }
     
     @Published public var speechSpeedPreset: Double {
         didSet {
-            UserDefaults.standard.set(speechSpeedPreset, forKey: "speech_speed_preset")
+            UserDefaults.standard.set(speechSpeedPreset, forKey: KeyStore.Defaults.speechSpeedPreset)
         }
     }
     
     @Published public var enableSelectionBubble: Bool {
         didSet {
-            UserDefaults.standard.set(enableSelectionBubble, forKey: "enable_selection_bubble")
+            UserDefaults.standard.set(enableSelectionBubble, forKey: KeyStore.Defaults.enableSelectionBubble)
             NotificationCenter.default.post(name: .featureFlagsDidChange, object: nil)
         }
     }
     
     @Published public var enableDoubleCmdCTrigger: Bool {
         didSet {
-            UserDefaults.standard.set(enableDoubleCmdCTrigger, forKey: "enable_double_cmd_c")
+            UserDefaults.standard.set(enableDoubleCmdCTrigger, forKey: KeyStore.Defaults.enableDoubleCmdC)
             NotificationCenter.default.post(name: .featureFlagsDidChange, object: nil)
         }
     }
@@ -480,7 +480,7 @@ public final class AppSettings: ObservableObject {
     
     @Published public var showInDock: Bool {
         didSet {
-            UserDefaults.standard.set(showInDock, forKey: "show_in_dock")
+            UserDefaults.standard.set(showInDock, forKey: KeyStore.Defaults.showInDock)
             DispatchQueue.main.async {
                 let policy: NSApplication.ActivationPolicy = self.showInDock ? .regular : .accessory
                 NSApp.setActivationPolicy(policy)
@@ -495,7 +495,7 @@ public final class AppSettings: ObservableObject {
     
     @Published public var mainWorkspaceTab: MainWorkspaceTab {
         didSet {
-            UserDefaults.standard.set(mainWorkspaceTab.rawValue, forKey: "main_workspace_tab")
+            UserDefaults.standard.set(mainWorkspaceTab.rawValue, forKey: KeyStore.Defaults.mainWorkspaceTab)
         }
     }
     
@@ -512,66 +512,66 @@ public final class AppSettings: ObservableObject {
             self.showMainWindowOnLaunch = UserDefaults.standard.bool(forKey: KeyStore.showMainWindowOnLaunch)
         }
         
-        let savedFontSize = UserDefaults.standard.string(forKey: "app_font_size") ?? AppFontSize.medium.rawValue
+        let savedFontSize = UserDefaults.standard.string(forKey: KeyStore.Defaults.appFontSize) ?? AppFontSize.medium.rawValue
         self.appFontSize = AppFontSize(rawValue: savedFontSize) ?? .medium
         
-        let savedRate = UserDefaults.standard.double(forKey: "speech_rate")
+        let savedRate = UserDefaults.standard.double(forKey: KeyStore.Defaults.speechRate)
         self.speechRate = savedRate > 0.05 ? savedRate : 0.50
         
-        let savedPitch = UserDefaults.standard.double(forKey: "speech_pitch")
+        let savedPitch = UserDefaults.standard.double(forKey: KeyStore.Defaults.speechPitch)
         self.speechPitch = savedPitch > 0.05 ? savedPitch : 1.0
         
-        let savedVolume = UserDefaults.standard.object(forKey: "speech_volume") != nil ? UserDefaults.standard.double(forKey: "speech_volume") : 1.0
+        let savedVolume = UserDefaults.standard.object(forKey: KeyStore.Defaults.speechVolume) != nil ? UserDefaults.standard.double(forKey: KeyStore.Defaults.speechVolume) : 1.0
         self.speechVolume = min(max(savedVolume, 0.0), 1.0)
         
-        self.autoSpeakWord = UserDefaults.standard.bool(forKey: "auto_speak_word")
+        self.autoSpeakWord = UserDefaults.standard.bool(forKey: KeyStore.Defaults.autoSpeakWord)
         
-        if UserDefaults.standard.object(forKey: "click_outside_dismiss") == nil {
+        if UserDefaults.standard.object(forKey: KeyStore.Defaults.clickOutsideDismiss) == nil {
             self.clickOutsideDismiss = true
         } else {
-            self.clickOutsideDismiss = UserDefaults.standard.bool(forKey: "click_outside_dismiss")
+            self.clickOutsideDismiss = UserDefaults.standard.bool(forKey: KeyStore.Defaults.clickOutsideDismiss)
         }
         
-        let savedQuitAction = UserDefaults.standard.string(forKey: "quit_action_preference") ?? QuitActionPreference.askEveryTime.rawValue
+        let savedQuitAction = UserDefaults.standard.string(forKey: KeyStore.Defaults.quitActionPreference) ?? QuitActionPreference.askEveryTime.rawValue
         self.quitActionPreference = QuitActionPreference(rawValue: savedQuitAction) ?? .askEveryTime
         
-        self.targetLanguage = UserDefaults.standard.string(forKey: "target_language") ?? TargetLanguage.vietnamese.rawValue
+        self.targetLanguage = UserDefaults.standard.string(forKey: KeyStore.Defaults.targetLanguage) ?? TargetLanguage.vietnamese.rawValue
         
-        if UserDefaults.standard.object(forKey: "auto_translate_on_selection_when_pinned") == nil {
+        if UserDefaults.standard.object(forKey: KeyStore.Defaults.autoTranslateOnSelectionWhenPinned) == nil {
             self.autoTranslateOnSelectionWhenPinned = true
         } else {
-            self.autoTranslateOnSelectionWhenPinned = UserDefaults.standard.bool(forKey: "auto_translate_on_selection_when_pinned")
+            self.autoTranslateOnSelectionWhenPinned = UserDefaults.standard.bool(forKey: KeyStore.Defaults.autoTranslateOnSelectionWhenPinned)
         }
         
         // Display Mode initialization (Default to wordByWord)
-        let savedMode = UserDefaults.standard.string(forKey: "translation_display_mode") ?? TranslationDisplayMode.wordByWord.rawValue
+        let savedMode = UserDefaults.standard.string(forKey: KeyStore.Defaults.translationDisplayMode) ?? TranslationDisplayMode.wordByWord.rawValue
         self.translationDisplayMode = TranslationDisplayMode(rawValue: savedMode) ?? .wordByWord
         
-        let savedDomain = UserDefaults.standard.string(forKey: "translation_domain") ?? TranslationDomain.general.rawValue
+        let savedDomain = UserDefaults.standard.string(forKey: KeyStore.Defaults.translationDomain) ?? TranslationDomain.general.rawValue
         self.translationDomain = TranslationDomain(rawValue: savedDomain) ?? .general
         
         // Default display settings
-        self.showPhonetics = UserDefaults.standard.object(forKey: "show_phonetics") == nil ? true : UserDefaults.standard.bool(forKey: "show_phonetics")
-        self.showExamples = UserDefaults.standard.object(forKey: "show_examples") == nil ? true : UserDefaults.standard.bool(forKey: "show_examples")
-        self.showSynonyms = UserDefaults.standard.object(forKey: "show_synonyms") == nil ? true : UserDefaults.standard.bool(forKey: "show_synonyms")
-        self.showOfflineDictionary = UserDefaults.standard.object(forKey: "show_offline_dict") == nil ? true : UserDefaults.standard.bool(forKey: "show_offline_dict")
+        self.showPhonetics = UserDefaults.standard.object(forKey: KeyStore.Defaults.showPhonetics) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.showPhonetics)
+        self.showExamples = UserDefaults.standard.object(forKey: KeyStore.Defaults.showExamples) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.showExamples)
+        self.showSynonyms = UserDefaults.standard.object(forKey: KeyStore.Defaults.showSynonyms) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.showSynonyms)
+        self.showOfflineDictionary = UserDefaults.standard.object(forKey: KeyStore.Defaults.showOfflineDict) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.showOfflineDict)
         
         // Menu customization defaults
-        self.showAIAssistantInMenu = UserDefaults.standard.object(forKey: "menu_show_ai_assistant") == nil ? true : UserDefaults.standard.bool(forKey: "menu_show_ai_assistant")
-        self.showAIVocabGrammarInMenu = UserDefaults.standard.object(forKey: "menu_show_ai_vocab_grammar") == nil ? false : UserDefaults.standard.bool(forKey: "menu_show_ai_vocab_grammar")
-        self.showOCRInMenu = UserDefaults.standard.object(forKey: "menu_show_ocr") == nil ? true : UserDefaults.standard.bool(forKey: "menu_show_ocr")
-        self.showiPadContinuityInMenu = UserDefaults.standard.object(forKey: "menu_show_ipad_continuity") == nil ? false : UserDefaults.standard.bool(forKey: "menu_show_ipad_continuity")
-        self.showDomainSelectorInMenu = UserDefaults.standard.object(forKey: "menu_show_domain_selector") == nil ? false : UserDefaults.standard.bool(forKey: "menu_show_domain_selector")
-        self.showNotebookInMenu = UserDefaults.standard.object(forKey: "menu_show_notebook") == nil ? true : UserDefaults.standard.bool(forKey: "menu_show_notebook")
+        self.showAIAssistantInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowAiAssistant) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowAiAssistant)
+        self.showAIVocabGrammarInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowAiVocabGrammar) == nil ? false : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowAiVocabGrammar)
+        self.showOCRInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowOcr) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowOcr)
+        self.showiPadContinuityInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowIpadContinuity) == nil ? false : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowIpadContinuity)
+        self.showDomainSelectorInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowDomainSelector) == nil ? false : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowDomainSelector)
+        self.showNotebookInMenu = UserDefaults.standard.object(forKey: KeyStore.Defaults.menuShowNotebook) == nil ? true : UserDefaults.standard.bool(forKey: KeyStore.Defaults.menuShowNotebook)
         
         // Translation Engine & AI initialization
-        let savedEngine = UserDefaults.standard.string(forKey: "translation_engine") ?? TranslationEngine.auto.rawValue
+        let savedEngine = UserDefaults.standard.string(forKey: KeyStore.Defaults.translationEngine) ?? TranslationEngine.auto.rawValue
         self.translationEngine = TranslationEngine(rawValue: savedEngine) ?? .auto
         
-        let savedProvider = UserDefaults.standard.string(forKey: "ai_provider") ?? DirectAIProvider.openAI.rawValue
+        let savedProvider = UserDefaults.standard.string(forKey: KeyStore.Defaults.aiProvider) ?? DirectAIProvider.openAI.rawValue
         self.aiProvider = DirectAIProvider(rawValue: savedProvider) ?? .openAI
         
-        let savedTone = UserDefaults.standard.string(forKey: "translation_tone") ?? TranslationTone.standard.rawValue
+        let savedTone = UserDefaults.standard.string(forKey: KeyStore.Defaults.translationTone) ?? TranslationTone.standard.rawValue
         self.translationTone = TranslationTone(rawValue: savedTone) ?? .standard
         
         // Secrets are stored in the Keychain. Migrate any pre-Keychain UserDefaults
@@ -584,22 +584,22 @@ public final class AppSettings: ObservableObject {
         self.groqKey = AppSettings.secret(KeyStore.Secret.groq)
         self.deepSeekKey = AppSettings.secret(KeyStore.Secret.deepSeek)
         self.deepLKey = AppSettings.secret(KeyStore.Secret.deepL)
-        self.ollamaEndpoint = UserDefaults.standard.string(forKey: "ollama_endpoint") ?? "http://localhost:11434"
-        self.customAIModel = UserDefaults.standard.string(forKey: "custom_ai_model") ?? ""
+        self.ollamaEndpoint = UserDefaults.standard.string(forKey: KeyStore.Defaults.ollamaEndpoint) ?? "http://localhost:11434"
+        self.customAIModel = UserDefaults.standard.string(forKey: KeyStore.Defaults.customAiModel) ?? ""
         
-        let savedSpeed = UserDefaults.standard.double(forKey: "speech_speed_preset")
+        let savedSpeed = UserDefaults.standard.double(forKey: KeyStore.Defaults.speechSpeedPreset)
         self.speechSpeedPreset = savedSpeed > 0.1 ? savedSpeed : 1.0
         
-        self.enableSelectionBubble = UserDefaults.standard.bool(forKey: "enable_selection_bubble")
-        self.enableDoubleCmdCTrigger = UserDefaults.standard.bool(forKey: "enable_double_cmd_c")
+        self.enableSelectionBubble = UserDefaults.standard.bool(forKey: KeyStore.Defaults.enableSelectionBubble)
+        self.enableDoubleCmdCTrigger = UserDefaults.standard.bool(forKey: KeyStore.Defaults.enableDoubleCmdC)
         
-        if UserDefaults.standard.object(forKey: "show_in_dock") == nil {
+        if UserDefaults.standard.object(forKey: KeyStore.Defaults.showInDock) == nil {
             self.showInDock = true
-            UserDefaults.standard.set(true, forKey: "show_in_dock")
+            UserDefaults.standard.set(true, forKey: KeyStore.Defaults.showInDock)
         } else {
-            self.showInDock = UserDefaults.standard.bool(forKey: "show_in_dock")
+            self.showInDock = UserDefaults.standard.bool(forKey: KeyStore.Defaults.showInDock)
         }
-        let savedWorkspaceTab = UserDefaults.standard.string(forKey: "main_workspace_tab") ?? MainWorkspaceTab.translate.rawValue
+        let savedWorkspaceTab = UserDefaults.standard.string(forKey: KeyStore.Defaults.mainWorkspaceTab) ?? MainWorkspaceTab.translate.rawValue
         self.mainWorkspaceTab = MainWorkspaceTab(rawValue: savedWorkspaceTab) ?? .translate
         
         if #available(macOS 13.0, *) {

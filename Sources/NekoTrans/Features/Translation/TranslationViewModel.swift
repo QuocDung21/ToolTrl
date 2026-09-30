@@ -31,7 +31,7 @@ public final class TranslationViewModel: ObservableObject {
     @Published public var isBookmarked: Bool = false
     @Published public var targetLanguage: TargetLanguage {
         didSet {
-            UserDefaults.standard.set(targetLanguage.rawValue, forKey: "target_language")
+            UserDefaults.standard.set(targetLanguage.rawValue, forKey: KeyStore.Defaults.targetLanguage)
             if !originalText.isEmpty {
                 updateTranslation()
             }
@@ -82,7 +82,7 @@ public final class TranslationViewModel: ObservableObject {
     private var translationTaskID: UUID = UUID()
     
     public init() {
-        let savedLang = UserDefaults.standard.string(forKey: "target_language") ?? TargetLanguage.vietnamese.rawValue
+        let savedLang = UserDefaults.standard.string(forKey: KeyStore.Defaults.targetLanguage) ?? TargetLanguage.vietnamese.rawValue
         self.targetLanguage = TargetLanguage(rawValue: savedLang) ?? .vietnamese
         self.translationTone = AppSettings.shared.translationTone
         self.selectedEngine = AppSettings.shared.translationEngine
