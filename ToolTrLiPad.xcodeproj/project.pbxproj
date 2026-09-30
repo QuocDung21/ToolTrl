@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10001 /* App/ToolTrLiPadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* App/ToolTrLiPadApp.swift */; };
+		A10001 /* App/NekoTransiPadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10001 /* App/NekoTransiPadApp.swift */; };
 		A10002 /* Views/PencilKitCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10002 /* Views/PencilKitCanvasView.swift */; };
 		A10003 /* Views/iPadStudioMainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10003 /* Views/iPadStudioMainView.swift */; };
 		A10004 /* Services/iPadSyncClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10004 /* Services/iPadSyncClient.swift */; };
@@ -17,7 +17,7 @@
 
 /* Begin PBXFileReference section */
 		B10000 /* ToolTrLiPad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToolTrLiPad.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B10001 /* App/ToolTrLiPadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/ToolTrLiPadApp.swift; sourceTree = "<group>"; };
+		B10001 /* App/NekoTransiPadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/NekoTransiPadApp.swift; sourceTree = "<group>"; };
 		B10002 /* Views/PencilKitCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/PencilKitCanvasView.swift; sourceTree = "<group>"; };
 		B10003 /* Views/iPadStudioMainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/iPadStudioMainView.swift; sourceTree = "<group>"; };
 		B10004 /* Services/iPadSyncClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/iPadSyncClient.swift; sourceTree = "<group>"; };
@@ -48,7 +48,7 @@
 		D10001 /* ToolTrLiPad */ = {
 			isa = PBXGroup;
 			children = (
-				B10001 /* App/ToolTrLiPadApp.swift */,
+				B10001 /* App/NekoTransiPadApp.swift */,
 				B10002 /* Views/PencilKitCanvasView.swift */,
 				B10003 /* Views/iPadStudioMainView.swift */,
 				B10004 /* Services/iPadSyncClient.swift */,
@@ -56,8 +56,8 @@
 				B10007 /* Views/RadarDeviceDiscoveryView.swift */,
 				B10005 /* Info.plist */,
 			);
-			name = ToolTrLiPad;
-			path = Sources/ToolTrLiPad;
+			name = NekoTransiPad;
+			path = Sources/NekoTransiPad;
 			sourceTree = SOURCE_ROOT;
 		};
 		D10002 /* Products */ = {
@@ -137,7 +137,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10001 /* App/ToolTrLiPadApp.swift in Sources */,
+				A10001 /* App/NekoTransiPadApp.swift in Sources */,
 				A10002 /* Views/PencilKitCanvasView.swift in Sources */,
 				A10003 /* Views/iPadStudioMainView.swift in Sources */,
 				A10004 /* Services/iPadSyncClient.swift in Sources */,
@@ -222,7 +222,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 266F5S6AUZ;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/ToolTrLiPad/Info.plist;
+				INFOPLIST_FILE = Sources/NekoTransiPad/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -243,7 +243,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 266F5S6AUZ;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/ToolTrLiPad/Info.plist;
+				INFOPLIST_FILE = Sources/NekoTransiPad/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
