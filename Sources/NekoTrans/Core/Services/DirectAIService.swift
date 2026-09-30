@@ -423,8 +423,11 @@ public final class DirectAIService: Sendable {
         }
         
         let model = AppSettings.shared.customAIModel.isEmpty ? DirectAIProvider.googleGemini.defaultModel : AppSettings.shared.customAIModel
-        let endpoint = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
-        guard let url = URL(string: endpoint) else { throw URLError(.badURL) }
+        guard let url = SafeURL.make(
+            host: "generativelanguage.googleapis.com",
+            path: "/v1beta/models/\(model):generateContent",
+            queryItems: [URLQueryItem(name: "key", value: apiKey)]
+        ) else { throw URLError(.badURL) }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -466,7 +469,11 @@ public final class DirectAIService: Sendable {
         if base.isEmpty { base = "http://localhost:11434" }
         if base.hasSuffix("/") { base = String(base.dropLast()) }
         
-        guard let url = URL(string: "\(base)/api/generate") else { throw URLError(.badURL) }
+        // User-typed endpoint: parse it instead of concatenating, so an odd character
+        // cannot make Foundation re-encode the whole URL.
+        guard var components = URLComponents(string: base) else { throw URLError(.badURL) }
+        components.path = components.path + "/api/generate"
+        guard let url = components.url else { throw URLError(.badURL) }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

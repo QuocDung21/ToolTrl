@@ -296,7 +296,7 @@ public final class GitHubSyncService: ObservableObject {
     }
     
     private func checkGistExists(gistId: String) async -> Bool {
-        guard let url = URL(string: "https://api.github.com/gists/\(gistId)") else { return false }
+        guard let url = SafeURL.make(host: "api.github.com", path: "/gists/\(gistId)") else { return false }
         var request = URLRequest(url: url)
         request.setValue("token \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
@@ -401,7 +401,7 @@ public final class GitHubSyncService: ObservableObject {
     }
     
     private func updateExistingGist(files: [String: [String: String]]) async -> Bool {
-        guard let url = URL(string: "https://api.github.com/gists/\(gistId)") else { return false }
+        guard let url = SafeURL.make(host: "api.github.com", path: "/gists/\(gistId)") else { return false }
         
         let body: [String: Any] = [
             "description": "NekoTrans Vocabulary Notebook & Analytics Backup (Apple LZFSE, \(Date().formatted()))",
@@ -449,7 +449,7 @@ public final class GitHubSyncService: ObservableObject {
         isSyncing = true
         lastErrorMessage = nil
         
-        guard let url = URL(string: "https://api.github.com/gists/\(gistId)") else {
+        guard let url = SafeURL.make(host: "api.github.com", path: "/gists/\(gistId)") else {
             isSyncing = false
             return false
         }
