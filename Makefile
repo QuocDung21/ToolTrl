@@ -64,7 +64,7 @@ dmg:
 ## 🧪 Chạy Unit Tests
 test:
 	@echo "$(CYAN)🧪 Chạy kiểm thử Swift Test...$(RESET)"
-	@swift test
+	@. ./Scripts/toolchain.sh && swift test
 
 ## 🧹 Xoá cache và file build
 clean:

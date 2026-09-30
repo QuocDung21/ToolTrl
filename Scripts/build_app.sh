@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
+# Fail fast (or auto-select Xcode) when only Command Line Tools are active.
+# shellcheck source=Scripts/toolchain.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/toolchain.sh"
+
 BUILD_FLAVOR="${1:---public}"
 
 if [ "$BUILD_FLAVOR" = "--beta" ]; then
@@ -67,7 +71,7 @@ cat << 'EOF' > "$CONTENTS_DIR/Info.plist"
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
-    <string>14.0</string>
+    <string>15.0</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 NekoTrans. All rights reserved.</string>
     <key>NSPrincipalClass</key>
