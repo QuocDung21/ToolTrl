@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" role="img"
+     aria-label="Minh hoạ: sổ tay từ vựng với danh sách từ, phiên âm và khung công thức ngữ pháp">
+  <defs>
+    <linearGradient id="nbBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F4EFE7"/>
+      <stop offset="100%" stop-color="#E7DFD2"/>
+    </linearGradient>
+    <filter id="nbShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#2A2318" flood-opacity=".18"/>
+    </filter>
+  </defs>
+
+  <rect width="1000" height="600" rx="26" fill="url(#nbBg)"/>
+
+  <g filter="url(#nbShadow)">
+    <rect x="52" y="52" width="896" height="484" rx="18" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Title bar -->
+  <rect x="52" y="52" width="896" height="46" rx="18" fill="#F7F4EF"/>
+  <rect x="52" y="80" width="896" height="18" fill="#F7F4EF"/>
+  <circle cx="80" cy="75" r="6" fill="#E4DED4"/>
+  <circle cx="100" cy="75" r="6" fill="#E4DED4"/>
+  <circle cx="120" cy="75" r="6" fill="#E4DED4"/>
+  <text x="152" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#3C3730">Sổ tay từ vựng</text>
+
+  <!-- Sidebar -->
+  <rect x="76" y="122" width="196" height="388" rx="12" fill="#F8F6F2"/>
+  <rect x="90" y="138" width="168" height="30" rx="8" fill="#E7EFFC"/>
+  <text x="106" y="158" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="600" fill="#2F6FE4">Tất cả ghi chú</text>
+  <text x="258" y="158" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478" text-anchor="end">128</text>
+
+  <text x="106" y="196" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Từ vựng</text>
+  <text x="258" y="196" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#A9A296" text-anchor="end">96</text>
+  <text x="106" y="226" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Cấu trúc ngữ pháp</text>
+  <text x="258" y="226" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#A9A296" text-anchor="end">32</text>
+  <text x="106" y="256" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Mục yêu thích</text>
+  <text x="106" y="286" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Đã ghi nhớ</text>
+
+  <line x1="92" y1="312" x2="256" y2="312" stroke="#EDE8DF"/>
+  <text x="106" y="338" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing=".5" fill="#A9A296">ÔN TẬP</text>
+  <text x="106" y="366" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Flashcards</text>
+  <text x="258" y="366" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#A9A296" text-anchor="end">24</text>
+  <text x="106" y="396" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#5A5449">Tiến độ &amp; Thống kê</text>
+
+  <!-- Word list -->
+  <rect x="292" y="122" width="384" height="388" rx="12" fill="#FCFBF9" stroke="#EFEBE4"/>
+  <rect x="306" y="136" width="356" height="30" rx="9" fill="#F2EFE9"/>
+  <circle cx="326" cy="151" r="6" fill="none" stroke="#A9A296" stroke-width="1.4"/>
+  <path d="M330.5 155.5l4 4" stroke="#A9A296" stroke-width="1.4" stroke-linecap="round"/>
+  <text x="342" y="155" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#A9A296">Tìm trong sổ tay…</text>
+
+  <!-- Row 1 (selected) -->
+  <rect x="300" y="180" width="368" height="52" rx="10" fill="#EFF4FD"/>
+  <text x="314" y="202" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#232019">serendipity</text>
+  <text x="314" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">/ˌser.ənˈdɪp.ə.ti/ · Sự may mắn tình cờ</text>
+  <circle cx="650" cy="206" r="5" fill="#F0A94A"/>
+
+  <!-- Row 2 -->
+  <rect x="300" y="240" width="368" height="52" rx="10" fill="#FFFFFF"/>
+  <text x="314" y="262" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#232019">resilience</text>
+  <text x="314" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">/rɪˈzɪl.jəns/ · Khả năng phục hồi</text>
+  <circle cx="650" cy="266" r="5" fill="#E7E3DA"/>
+
+  <!-- Row 3 (grammar) -->
+  <rect x="300" y="300" width="368" height="52" rx="10" fill="#FFFFFF"/>
+  <text x="314" y="322" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#232019">📐 Quá khứ hoàn thành</text>
+  <text x="314" y="340" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" fill="#2F6FE4">S + had + V3/ed</text>
+  <circle cx="650" cy="326" r="5" fill="#E7E3DA"/>
+
+  <!-- Row 4 -->
+  <rect x="300" y="360" width="368" height="52" rx="10" fill="#FFFFFF"/>
+  <text x="314" y="382" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#232019">collocation</text>
+  <text x="314" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">/ˌkɒl.əˈkeɪ.ʃən/ · Cụm từ cố định</text>
+  <circle cx="650" cy="386" r="5" fill="#E7E3DA"/>
+
+  <!-- Row 5 -->
+  <rect x="300" y="420" width="368" height="52" rx="10" fill="#FFFFFF"/>
+  <text x="314" y="442" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600" fill="#232019">nuance</text>
+  <text x="314" y="460" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">/ˈnjuː.ɑːns/ · Sắc thái</text>
+  <circle cx="650" cy="446" r="5" fill="#E7E3DA"/>
+
+  <!-- Detail pane -->
+  <rect x="692" y="122" width="232" height="388" rx="12" fill="#FCFBF9" stroke="#EFEBE4"/>
+  <text x="710" y="152" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700" fill="#8A8478">📐 CÔNG THỨC NGỮ PHÁP</text>
+  <rect x="710" y="166" width="196" height="58" rx="10" fill="#EFF4FD"/>
+  <text x="722" y="192" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700" fill="#2F6FE4">S + had + V3/ed</text>
+  <text x="722" y="210" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700" fill="#2F6FE4">+ by the time + S + V2</text>
+
+  <text x="710" y="252" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#8A8478">Ý NGHĨA &amp; CÁCH DÙNG</text>
+  <rect x="710" y="262" width="196" height="8" rx="4" fill="#EDE9E2"/>
+  <rect x="710" y="278" width="176" height="8" rx="4" fill="#EDE9E2"/>
+  <rect x="710" y="294" width="150" height="8" rx="4" fill="#EDE9E2"/>
+
+  <text x="710" y="330" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#8A8478">VÍ DỤ MINH HOẠ</text>
+  <text x="710" y="352" font-family="ui-serif, 'Iowan Old Style', Georgia, serif" font-size="12" font-style="italic" fill="#4A443B">He had left before I</text>
+  <text x="710" y="368" font-family="ui-serif, 'Iowan Old Style', Georgia, serif" font-size="12" font-style="italic" fill="#4A443B">arrived.</text>
+  <text x="710" y="388" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">Anh ấy đã rời đi trước khi</text>
+  <text x="710" y="404" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#8A8478">tôi đến.</text>
+
+  <rect x="710" y="428" width="196" height="30" rx="9" fill="#14161A"/>
+  <text x="808" y="448" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#EEF1F6" text-anchor="middle">✨ Phân tích AI</text>
+  <rect x="710" y="466" width="196" height="30" rx="9" fill="#F2EFE9"/>
+  <text x="808" y="486" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#5A5449" text-anchor="middle">Ôn bằng flashcard</text>
+</svg>

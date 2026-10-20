@@ -18,50 +18,96 @@ This document defines the strict architectural contracts, domain models, system 
 ## 2. CODEBASE TOPOLOGY & FILE CONTRACTS
 
 ```
-Sources/NekoTrans/
+Packages/NekoKit/
+├── Package.swift                    # Apple-style Multi-Target Local Swift Package
+└── Sources/
+    ├── NekoCore/                    # Layer 1: Models, Key, KeychainStore, SafeURL, AppLog, Parsers
+    │   ├── Models/
+    │   │   ├── AppConfigurationModels.swift # TranslationEngine, TranslationDomain, WordLookupMode, AppLanguage...
+    │   │   └── VocabularyModels.swift       # SavedWordItem, VocabularyItemType, ItemThematicGenre, ItemAIPriority.
+    │   └── Utilities/
+    │       ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] Prompt Factory.
+    │       ├── AIAnalysisParser.swift       # Multiline regex LLM parser -> ParsedAIAnalysis.
+    │       ├── AppLog.swift                 # os.Logger categories; use instead of `print`.
+    │       ├── BrowserScriptHelper.swift    # AppleScript browser text grabber/injector.
+    │       ├── DataCompression.swift        # Apple LZFSE / ZLIB Compression Engine.
+    │       ├── HTMLEntityDecoder.swift      # HTML entity decoding utility.
+    │       ├── IPANormalizer.swift          # Broad Oxford/Cambridge IPA normalizer.
+    │       ├── InputTextNormalizer.swift    # camelCase/snake_case splitter & POS normalizer.
+    │       ├── Key.swift                    # [SINGLE SOURCE OF TRUTH] Defaults.Keys + KeyStore.Secret accounts.
+    │       ├── KeychainStore.swift          # macOS Keychain wrapper for every app secret.
+    │       ├── SafeURL.swift                # URL builder; NEVER interpolate into URL(string:).
+    │       ├── TextGrabber.swift            # Accessibility text selection extractor.
+    │       └── WordClassifierService.swift  # NaturalLanguage POS & thematic classification.
+    │
+    ├── NekoServices/                # Layer 2: Domain, Networking, AI, Dictionary, Persistence Services
+    │   ├── AnkiConnectService.swift
+    │   ├── AppExclusionService.swift
+    │   ├── AudioPlayerService.swift
+    │   ├── ContinuousJournalService.swift
+    │   ├── DictionaryService.swift
+    │   ├── DirectAIService.swift
+    │   ├── FeatureFlagService.swift
+    │   ├── GitHubSyncService.swift
+    │   ├── LookupStatsService.swift
+    │   ├── QuickPromptService.swift
+    │   ├── ScreenOCRService.swift
+    │   ├── SmartDictionaryService.swift
+    │   ├── SoundService.swift
+    │   ├── SpeechService.swift
+    │   ├── SpotlightService.swift
+    │   ├── TextAnalysisService.swift
+    │   ├── TranslationCache.swift
+    │   ├── TranslationHistoryService.swift
+    │   ├── TranslationProvider.swift
+    │   ├── TranslationService.swift
+    │   └── VocabularyService.swift
+    │
+    └── NekoUI/                      # Layer 3: Design System & Reusable SwiftUI Components
+        ├── AppDesignSystem.swift    # Design tokens, colors, typography, and card modifiers.
+        ├── CommonUIComponents.swift # Shared visual effects and reusable UI elements.
+        └── Neko*.swift              # NekoBadge, NekoCard, NekoAudioButton, NekoCopyButton, NekoSearchBar...
+
+Sources/NekoTrans/                   # Layer 4: macOS App Shell, Windows, Views, String Catalog
 ├── App/
-│   └── AppDelegate.swift            # App lifecycle, NSStatusItem (Menu Bar), HotKeys, Window Controllers.
-│                                    # The SwiftUI entry point lives in Sources/NekoTransLauncher.
+│   ├── NekoTransApp.swift           # @main SwiftUI application entry point.
+│   ├── AppDelegate.swift            # App lifecycle, HotKeys, Background monitors, System Menu.
+│   ├── AppSettings.swift            # App configuration defaults and persistence.
+│   ├── MenuBarController.swift      # NSStatusItem (Menu Bar) controller.
+│   └── ModuleExports.swift          # Re-exports NekoCore, NekoServices, NekoUI across the app target.
 │
-├── Core/
-│   ├── KeyStore/
-│   │   ├── Key.swift                # [SINGLE SOURCE OF TRUTH] UserDefaults keys + Keychain secret accounts.
-│   │   └── KeychainStore.swift      # macOS Keychain wrapper for every app secret.
-│   ├── Models/
-│   │   └── KeyShortcut.swift        # Carbon KeyCode & ModifierFlags domain model.
-│   ├── Services/
-│   │   ├── VocabularyService.swift      # JSON Persistence, domain mutations, AI tagging.
-│   │   ├── GitHubSyncService.swift      # GitHub Secret Gist cloud 2-way sync & LZFSE backup engine.
-│   │   ├── SpeechService.swift          # Text-To-Speech (AVSpeechSynthesizer) state tracking.
-│   │   ├── AudioPlayerService.swift     # Native pronunciation audio player with 0ms prefetch.
-│   │   ├── SmartDictionaryService.swift # REST client for Dictionary API (definitions, IPA).
-│   │   ├── TranslationService.swift     # Multi-engine translation with LRU TranslationCache.
-│   │   ├── TranslationCache.swift       # In-memory LRU translation cache.
-│   │   ├── HotKeyManager.swift          # Carbon global keyboard shortcut listener.
-│   │   ├── QuickPromptService.swift     # Dynamic prompt template management.
-│   │   └── AppSettings.swift            # App configuration defaults and persistence.
-│   └── Helpers/
-│       ├── AIPromptBuilder.swift        # [SINGLE SOURCE OF TRUTH] Prompt Factory.
-│       ├── AIAnalysisParser.swift       # Multiline regex LLM parser -> ParsedAIAnalysis.
-│       ├── AppLog.swift                 # os.Logger categories; use instead of `print`.
-│       ├── SafeURL.swift                # URL builder; NEVER interpolate into URL(string:).
-│       ├── DataCompression.swift        # Apple LZFSE / ZLIB Compression Engine.
-│       └── TextGrabber.swift            # Accessibility text selection extractor.
+├── Services/
+│   ├── ActionManager.swift          # Global shortcut action dispatcher.
+│   ├── AppIconService.swift         # App & Dock icon management.
+│   ├── HotKeyManager.swift          # Global keyboard shortcut listener (KeyboardShortcuts).
+│   └── UpdaterService.swift         # Sparkle auto-update manager.
 │
-└── Features/
-    ├── MainWorkspace/        # MainWorkspaceView, translation/deep-AI/flashcard studios, history sheet.
-    ├── Translation/          # TranslationHUDView, Header, Dictionary, Sentence, ViewModel, FloatingPanel.
-    ├── Notebook/             # VocabularyNotebookView, TableView, Flashcard, QuickLook, WordDetail, Grammar.
-    ├── OCR/                  # ScreenOCRService, ScreenSnipController.
-    ├── AI/                   # QuickAIAssistantView, AIWebView, TextAnalysisSheet.
-    ├── ContinuityHomework/   # iPad Continuity studio, Bonjour server, floating homework bubble.
-    ├── Stats/                # LearningStatsDashboardView, LookupStatsService.
-    ├── Settings/             # SettingsView, GitHubSyncSettingsSection, ShortcutRecorder.
-    ├── Widget/               # WidgetEntryView.
-    └── Common/               # CommonUIComponents, Components/* (NekoBadge, NekoCard, ...).
+├── Views/
+│   ├── Workspace/        # MainWorkspaceView, translation/deep-AI/flashcard studios, history sheet.
+│   ├── Translation/      # TranslationHUDView, Header, Dictionary, Sentence, TranslationViewModel.
+│   ├── Notebook/         # VocabularyNotebookView, TableView, Flashcard, QuickLook, WordDetail, Grammar.
+│   ├── AI/               # QuickAIAssistantView, AIWebView, SmartTextAnalysisSheet.
+│   ├── Stats/            # LearningStatsDashboardView, ApexChartView.
+│   └── Settings/         # SettingsView, GitHubSyncSettingsSection, ShortcutRecorderView, Sections/*.
+│
+├── Windows/
+│   ├── FloatingPanel.swift              # Non-activating HUD translation panel.
+│   ├── MainWindowController.swift       # Main workspace window controller.
+│   ├── QuickAIWindowController.swift    # Quick AI web assistant window controller.
+│   ├── ScreenSnipController.swift       # Interactive screen region selection overlay for OCR.
+│   ├── SelectionBubbleController.swift  # Floating mouse-up text selection bubble.
+│   ├── SettingsWindowController.swift   # Preferences window controller.
+│   ├── TextAnalysisWindowController.swift # Smart text analysis window controller.
+│   └── VocabularyWindowController.swift # Standalone notebook window controller.
+│
+└── Localization/
+    ├── AppConfigurationModels+Localization.swift # LocalizedStringResource extensions on NekoCore models.
+    ├── Localizable.xcstrings        # Xcode 16 String Catalog with auto-generated Swift symbols.
+    ├── Localization.swift           # Runtime language preference & LocalizedStringResource manager.
+    └── LocalizedRootView.swift      # Root SwiftUI localization environment wrapper.
 ```
 
-Additional targets in `Package.swift`: `NekoTrans` (launcher, `Sources/NekoTransLauncher`), `NekoTransiPad` (`Sources/NekoTransiPad`, all UIKit code guarded by `#if canImport(UIKit)`), `NekoTransTests` (`Tests/NekoTransTests`).
+Targets in `NekoTrans.xcodeproj` (`PBXFileSystemSynchronizedRootGroup`): `NekoTrans` (`Sources/NekoTrans`), `NekoTransTests` (`Tests/NekoTransTests`), plus local package `Packages/NekoKit` (`NekoCore`, `NekoServices`, `NekoUI`).
 
 ---
 
@@ -80,7 +126,7 @@ if item.isGrammarFormula {
 }
 ```
 
-### RULE 2: CENTRALIZED PROMPT FACTORY (`Core/Helpers/AIPromptBuilder.swift`)
+### RULE 2: CENTRALIZED PROMPT FACTORY (`Utilities/AIPromptBuilder.swift`)
 - **NEVER** write inline raw prompt strings inside SwiftUI Views or Controller classes.
 - All prompts must be static methods in `AIPromptBuilder`:
   - `AIPromptBuilder.structuredWordPrompt(for:)`
@@ -88,7 +134,7 @@ if item.isGrammarFormula {
   - `AIPromptBuilder.wordGrammarPatternsPrompt(for:context:)`
   - `AIPromptBuilder.strictEnforcedGrammarPrompt(title:context:customNote:)`
 
-### RULE 3: MULTILINE STREAM PARSING (`Core/Helpers/AIAnalysisParser.swift`)
+### RULE 3: MULTILINE STREAM PARSING (`Utilities/AIAnalysisParser.swift`)
 - LLM outputs must be parsed through `AIAnalysisParser.parse(rawText)`.
 - When extending new sections (e.g. `quizzes`, `idioms`), add the property to `ParsedAIAnalysis` and handle its header detection in `AIAnalysisParser.swift`.
 - Formula parsing (`case 7`) must accumulate **all lines** into a multiline formula string until the next header is reached.
@@ -100,28 +146,29 @@ if item.isGrammarFormula {
   - Formulas: `.font(.system(size: 13.5, weight: .bold, design: .monospaced))` with blue tint.
   - Examples: `.font(.system(size: 13, design: .serif)).italic()`.
   - Badges & Tags: 10pt bold uppercase in subtle colored rounded pills.
-- Grammar vs. vocabulary rendering lives in `Features/Notebook/GrammarDetailView.swift` and `Features/Notebook/VocabularyNotebookView.swift`.
+- Grammar vs. vocabulary rendering lives in `Views/Notebook/GrammarDetailView.swift` and `Views/Notebook/VocabularyNotebookView.swift`.
 
-### RULE 5: SECRETS NEVER TOUCH `UserDefaults`
+### RULE 5: SECRETS NEVER TOUCH `UserDefaults` & CENTRALIZED `Defaults` KEYS
 - Every credential (LLM/translation API keys, GitHub PAT) **MUST** be persisted through `KeychainStore` and its account name **MUST** be declared in `KeyStore.Secret`.
 - **NEVER** call `UserDefaults.standard.set(...)` with a secret, and never add a new raw secret key string outside `KeyStore.Secret`.
+- All non-secret persistent settings **MUST** use `Defaults` (`sindresorhus/Defaults`) with keys declared in `Utilities/Key.swift` (`extension Defaults.Keys`).
 - Legacy installs are migrated once by `KeychainStore.migrateFromUserDefaults`; the `UserDefaults` copy is only removed after a successful Keychain write.
 
 ### RULE 6: STRICT RESTRICTED ZONES & NO-GO DIRECTORIES
 - **DO NOT TOUCH / DO NOT INDEX**:
   - `build/`, `.build/`, `DerivedData/`, `*.dmg`, `*.app` (Build artifacts)
-  - `Windows/` (Future platform planning directory; do NOT modify or mix with macOS Swift codebase)
+  - `Windows/` (Top-level future platform planning directory at repo root; note `Sources/NekoTrans/Windows/` is for macOS `NSWindow`/`NSPanel` controllers)
   - `Resources/AppIcon.iconset/`, `Resources/*.png` (Binary assets)
   - `.git/`, `.env*`, `*.key`, `*.p12`, `*.pem` (Credentials & VCS internals)
 
 ### RULE 7: NO `print` IN SHIPPING CODE
 - Diagnostic output **MUST** go through `AppLog` (`os.Logger`), never `print()`. stdout is discarded when the app is launched from Finder, so `print` messages are invisible exactly when they matter.
-- Pick the existing category (`app`, `settings`, `vocabulary`, `spotlight`, `history`, `dictionary`, `translation`, `continuity`, `sync`) or add one to `AppLog`.
+- Pick the existing category (`app`, `settings`, `vocabulary`, `spotlight`, `history`, `dictionary`, `translation`, `sync`) or add one to `AppLog`.
 - User-supplied content (word titles, translated text) **MUST** stay `.private`; mark only error descriptions and identifiers `.public`.
 - Inspect logs with: `log stream --predicate 'subsystem == "com.nekotrans.mac"' --level debug`
 
 ### RULE 8: NEVER INTERPOLATE INTO `URL(string:)`
-- Any request URL that **embeds a value** (user text, an API key, an id, a user-typed endpoint) **MUST** be built with `SafeURL.make(...)` (`Core/Helpers/SafeURL.swift`) or `URLComponents`. Never write `URL(string: "https://host/path?q=\(value)")`.
+- Any request URL that **embeds a value** (user text, an API key, an id, a user-typed endpoint) **MUST** be built with `SafeURL.make(...)` (`Utilities/SafeURL.swift`) or `URLComponents`. Never write `URL(string: "https://host/path?q=\(value)")`.
 - `URL(string:)` stays fine for a literal constant (`URL(string: "https://api.github.com/user")`) or for a URL already produced/validated elsewhere.
 - Reason: `URL(string:)` percent-encodes the **entire** string the moment it contains a character Foundation rejects. Interpolating an already-escaped value then escapes the escapes (`%20` → `%2520`) and the server receives literal `%20` text. MyMemory's `langpair=en|vi` carries a raw `|`, so every query it received was double-encoded and echoed back as the "translation".
 - Pass **raw** values to `SafeURL`; pre-escaping them reintroduces the bug.
@@ -144,11 +191,11 @@ Always execute the following shell pipeline after code modifications:
 ## 5. EXTENSION RECIPES FOR AI AGENTS
 
 ### Recipe A: Adding a New AI Analysis Section
-1. **Update Model**: Add field `public var myField: [String] = []` to `ParsedAIAnalysis` in `Core/Helpers/AIAnalysisParser.swift`.
+1. **Update Model**: Add field `public var myField: [String] = []` to `ParsedAIAnalysis` in `Utilities/AIAnalysisParser.swift`.
 2. **Update Parser**: Add header keyword detection in `AIAnalysisParser.parse()` and append to `result.myField`.
-3. **Update Prompt**: Add corresponding markdown section header in `Core/Helpers/AIPromptBuilder.swift`.
-4. **Update UI**: Render a new `GroupBox` inside `Features/Notebook/GrammarDetailView.swift` or `Features/Notebook/VocabularyNotebookView.swift`.
+3. **Update Prompt**: Add corresponding markdown section header in `Utilities/AIPromptBuilder.swift`.
+4. **Update UI**: Render a new `GroupBox` inside `Views/Notebook/GrammarDetailView.swift` or `Views/Notebook/VocabularyNotebookView.swift`.
 
 ### Recipe B: Adding a New AI Provider to WebView
-1. **Enum Addition**: Add case in `enum AIProvider: String, CaseIterable, Identifiable` in `Features/AI/QuickAIAssistantView.swift`.
-2. **Input Selector**: Add DOM selector & input handler in `Features/AI/AIWebView.swift` inside the JavaScript injection loop.
+1. **Enum Addition**: Add case in `enum AIProvider: String, CaseIterable, Identifiable` in `Views/AI/QuickAIAssistantView.swift`.
+2. **Input Selector**: Add DOM selector & input handler in `Views/AI/AIWebView.swift` inside the JavaScript injection loop.

@@ -32,8 +32,15 @@ install: build
 	@killall NekoTrans 2>/dev/null || killall ToolTrL 2>/dev/null || true
 	@sleep 1
 	@echo "$(CYAN)📂 Cài đặt vào /Applications/NekoTrans.app...$(RESET)"
-	@rm -rf /Applications/NekoTrans.app /Applications/ToolTrL.app
-	@cp -R build/NekoTrans.app /Applications/
+	@mkdir -p /Applications/NekoTrans.app
+	@if command -v rsync >/dev/null 2>&1; then \
+		rsync -a --delete build/NekoTrans.app/ /Applications/NekoTrans.app/; \
+	else \
+		rm -rf /Applications/NekoTrans.app /Applications/ToolTrL.app; \
+		cp -R build/NekoTrans.app /Applications/; \
+	fi
+	@touch /Applications/NekoTrans.app
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f /Applications/NekoTrans.app >/dev/null 2>&1 || true
 	@echo "$(GREEN)🚀 Khởi chạy /Applications/NekoTrans.app...$(RESET)"
 	@open /Applications/NekoTrans.app
 
@@ -63,8 +70,8 @@ dmg:
 
 ## 🧪 Chạy Unit Tests
 test:
-	@echo "$(CYAN)🧪 Chạy kiểm thử Swift Test...$(RESET)"
-	@. ./Scripts/toolchain.sh && swift test
+	@echo "$(CYAN)🧪 Chạy kiểm thử Xcode Test...$(RESET)"
+	@. ./Scripts/toolchain.sh && xcodebuild test -project NekoTrans.xcodeproj -scheme NekoTrans -destination 'platform=macOS' -derivedDataPath .build/XcodeDerivedData
 
 ## 🧹 Xoá cache và file build
 clean:

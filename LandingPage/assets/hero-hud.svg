@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img"
+     aria-label="Minh hoạ: bôi đen một câu trên trang web, NekoTrans hiện bảng dịch tiếng Việt ngay bên cạnh">
+  <defs>
+    <linearGradient id="backdrop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F3EEE5"/>
+      <stop offset="55%" stop-color="#EAE2D6"/>
+      <stop offset="100%" stop-color="#E2D8C9"/>
+    </linearGradient>
+    <linearGradient id="hud" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#25282F"/>
+      <stop offset="100%" stop-color="#1B1D23"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#F97316" stop-opacity=".18"/>
+    </linearGradient>
+    <filter id="panelShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#2A2318" flood-opacity=".22"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#2A2318" flood-opacity=".12"/>
+    </filter>
+  </defs>
+
+  <!-- Backdrop -->
+  <rect width="1200" height="760" rx="30" fill="url(#backdrop)"/>
+  <circle cx="1085" cy="90" r="180" fill="url(#glow)"/>
+  <circle cx="120" cy="690" r="150" fill="url(#glow)" opacity=".7"/>
+
+  <!-- Page being read -->
+  <g filter="url(#softShadow)">
+    <rect x="46" y="96" width="700" height="592" rx="18" fill="#FFFFFF"/>
+  </g>
+  <rect x="46" y="96" width="700" height="52" rx="18" fill="#F6F3EE"/>
+  <rect x="46" y="130" width="700" height="18" fill="#F6F3EE"/>
+  <circle cx="80" cy="122" r="6" fill="#E4DED4"/>
+  <circle cx="100" cy="122" r="6" fill="#E4DED4"/>
+  <circle cx="120" cy="122" r="6" fill="#E4DED4"/>
+  <rect x="560" y="115" width="150" height="14" rx="7" fill="#E9E4DB"/>
+
+  <!-- Article headline + body -->
+  <rect x="92" y="188" width="330" height="20" rx="10" fill="#D9D3C8"/>
+  <rect x="92" y="228" width="606" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="252" width="576" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="276" width="540" height="12" rx="6" fill="#EDE9E2"/>
+
+  <!-- Selected sentence -->
+  <rect x="92" y="308" width="606" height="12" rx="6" fill="#CFE0FA"/>
+  <rect x="92" y="332" width="470" height="12" rx="6" fill="#CFE0FA"/>
+
+  <rect x="92" y="372" width="596" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="396" width="612" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="420" width="430" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="460" width="240" height="16" rx="8" fill="#D9D3C8"/>
+  <rect x="92" y="494" width="600" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="518" width="566" height="12" rx="6" fill="#EDE9E2"/>
+  <rect x="92" y="542" width="380" height="12" rx="6" fill="#EDE9E2"/>
+
+  <!-- Hotkey hint -->
+  <g filter="url(#softShadow)">
+    <rect x="92" y="596" width="252" height="46" rx="12" fill="#14161A"/>
+  </g>
+  <rect x="106" y="610" width="38" height="20" rx="5" fill="#3A3E46"/>
+  <text x="125" y="624" font-family="system-ui, -apple-system, sans-serif" font-size="9.5"
+        fill="#E7E9EE" text-anchor="middle">⌥D</text>
+  <text x="154" y="624" font-family="system-ui, -apple-system, sans-serif" font-size="12"
+        fill="#E7E9EE">Dịch đoạn đang chọn</text>
+
+  <!-- Translation HUD -->
+  <g filter="url(#panelShadow)">
+    <rect x="470" y="132" width="684" height="498" rx="20" fill="url(#hud)"/>
+  </g>
+  <rect x="470.5" y="132.5" width="683" height="497" rx="19.5" fill="none" stroke="#FFFFFF" stroke-opacity=".08"/>
+
+  <!-- HUD header -->
+  <circle cx="508" cy="172" r="13" fill="#F08A24"/>
+  <path d="M500 165l1.6-6 4.6 3.4z" fill="#F08A24"/>
+  <path d="M516 165l-1.6-6-4.6 3.4z" fill="#F08A24"/>
+  <circle cx="503.6" cy="171" r="1.7" fill="#2A1B0C"/>
+  <circle cx="512.4" cy="171" r="1.7" fill="#2A1B0C"/>
+  <path d="M506.6 176.6q1.4 1.4 2.8 0" stroke="#2A1B0C" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+
+  <text x="530" y="177" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#F2F4F8">NekoTrans</text>
+  <path d="M612 172h16m0 0l-5-5m5 5l-5 5" stroke="#9AA1AE" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="638" y="160" width="48" height="24" rx="8" fill="#2F333B"/>
+  <text x="662" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#6FA8FF" text-anchor="middle">EN</text>
+  <path d="M660 182l-3 5h6z" fill="#2F333B"/>
+
+  <rect x="1024" y="158" width="28" height="28" rx="8" fill="#2F333B"/>
+  <path d="M1032 166v6m-3-3h6" stroke="#9AA1AE" stroke-width="1.6" stroke-linecap="round"/>
+  <rect x="1060" y="158" width="34" height="28" rx="8" fill="#2F333B"/>
+  <text x="1077" y="176" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#C7CCD6" text-anchor="middle">···</text>
+  <circle cx="1116" cy="172" r="11" fill="#2F333B"/>
+  <path d="M1112 168l8 8m0-8l-8 8" stroke="#9AA1AE" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Display-mode pills -->
+  <rect x="494" y="200" width="66" height="26" rx="9" fill="#2B2F37"/>
+  <text x="527" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#B7BDC8" text-anchor="middle">Từng từ</text>
+  <rect x="566" y="200" width="70" height="26" rx="9" fill="#2F6FE4"/>
+  <text x="601" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#FFFFFF" text-anchor="middle">Chỉ dịch</text>
+  <rect x="642" y="200" width="86" height="26" rx="9" fill="#2B2F37"/>
+  <text x="685" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#B7BDC8" text-anchor="middle">Tiêu chuẩn</text>
+  <rect x="734" y="200" width="66" height="26" rx="9" fill="#2B2F37"/>
+  <text x="767" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#B7BDC8" text-anchor="middle">Cú pháp</text>
+
+  <circle cx="826" cy="213" r="6" fill="none" stroke="#8B93A1" stroke-width="1.3"/>
+  <path d="M822 213h8M826 209v8" stroke="#8B93A1" stroke-width="1.1"/>
+  <text x="842" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#B7BDC8">Tiêu chuẩn</text>
+  <path d="M894 209l4 4-4 4" stroke="#8B93A1" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="968" y="200" width="106" height="26" rx="9" fill="#3A2C18"/>
+  <text x="1021" y="217" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#F0A94A" text-anchor="middle">✎ Sửa &amp; Viết lại</text>
+
+  <!-- Result label -->
+  <path d="M500 250h11v8h-11z" fill="none" stroke="#E8952F" stroke-width="1.3"/>
+  <path d="M500 250l11 8" stroke="#E8952F" stroke-width="1.3"/>
+  <text x="521" y="261" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="0.6" fill="#5B9BFF">BẢN DỊCH TIẾNG VIỆT</text>
+  <path d="M1064 250l3 8 3-8z" fill="#9AA1AE"/>
+  <path d="M1056 248h4v10h-4z" fill="#9AA1AE"/>
+  <rect x="1078" y="243" width="56" height="24" rx="8" fill="#2F333B"/>
+  <text x="1106" y="259" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#C7CCD6" text-anchor="middle">Sao chép</text>
+
+  <!-- Translation card -->
+  <rect x="494" y="280" width="636" height="196" rx="14" fill="#14161A"/>
+  <text x="516" y="316" font-family="ui-serif, 'Iowan Old Style', Georgia, serif" font-size="19" fill="#EEF1F6">
+    NekoTrans dịch ngay tại chỗ bạn đang đọc.
+  </text>
+  <text x="516" y="350" font-family="ui-serif, 'Iowan Old Style', Georgia, serif" font-size="19" fill="#EEF1F6">
+    Bôi đen, nhấn một phím, và bảng dịch hiện
+  </text>
+  <text x="516" y="384" font-family="ui-serif, 'Iowan Old Style', Georgia, serif" font-size="19" fill="#EEF1F6">
+    ra cạnh con trỏ — không rời mắt khỏi trang.
+  </text>
+  <rect x="516" y="410" width="360" height="9" rx="4.5" fill="#2A2E36"/>
+  <rect x="516" y="430" width="286" height="9" rx="4.5" fill="#2A2E36"/>
+
+  <!-- HUD footer / manual input -->
+  <line x1="494" y1="492" x2="1130" y2="492" stroke="#FFFFFF" stroke-opacity=".07"/>
+  <circle cx="512" cy="524" r="6.5" fill="none" stroke="#8B93A1" stroke-width="1.5"/>
+  <path d="M516.5 528.5l4.5 4.5" stroke="#8B93A1" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="530" y="529" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#868D9A">Nhập từ, cụm từ hoặc câu cần tra cứu…</text>
+  <rect x="968" y="512" width="66" height="24" rx="7" fill="#2F333B"/>
+  <text x="1001" y="528" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" fill="#C7CCD6" text-anchor="middle">⌘C Chép</text>
+  <rect x="1040" y="512" width="60" height="24" rx="7" fill="#2F333B"/>
+  <text x="1070" y="528" font-family="system-ui, -apple-system, sans-serif" font-size="10.5" fill="#C7CCD6" text-anchor="middle">⌘S Lưu</text>
+  <rect x="1106" y="512" width="24" height="24" rx="7" fill="#2F333B"/>
+  <text x="1118" y="528" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#C7CCD6" text-anchor="middle">esc</text>
+
+  <!-- Selection caret -->
+  <rect x="452" y="300" width="3" height="26" rx="1.5" fill="#2F6FE4"/>
+</svg>

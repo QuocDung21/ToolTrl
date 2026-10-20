@@ -1,12 +1,13 @@
 # Xcode and SPM
 .build/
 build/
-Packages/
 Package.resolved
 .swiftpm/
 xcuserdata/
 *.xcuserstate
 *.xcworkspace
+default.profraw
+_reference/
 
 # IDE
 .vscode/

@@ -3,114 +3,101 @@ import SwiftUI
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
+
+    // MARK: - Shared Accessor
+
+    public static var shared: AppDelegate? {
+        NSApp?.delegate as? AppDelegate
+    }
+
+    // MARK: - Properties
+
     public var floatingPanel: FloatingPanel?
-    private var viewModel: TranslationViewModel!
+    private let viewModel = TranslationViewModel()
     private var menuBarController: MenuBarController?
+
     private var lastTriggerTime: Date = .distantPast
-    
+    private var lastCopyTime: Date = .distantPast
+    private var clipboardChangeCount: Int = NSPasteboard.general.changeCount
+    private var clipboardTimer: Timer?
+    private var featureFlagsObserver: NSObjectProtocol?
+    private var isTerminatingConfirmed = false
 
     public override init() {
         super.init()
     }
 
+    // MARK: - Application Lifecycle
+
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        // Update dock icon to newest NekoTrans icon
+        _ = UpdaterService.shared
         AppIconService.shared.updateDockIcon()
-
-        // Setup standard macOS Application Menu (Quit, Close, Edit, Window)
         setupMainMenu()
-
-        // Configure Dock vs Menu Bar activation policy
-        if AppSettings.shared.showInDock {
-            NSApp.setActivationPolicy(.regular)
-        } else {
-            NSApp.setActivationPolicy(.accessory)
-        }
-
-        viewModel = TranslationViewModel()
+        configureActivationPolicy()
 
         setupFloatingPanel()
         setupMenuBar()
         setupHotKey()
-
-        // Setup background monitors conditionally according to feature flags
+        setupFeatureFlagsObserver()
         updateBackgroundMonitors()
 
-        NotificationCenter.default.addObserver(forName: .featureFlagsDidChange, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in
-                self?.updateBackgroundMonitors()
-            }
-        }
-
-        // Prompt for Accessibility permission if not granted
         checkAccessibilityOnLaunch()
 
-        // Show native main window on launch
         if AppSettings.shared.showMainWindowOnLaunch {
             MainWindowController.shared.showMainWindow()
         }
     }
 
-    private var lastCopyTime: Date = .distantPast
-    private var clipboardChangeCount: Int = NSPasteboard.general.changeCount
-    private var clipboardTimer: Timer?
-
-    private func updateBackgroundMonitors() {
-        // 1. Double Cmd+C clipboard monitor
-        if AppSettings.shared.isDoubleCmdCActive {
-            if clipboardTimer == nil {
-                setupClipboardMonitor()
-            }
-        } else {
-            clipboardTimer?.invalidate()
-            clipboardTimer = nil
-        }
-
-        // 2. Selection Bubble monitor
-        if AppSettings.shared.isSelectionBubbleActive {
-            SelectionBubbleController.shared.startMonitoring()
-            SelectionBubbleController.shared.onBubbleClicked = { [weak self] text in
-                self?.triggerTranslationWithText(text)
-            }
-        } else {
-            SelectionBubbleController.shared.stopMonitoring()
+    public func applicationWillTerminate(_ notification: Notification) {
+        stopClipboardMonitor()
+        SelectionBubbleController.shared.stopMonitoring()
+        if let observer = featureFlagsObserver {
+            NotificationCenter.default.removeObserver(observer)
+            featureFlagsObserver = nil
         }
     }
 
-    private func setupClipboardMonitor() {
-        clipboardChangeCount = NSPasteboard.general.changeCount
-        clipboardTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
+    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindowController.shared.showMainWindow()
+        return true
+    }
+
+    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    // MARK: - Setup & Configuration
+
+    private func configureActivationPolicy() {
+        let policy: NSApplication.ActivationPolicy = AppSettings.shared.showInDock ? .regular : .accessory
+        NSApp.setActivationPolicy(policy)
+    }
+
+    private func setupFeatureFlagsObserver() {
+        featureFlagsObserver = NotificationCenter.default.addObserver(
+            forName: .featureFlagsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
             Task { @MainActor in
-                self?.handleClipboardTick()
+                self?.updateBackgroundMonitors()
             }
         }
-    }
 
-    private func handleClipboardTick() {
-        guard AppSettings.shared.isDoubleCmdCActive else { return }
-        guard !TextGrabber.isSimulatingCopy else {
-            clipboardChangeCount = NSPasteboard.general.changeCount
-            return
-        }
-        let currentCount = NSPasteboard.general.changeCount
-        if currentCount != clipboardChangeCount {
-            clipboardChangeCount = currentCount
-            let now = Date()
-            if now.timeIntervalSince(lastCopyTime) < 0.45 {
-                // Double copy detected within 450ms!
-                if let str = NSPasteboard.general.string(forType: .string)?.trimmingCharacters(in: .whitespacesAndNewlines), !str.isEmpty {
-                    SelectionBubbleController.shared.hideBubble()
-                    viewModel.processText(str)
-                    floatingPanel?.showNearCursorOrCenter()
-                }
+        NotificationCenter.default.addObserver(
+            forName: .appLanguageDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.setupMainMenu()
             }
-            lastCopyTime = now
         }
     }
 
     private func setupFloatingPanel() {
         let panel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 515, height: 390),
+            contentRect: NSRect(x: 0, y: 0, width: 515, height: 260),
             backing: .buffered,
             defer: false
         )
@@ -125,9 +112,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.viewModel.toggleBookmark()
         }
         panel.onBackRequested = { [weak self] in
-            if self?.viewModel.canGoBack == true {
-                self?.viewModel.goBack()
-            }
+            guard let self, self.viewModel.canGoBack else { return }
+            self.viewModel.goBack()
         }
         panel.onOpenNotebookRequested = {
             VocabularyWindowController.shared.showNotebook()
@@ -136,28 +122,32 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsWindowController.shared.showSettings()
         }
         panel.onSelectionTranslated = { [weak self] selectedText in
-            guard let self = self else { return }
-            if selectedText != self.viewModel.originalText {
-                self.viewModel.processText(selectedText)
-            }
+            guard let self, selectedText != self.viewModel.originalText else { return }
+            self.viewModel.processText(selectedText)
         }
 
-        let hudView = TranslationHUDView(
-            viewModel: viewModel,
-            onTogglePin: { [weak panel] in
-                panel?.togglePin()
-            },
-            onClose: { [weak panel] in
-                panel?.hidePanel()
-            }
-        )
+        let hudView = LocalizedRootView {
+            TranslationHUDView(
+                viewModel: viewModel,
+                onTogglePin: { [weak panel] in
+                    panel?.togglePin()
+                },
+                onHeightChanged: { [weak panel] newHeight in
+                    panel?.updateHeight(newHeight, animate: true)
+                },
+                onClose: { [weak panel] in
+                    panel?.hidePanel()
+                }
+            )
+        }
 
         let hostingView = NSHostingView(rootView: hudView)
+        hostingView.sizingOptions = []
         hostingView.wantsLayer = true
-        hostingView.layer?.cornerRadius = 16
-        hostingView.layer?.masksToBounds = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+
         panel.contentView = hostingView
-        self.floatingPanel = panel
+        floatingPanel = panel
     }
 
     private func setupMenuBar() {
@@ -188,16 +178,161 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onOCR: { [weak self] in
                 self?.triggerOCR()
+            },
+            onSilentOCR: { [weak self] in
+                self?.triggerSilentOCR()
+            },
+            onTranslateAndReplace: {
+                Task {
+                    await ActionManager.shared.translateAndReplace()
+                }
+            },
+            onPolishAndReplace: {
+                Task {
+                    await ActionManager.shared.polishAndReplace()
+                }
             }
         )
     }
 
+    private func checkAccessibilityOnLaunch() {
+        // Chỉ kiểm tra âm thầm (prompt: false) khi khởi động app để tránh hiện popup khó chịu mỗi lần build/mở lại
+        if !TextGrabber.isAccessibilityTrusted(prompt: false) {
+            AppLog.app.notice("Quyền Trợ năng (Accessibility) chưa được cấp.")
+        }
+    }
+
+    // MARK: - Background Monitors (Double ⌘C & Selection Bubble)
+
+    private func updateBackgroundMonitors() {
+        if AppSettings.shared.isDoubleCmdCActive {
+            startClipboardMonitorIfNeeded()
+        } else {
+            stopClipboardMonitor()
+        }
+
+        if AppSettings.shared.isSelectionBubbleActive {
+            SelectionBubbleController.shared.onBubbleClicked = { [weak self] text, bubbleFrame in
+                self?.triggerTranslationWithText(text, nearRect: bubbleFrame)
+            }
+            SelectionBubbleController.shared.startMonitoring()
+        } else {
+            SelectionBubbleController.shared.stopMonitoring()
+        }
+    }
+
+    private func startClipboardMonitorIfNeeded() {
+        guard clipboardTimer == nil else { return }
+        clipboardChangeCount = NSPasteboard.general.changeCount
+
+        let timer = Timer(timeInterval: 0.3, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.handleClipboardTick()
+            }
+        }
+        // Cho phép macOS gộp timer (timer coalescing) để tiết kiệm năng lượng CPU
+        timer.tolerance = 0.08
+        RunLoop.main.add(timer, forMode: .common)
+        clipboardTimer = timer
+    }
+
+    private func stopClipboardMonitor() {
+        clipboardTimer?.invalidate()
+        clipboardTimer = nil
+    }
+
+    private func handleClipboardTick() {
+        guard AppSettings.shared.isDoubleCmdCActive else { return }
+        let currentCount = NSPasteboard.general.changeCount
+
+        guard !TextGrabber.isSimulatingCopy else {
+            clipboardChangeCount = currentCount
+            return
+        }
+
+        guard currentCount != clipboardChangeCount else { return }
+        clipboardChangeCount = currentCount
+
+        let now = Date()
+        defer { lastCopyTime = now }
+
+        guard now.timeIntervalSince(lastCopyTime) < 0.45,
+              let copied = NSPasteboard.general.string(forType: .string) else {
+            return
+        }
+
+        triggerTranslationWithText(copied)
+    }
+
+    // MARK: - Translation, OCR & AI Triggers
+
+    public func triggerTranslation() {
+        let now = Date()
+        // Debounce: Chống spam phím tắt dưới 250ms
+        guard now.timeIntervalSince(lastTriggerTime) > 0.25 else { return }
+        lastTriggerTime = now
+
+        // Nếu quyền trợ năng chưa được cấp khi người dùng nhấn phím tắt, mới yêu cầu cấp quyền
+        if !TextGrabber.isAccessibilityTrusted(prompt: false) {
+            _ = TextGrabber.isAccessibilityTrusted(prompt: true)
+        }
+
+        Task { @MainActor in
+            SelectionBubbleController.shared.hideBubble()
+            let text = await TextGrabber.shared.getSelectedText()
+            let isVisible = floatingPanel?.isVisible ?? false
+
+            if let selectedText = text?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !selectedText.isEmpty {
+                if isVisible && selectedText == viewModel.originalText {
+                    floatingPanel?.hidePanel()
+                    return
+                }
+                triggerTranslationWithText(selectedText)
+            } else {
+                openQuickLookup()
+            }
+        }
+    }
+
+    public func triggerTranslationWithText(_ text: String, nearRect: NSRect? = nil) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        SelectionBubbleController.shared.hideBubble()
+        viewModel.processText(trimmed)
+
+        if let rect = nearRect {
+            floatingPanel?.showNearRect(rect)
+        } else {
+            floatingPanel?.showNearCursorOrCenter()
+        }
+    }
+
+    public func openQuickLookup() {
+        guard let panel = floatingPanel else { return }
+        if panel.isVisible {
+            panel.hidePanel()
+        } else {
+            panel.showNearCursorOrCenter()
+        }
+    }
+
     public func triggerOCR() {
         floatingPanel?.hidePanel()
-        ScreenOCRService.shared.captureAndRecognize { [weak self] recognizedText in
+        ScreenOCRService.shared.captureAndRecognize { [weak self] recognizedText, snipRect in
+            guard let text = recognizedText else { return }
+            self?.triggerTranslationWithText(text, nearRect: snipRect)
+        }
+    }
+
+    public func triggerSilentOCR() {
+        floatingPanel?.hidePanel()
+        ScreenOCRService.shared.captureAndRecognize { recognizedText in
             guard let text = recognizedText, !text.isEmpty else { return }
-            self?.viewModel.processText(text)
-            self?.floatingPanel?.showNearCursorOrCenter()
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            SoundService.play(.pop)
+            AppLog.app.notice("Silent OCR copied to clipboard: \(text.count, privacy: .public) chars")
         }
     }
 
@@ -208,84 +343,22 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func checkAccessibilityOnLaunch() {
-        if !TextGrabber.isAccessibilityTrusted(prompt: true) {
-            AppLog.app.notice("Quyền Trợ năng (Accessibility) chưa được cấp — đã gửi yêu cầu cấp quyền.")
-        }
-    }
-
-    public func triggerTranslation() {
-        let now = Date()
-        // Debounce: Chống spam phím tắt dưới 250ms
-        guard now.timeIntervalSince(lastTriggerTime) > 0.25 else { return }
-        lastTriggerTime = now
-
-        Task { @MainActor in
-            SelectionBubbleController.shared.hideBubble()
-            let text = await TextGrabber.shared.getSelectedText()
-            let isVisible = self.floatingPanel?.isVisible ?? false
-
-            if let selectedText = text, !selectedText.isEmpty {
-                // Nếu cửa sổ đang mở và người dùng bấm lại phím tắt trên đúng từ cũ -> Toggle đóng
-                if isVisible && selectedText == self.viewModel.originalText {
-                    self.floatingPanel?.hidePanel()
-                    return
-                }
-
-                self.viewModel.processText(selectedText)
-                self.floatingPanel?.showNearCursorOrCenter()
-            } else {
-                if isVisible {
-                    // Đang mở -> Toggle đóng
-                    self.floatingPanel?.hidePanel()
-                } else {
-                    // Chưa mở -> Mở ô tìm kiếm thủ công
-                    self.floatingPanel?.showNearCursorOrCenter()
-                }
-            }
-        }
-    }
-
-    public func triggerTranslationWithText(_ text: String) {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        self.viewModel.processText(trimmed)
-        self.floatingPanel?.showNearCursorOrCenter()
-    }
-
-    public func openQuickLookup() {
-        let isVisible = self.floatingPanel?.isVisible ?? false
-        if isVisible {
-            self.floatingPanel?.hidePanel()
-        } else {
-            self.floatingPanel?.showNearCursorOrCenter()
-        }
-    }
-
-    public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        MainWindowController.shared.showMainWindow()
-        return true
-    }
-
     public func showMainWindow() {
         MainWindowController.shared.showMainWindow()
     }
 
-    private var isTerminatingConfirmed = false
+    // MARK: - Quit & Background Lifecycle
 
-    // MARK: - Handle Quit / Command + Q Confirmation
     public func hideToBackground() {
         MainWindowController.shared.hideMainWindow()
-        self.floatingPanel?.hidePanel()
+        floatingPanel?.hidePanel()
         SelectionBubbleController.shared.hideBubble()
-        FloatingHomeworkBubbleController.shared.hideBubble()
         QuickAIWindowController.shared.closeWindow()
         TextAnalysisWindowController.shared.closeWindow()
-        ContinuityHomeworkWindowController.shared.closeWindow()
         VocabularyWindowController.shared.hideNotebook()
         SettingsWindowController.shared.hideSettings()
 
-        for window in NSApp.windows {
+        for window in NSApp.windows where window.isVisible {
             let className = NSStringFromClass(type(of: window))
             if className.contains("StatusBar") { continue }
             window.orderOut(nil)
@@ -300,7 +373,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateNow
         }
 
-        // Kiểm tra nếu người dùng đã ghi nhớ lựa chọn trước đó
         switch AppSettings.shared.quitActionPreference {
         case .runInBackground:
             hideToBackground()
@@ -314,26 +386,26 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
 
+        let isEn = Localization.shared.resolvedLanguage == .english
         let alert = NSAlert()
-        alert.messageText = "Bạn muốn thoát NekoTrans?"
-        alert.informativeText = "Ứng dụng có thể tiếp tục chạy ngầm trên thanh Menu để bạn dùng phím tắt dịch nhanh."
+        alert.messageText = isEn ? "Quit NekoTrans?" : "Bạn muốn thoát NekoTrans?"
+        alert.informativeText = isEn
+            ? "The app can keep running in the background from the Menu Bar so you can use translation shortcuts anytime."
+            : "Ứng dụng có thể tiếp tục chạy ngầm trên thanh Menu để bạn dùng phím tắt dịch nhanh."
         alert.alertStyle = .informational
-
-        // Checkbox ghi nhớ lựa chọn
         alert.showsSuppressionButton = true
-        alert.suppressionButton?.title = "Ghi nhớ lựa chọn này"
+        alert.suppressionButton?.title = isEn ? "Remember this choice" : "Ghi nhớ lựa chọn này"
 
-        alert.addButton(withTitle: "Chạy dưới nền")
-        alert.addButton(withTitle: "Thoát hoàn toàn")
-        let cancelBtn = alert.addButton(withTitle: "Hủy")
-        cancelBtn.keyEquivalent = "\u{1b}" // Esc
+        alert.addButton(withTitle: isEn ? "Run in Background" : "Chạy dưới nền")
+        alert.addButton(withTitle: isEn ? "Quit Completely" : "Thoát hoàn toàn")
+        let cancelBtn = alert.addButton(withTitle: isEn ? "Cancel" : "Hủy")
+        cancelBtn.keyEquivalent = "\u{1b}"
 
         let response = alert.runModal()
         let shouldRemember = alert.suppressionButton?.state == .on
 
         switch response {
         case .alertFirstButtonReturn:
-            // Người dùng chọn chạy dưới nền
             if shouldRemember {
                 AppSettings.shared.quitActionPreference = .runInBackground
             }
@@ -341,7 +413,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateCancel
 
         case .alertSecondButtonReturn:
-            // Người dùng chọn thoát hoàn toàn
             if shouldRemember {
                 AppSettings.shared.quitActionPreference = .terminateImmediately
             }
@@ -349,41 +420,70 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateNow
 
         default:
-            // Người dùng bấm Hủy hoặc Esc -> Hủy thao tác tắt
             return .terminateCancel
         }
     }
 
-    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return false // Nếu bấm nút đỏ tắt cửa sổ, app vẫn sẵn sàng chạy ngầm
-    }
+    // MARK: - Standard macOS System Main Menu
 
-    // MARK: - Standard macOS System Main Menu (⌘Q, ⌘W, ⌘,, Cut, Copy, Paste)
     private func setupMainMenu() {
+        let isEn = Localization.shared.resolvedLanguage == .english
         let mainMenu = NSMenu()
 
         // 1. App Menu (NekoTrans)
         let appMenuItem = NSMenuItem()
         let appMenu = NSMenu()
 
-        appMenu.addItem(withTitle: "Giới thiệu NekoTrans", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
-        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(
+            withTitle: isEn ? "About NekoTrans" : "Giới thiệu NekoTrans",
+            action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
+            keyEquivalent: ""
+        )
+        appMenu.addItem(.separator())
 
-        let prefsItem = NSMenuItem(title: "Cài đặt...", action: #selector(handleOpenSettingsFromMenu), keyEquivalent: ",")
+        let prefsItem = NSMenuItem(
+            title: isEn ? "Settings..." : "Cài đặt...",
+            action: #selector(handleOpenSettingsFromMenu),
+            keyEquivalent: ","
+        )
         prefsItem.target = self
         appMenu.addItem(prefsItem)
 
-        appMenu.addItem(NSMenuItem.separator())
-        appMenu.addItem(withTitle: "Ẩn NekoTrans", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        let updateItem = NSMenuItem(
+            title: isEn ? "Check for Updates…" : "Kiểm tra cập nhật…",
+            action: #selector(handleCheckForUpdates),
+            keyEquivalent: ""
+        )
+        updateItem.target = self
+        appMenu.addItem(updateItem)
 
-        let hideOthersItem = NSMenuItem(title: "Ẩn các ứng dụng khác", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
+        appMenu.addItem(.separator())
+        appMenu.addItem(
+            withTitle: isEn ? "Hide NekoTrans" : "Ẩn NekoTrans",
+            action: #selector(NSApplication.hide(_:)),
+            keyEquivalent: "h"
+        )
+
+        let hideOthersItem = NSMenuItem(
+            title: isEn ? "Hide Others" : "Ẩn các ứng dụng khác",
+            action: #selector(NSApplication.hideOtherApplications(_:)),
+            keyEquivalent: "h"
+        )
         hideOthersItem.keyEquivalentModifierMask = [.command, .option]
         appMenu.addItem(hideOthersItem)
 
-        appMenu.addItem(withTitle: "Hiện tất cả", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
-        appMenu.addItem(NSMenuItem.separator())
+        appMenu.addItem(
+            withTitle: isEn ? "Show All" : "Hiện tất cả",
+            action: #selector(NSApplication.unhideAllApplications(_:)),
+            keyEquivalent: ""
+        )
+        appMenu.addItem(.separator())
 
-        let quitItem = NSMenuItem(title: "Thoát NekoTrans", action: #selector(handleQuitApp), keyEquivalent: "q")
+        let quitItem = NSMenuItem(
+            title: isEn ? "Quit NekoTrans" : "Thoát NekoTrans",
+            action: #selector(handleQuitApp),
+            keyEquivalent: "q"
+        )
         quitItem.target = self
         appMenu.addItem(quitItem)
 
@@ -392,34 +492,47 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 2. File Menu
         let fileMenuItem = NSMenuItem()
-        let fileMenu = NSMenu(title: "Tệp")
-        fileMenu.addItem(withTitle: "Đóng cửa sổ", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        let fileMenu = NSMenu(title: isEn ? "File" : "Tệp")
+        fileMenu.addItem(
+            withTitle: isEn ? "Close Window" : "Đóng cửa sổ",
+            action: #selector(NSWindow.performClose(_:)),
+            keyEquivalent: "w"
+        )
         fileMenuItem.submenu = fileMenu
         mainMenu.addItem(fileMenuItem)
 
-        // 3. Edit Menu (Standard macOS Cut/Copy/Paste/Undo/Redo)
+        // 3. Edit Menu
         let editMenuItem = NSMenuItem()
-        let editMenu = NSMenu(title: "Sửa")
-        editMenu.addItem(withTitle: "Hoàn tác", action: Selector(("undo:")), keyEquivalent: "z")
-        let redoItem = NSMenuItem(title: "Làm lại", action: Selector(("redo:")), keyEquivalent: "z")
+        let editMenu = NSMenu(title: isEn ? "Edit" : "Sửa")
+        editMenu.addItem(withTitle: isEn ? "Undo" : "Hoàn tác", action: Selector(("undo:")), keyEquivalent: "z")
+        let redoItem = NSMenuItem(title: isEn ? "Redo" : "Làm lại", action: Selector(("redo:")), keyEquivalent: "z")
         redoItem.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(redoItem)
-        editMenu.addItem(NSMenuItem.separator())
-        editMenu.addItem(withTitle: "Cắt", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Sao chép", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Dán", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        editMenu.addItem(withTitle: "Chọn tất cả", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: isEn ? "Cut" : "Cắt", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: isEn ? "Copy" : "Sao chép", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: isEn ? "Paste" : "Dán", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: isEn ? "Select All" : "Chọn tất cả", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenuItem.submenu = editMenu
         mainMenu.addItem(editMenuItem)
 
         // 4. Window Menu
         let windowMenuItem = NSMenuItem()
-        let windowMenu = NSMenu(title: "Cửa sổ")
-        windowMenu.addItem(withTitle: "Thu nhỏ", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
-        windowMenu.addItem(withTitle: "Phóng to", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        let windowMenu = NSMenu(title: isEn ? "Window" : "Cửa sổ")
+        windowMenu.addItem(
+            withTitle: isEn ? "Minimize" : "Thu nhỏ",
+            action: #selector(NSWindow.performMiniaturize(_:)),
+            keyEquivalent: "m"
+        )
+        windowMenu.addItem(
+            withTitle: isEn ? "Zoom" : "Phóng to",
+            action: #selector(NSWindow.performZoom(_:)),
+            keyEquivalent: ""
+        )
         windowMenuItem.submenu = windowMenu
         mainMenu.addItem(windowMenuItem)
 
+        NSApp.windowsMenu = windowMenu
         NSApp.mainMenu = mainMenu
     }
 
@@ -427,7 +540,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         SettingsWindowController.shared.showSettings()
     }
 
+    @objc private func handleCheckForUpdates() {
+        UpdaterService.shared.checkForUpdates()
+    }
+
     @objc private func handleQuitApp() {
         NSApp.terminate(nil)
     }
 }
+

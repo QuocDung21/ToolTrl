@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NekoTrans">
+  <defs>
+    <linearGradient id="favi" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBA53C"/>
+      <stop offset="100%" stop-color="#EF7A18"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#14161A"/>
+  <path d="M16 22l2.6-10 8 6.4z" fill="url(#favi)"/>
+  <path d="M48 22l-2.6-10-8 6.4z" fill="url(#favi)"/>
+  <circle cx="32" cy="36" r="15" fill="url(#favi)"/>
+  <circle cx="26" cy="34" r="2.4" fill="#2A1B0C"/>
+  <circle cx="38" cy="34" r="2.4" fill="#2A1B0C"/>
+  <path d="M30 42q2 2 4 0" stroke="#2A1B0C" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+</svg>
