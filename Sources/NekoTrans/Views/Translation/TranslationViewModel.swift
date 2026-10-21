@@ -238,10 +238,15 @@ public final class TranslationViewModel {
                     self.isLoading = false
                     self.isStreaming = false
                     let p = AppSettings.shared.aiProvider
-                    let custom = AppSettings.shared.customAIModel
-                    let model = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
-                    let shortModel = model.contains("/") ? (model.components(separatedBy: "/").last ?? model) : model
-                    self.activeEngineLabel = "⚡ \(shortModel) (\(p == .ollama ? "Local AI" : p.rawValue))"
+                    if p == .inProcessGGUF {
+                        let name = LocalGGUFService.shared.loadedModelName ?? URL(fileURLWithPath: AppSettings.shared.customGGUFModelPath).deletingPathExtension().lastPathComponent
+                        self.activeEngineLabel = "⚡ \(name.isEmpty ? "GGUF Metal" : name) (In-Process Direct)"
+                    } else {
+                        let custom = AppSettings.shared.customAIModel
+                        let model = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
+                        let shortModel = model.contains("/") ? (model.components(separatedBy: "/").last ?? model) : model
+                        self.activeEngineLabel = "⚡ \(shortModel) (\(p == .ollama ? "Local AI" : p.rawValue))"
+                    }
                     self.recordHistory(translated: fullText)
                 } catch {
                     // Graceful fallback to regular translation if AI streaming fails
@@ -255,7 +260,12 @@ public final class TranslationViewModel {
                     ) {
                         guard self.translationTaskID == currentID else { return }
                         self.translatedText = result
-                        self.activeEngineLabel = "Google Translate (Tự động chuyển do Local AI chưa chạy)"
+                        let p = AppSettings.shared.aiProvider
+                        if p == .inProcessGGUF {
+                            self.activeEngineLabel = "Google Translate (Tự động chuyển do chưa chọn/nạp file GGUF)"
+                        } else {
+                            self.activeEngineLabel = "Google Translate (Tự động chuyển do Local AI chưa chạy)"
+                        }
                         self.recordHistory(translated: result)
                     }
                     self.isLoading = false

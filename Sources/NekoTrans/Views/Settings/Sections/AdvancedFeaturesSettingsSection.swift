@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Defaults
+import UniformTypeIdentifiers
 
 public struct AdvancedFeaturesSettingsSection: View {
     @Bindable var settings = AppSettings.shared
@@ -24,6 +25,8 @@ public struct AdvancedFeaturesSettingsSection: View {
     @State private var selectedBackendType: LocalAIBackendType = .ollama
     @State private var customModelInputMode: Bool = false
     @State private var localHFModels: [LocalAIModelInfo] = []
+    @State private var localGGUFModels: [LocalGGUFModelItem] = []
+    @State private var ggufLoadStatus: String? = nil
     @State private var copiedCommandMessage: String? = nil
     
     private var hasCustomConfig: Bool {
@@ -103,7 +106,7 @@ public struct AdvancedFeaturesSettingsSection: View {
                 
                 DisclosureGroup(isExpanded: $isExpandedAIConfig) {
                     VStack(alignment: .leading, spacing: 10) {
-                        if settings.aiProvider != .ollama {
+                        if settings.aiProvider != .ollama && settings.aiProvider != .inProcessGGUF {
                             TextField("Model AI tùy chỉnh (để trống để dùng mặc định):", text: $settings.customAIModel)
                                 .textFieldStyle(.roundedBorder)
                         }
@@ -380,6 +383,8 @@ public struct AdvancedFeaturesSettingsSection: View {
                                     .padding(.top, 4)
                                 }
                             }
+                        case .inProcessGGUF:
+                            ggufInProcessView
                         }
                         
                         SecureField("DeepL API Key (Tùy chọn):", text: $settings.deepLKey)
@@ -774,6 +779,7 @@ public struct AdvancedFeaturesSettingsSection: View {
     private func scanLocalAI() {
         isScanningLocalAI = true
         self.localHFModels = LocalAIService.shared.scanHuggingFaceLocalCache()
+        self.localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
         Task {
             let state = await LocalAIService.shared.checkHealth(endpoint: settings.ollamaEndpoint)
             await MainActor.run {
@@ -862,6 +868,267 @@ public struct AdvancedFeaturesSettingsSection: View {
         if panel.runModal() == .OK, let url = panel.url {
             Defaults[.journalDirectoryPath] = url.path
         }
+    }
+
+    // MARK: - GGUF In-Process Metal Engine
+    private func selectGGUFFile() {
+        let panel = NSOpenPanel()
+        if let ggufType = UTType(filenameExtension: "gguf") {
+            panel.allowedContentTypes = [ggufType]
+        }
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.prompt = "Chọn file"
+        panel.message = "Chọn file mô hình GGUF (.gguf) trên máy để nạp trực tiếp vào RAM:"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            settings.customGGUFModelPath = url.path
+            settings.translationEngine = .directAI
+            settings.aiProvider = .inProcessGGUF
+            scanLocalAI()
+            loadGGUFIntoRAM(path: url.path)
+        }
+    }
+
+    private func loadGGUFIntoRAM(path: String) {
+        do {
+            try LocalGGUFService.shared.loadModel(at: path)
+            ggufLoadStatus = "✅ Đã nạp vào RAM Metal thành công: \(LocalGGUFService.shared.loadedModelName ?? "")"
+        } catch {
+            ggufLoadStatus = "❌ Lỗi: \(error.localizedDescription)"
+        }
+    }
+
+    @ViewBuilder
+    private var ggufInProcessView: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // 1. Apple Silicon Hardware Acceleration Badge
+            HStack(spacing: 6) {
+                Image(systemName: "cpu.fill")
+                    .foregroundColor(.cyan)
+                Text("Apple Silicon Metal In-Process (\(LocalAIService.shared.appleSiliconChipName))")
+                    .font(.system(size: 11, weight: .semibold))
+                Spacer()
+                Text("100% In-Process • Không cần Server")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .padding(8)
+            .background(Color.cyan.opacity(0.08))
+            .cornerRadius(6)
+
+            // 2. RAM Load Status Banner
+            HStack(spacing: 8) {
+                if LocalGGUFService.shared.isLoaded {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Đã nạp trong RAM Metal: \(LocalGGUFService.shared.loadedModelName ?? "")")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.green)
+                        Text("Sẵn sàng dịch tức thì không qua mạng")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button("Giải phóng RAM") {
+                        LocalGGUFService.shared.unloadModel()
+                        ggufLoadStatus = "Đã giải phóng bộ nhớ RAM."
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                } else {
+                    Image(systemName: "circle.dashed")
+                        .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Chưa nạp vào RAM")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("Mô hình sẽ tự động nạp khi bạn dịch câu đầu tiên")
+                            .font(.system(size: 9.5))
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    if !settings.customGGUFModelPath.isEmpty && FileManager.default.fileExists(atPath: settings.customGGUFModelPath) {
+                        Button("Nạp vào RAM ngay") {
+                            loadGGUFIntoRAM(path: settings.customGGUFModelPath)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                }
+            }
+            .padding(8)
+            .background(Color.primary.opacity(0.03))
+            .cornerRadius(6)
+
+            if let status = ggufLoadStatus {
+                Text(status)
+                    .font(.system(size: 10.5))
+                    .foregroundColor(.blue)
+            }
+
+            // 3. Current Selected GGUF File
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Đường dẫn file .gguf:")
+                    .font(.system(size: 11, weight: .medium))
+                HStack {
+                    TextField("Chọn file .gguf trên máy...", text: $settings.customGGUFModelPath)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 11))
+
+                    Button("Chọn file...") {
+                        selectGGUFFile()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+
+            // 4. Engine status banner
+            HStack(spacing: 8) {
+                if settings.translationEngine == .directAI && settings.aiProvider == .inProcessGGUF {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Đang là Động cơ dịch chính (Direct AI • GGUF In-Process)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.green)
+                    }
+                } else {
+                    HStack(spacing: 6) {
+                        Text("Động cơ dịch hiện tại: \(settings.translationEngine.rawValue)")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Button(action: {
+                            settings.translationEngine = .directAI
+                            settings.aiProvider = .inProcessGGUF
+                        }) {
+                            Label("Đặt làm bộ dịch chính", systemImage: "bolt.fill")
+                                .font(.system(size: 10.5, weight: .semibold))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
+                }
+            }
+            .padding(.vertical, 2)
+
+            // 5. Discovered GGUF Files on Disk
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Label("File GGUF tìm thấy trên máy (\(localGGUFModels.count)):", systemImage: "shippingbox.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.blue)
+                    Spacer()
+                    Button(action: {
+                        localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
+                    }) {
+                        Label("Quét lại", systemImage: "arrow.clockwise")
+                            .font(.system(size: 10.5))
+                    }
+                    .buttonStyle(.borderless)
+                }
+
+                if localGGUFModels.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Chưa tìm thấy file .gguf nào trong Downloads hoặc thư mục Cache.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.secondary)
+                        Text("💡 Bạn có thể tải file GGUF từ Hugging Face hoặc bấm nút 'Chọn file...' ở trên.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(6)
+                } else {
+                    ForEach(localGGUFModels) { gguf in
+                        let isSelected = settings.customGGUFModelPath == gguf.path && settings.aiProvider == .inProcessGGUF
+                        HStack(spacing: 8) {
+                            Image(systemName: isSelected ? "checkmark.seal.fill" : "cube.fill")
+                                .foregroundColor(isSelected ? .green : .blue)
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 4) {
+                                    Text(gguf.name)
+                                        .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                    if isSelected {
+                                        Text("ĐANG CHỌN")
+                                            .font(.system(size: 8.5, weight: .bold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(Color.green.opacity(0.18))
+                                            .foregroundColor(.green)
+                                            .cornerRadius(3)
+                                    }
+                                }
+                                Text("Dung lượng: \(gguf.formattedSize) • \(gguf.path)")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+
+                            Spacer()
+
+                            if isSelected {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 10, weight: .bold))
+                                    Text("Đang sử dụng")
+                                        .font(.system(size: 10.5, weight: .semibold))
+                                }
+                                .foregroundColor(.green)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                            } else {
+                                Button("Sử dụng") {
+                                    settings.customGGUFModelPath = gguf.path
+                                    settings.translationEngine = .directAI
+                                    settings.aiProvider = .inProcessGGUF
+                                    loadGGUFIntoRAM(path: gguf.path)
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                        .padding(6)
+                        .background(isSelected ? Color.green.opacity(0.08) : Color.blue.opacity(0.05))
+                        .cornerRadius(6)
+                    }
+                }
+            }
+
+            // 6. Gợi ý tải model GGUF chuẩn & siêu tốc cho Apple Silicon
+            VStack(alignment: .leading, spacing: 4) {
+                Text("🌟 Gợi ý model GGUF tối ưu cho dịch thuật:")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.primary)
+                HStack(spacing: 8) {
+                    Button(action: {
+                        if let url = URL(string: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        Label("Qwen2.5-1.5B-Instruct-GGUF (~1.1 GB)", systemImage: "arrow.down.circle")
+                            .font(.system(size: 10.5))
+                    }
+                    .buttonStyle(.link)
+
+                    Button(action: {
+                        if let url = URL(string: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        Label("Qwen2.5-0.5B-Instruct-GGUF (~390 MB)", systemImage: "arrow.down.circle")
+                            .font(.system(size: 10.5))
+                    }
+                    .buttonStyle(.link)
+                }
+            }
+            .padding(8)
+            .background(Color.primary.opacity(0.02))
+            .cornerRadius(6)
+        }
+        .padding(.top, 4)
     }
 }
 

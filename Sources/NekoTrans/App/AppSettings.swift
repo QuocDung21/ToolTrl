@@ -117,6 +117,10 @@ public final class AppSettings {
         didSet { Defaults[.customAIModel] = customAIModel }
     }
 
+    public var customGGUFModelPath: String {
+        didSet { Defaults[.customGGUFModelPath] = customGGUFModelPath }
+    }
+
     // MARK: - 📖 Dictionary
     public var showPhonetics: Bool {
         didSet { Defaults[.showPhonetics] = showPhonetics }
@@ -234,6 +238,7 @@ public final class AppSettings {
         self.aiProvider = Defaults[.aiProvider]
         self.ollamaEndpoint = Defaults[.ollamaEndpoint]
         self.customAIModel = Defaults[.customAIModel]
+        self.customGGUFModelPath = Defaults[.customGGUFModelPath]
 
         // ── Dictionary ────────────────────────────────────────
         self.showPhonetics = Defaults[.showPhonetics]

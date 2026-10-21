@@ -111,6 +111,18 @@ public final class DirectAIService: Sendable {
                 prompt: prompt,
                 onToken: onToken
             )
+        case .inProcessGGUF:
+            if !LocalGGUFService.shared.isLoaded {
+                let path = Defaults[.customGGUFModelPath]
+                guard !path.isEmpty && FileManager.default.fileExists(atPath: path) else {
+                    throw NSError(domain: "GGUF", code: 404, userInfo: [NSLocalizedDescriptionKey: "Chưa chọn file model GGUF nào hoặc file không tồn tại. Vui lòng vào Cài đặt để chọn file .gguf."])
+                }
+                try LocalGGUFService.shared.loadModel(at: path)
+            }
+            return try await LocalGGUFService.shared.streamInference(
+                prompt: prompt,
+                onToken: onToken
+            )
         default:
             // One-shot fallback for other providers
             let result = try await sendPromptToAI(prompt: prompt, provider: provider)
@@ -268,6 +280,16 @@ public final class DirectAIService: Sendable {
             
         case .ollama:
             return try await queryOllama(prompt: prompt)
+            
+        case .inProcessGGUF:
+            if !LocalGGUFService.shared.isLoaded {
+                let path = Defaults[.customGGUFModelPath]
+                guard !path.isEmpty && FileManager.default.fileExists(atPath: path) else {
+                    throw NSError(domain: "GGUF", code: 404, userInfo: [NSLocalizedDescriptionKey: "Chưa chọn file model GGUF nào hoặc file không tồn tại. Vui lòng vào Cài đặt để chọn file .gguf."])
+                }
+                try LocalGGUFService.shared.loadModel(at: path)
+            }
+            return try await LocalGGUFService.shared.streamInference(prompt: prompt, onToken: { _ in })
         }
     }
     

@@ -15,6 +15,10 @@ let package = Package(
         .package(url: "https://github.com/sindresorhus/Defaults.git", from: "9.0.0")
     ],
     targets: [
+        .binaryTarget(
+            name: "llama",
+            path: "Frameworks/llama.xcframework"
+        ),
         .target(
             name: "NekoCore",
             dependencies: [
@@ -26,6 +30,7 @@ let package = Package(
             name: "NekoServices",
             dependencies: [
                 "NekoCore",
+                "llama",
                 .product(name: "Defaults", package: "Defaults")
             ],
             swiftSettings: [.swiftLanguageMode(.v5)]
