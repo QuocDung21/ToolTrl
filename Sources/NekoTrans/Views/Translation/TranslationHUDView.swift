@@ -97,7 +97,7 @@ public struct TranslationHUDView: View {
                 .animation(.easeInOut(duration: 0.18), value: viewModel.richEntry != nil)
             }
             .frame(height: currentScrollHeight)
-            .animation(.spring(response: 0.28, dampingFraction: 0.82), value: currentScrollHeight)
+            .animation(viewModel.isStreaming ? nil : .spring(response: 0.28, dampingFraction: 0.82), value: currentScrollHeight)
             .animation(.spring(response: 0.28, dampingFraction: 0.82), value: viewModel.originalText.isEmpty)
             .animation(.spring(response: 0.28, dampingFraction: 0.82), value: viewModel.isWordLookup)
             .onPreferenceChange(HUDContentHeightKey.self) { newHeight in

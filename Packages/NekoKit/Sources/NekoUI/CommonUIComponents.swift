@@ -65,12 +65,21 @@ public struct LiveSpokenTextView: View {
     }
 
     public var body: some View {
-        Text(attributedText)
-            .font(font)
-            .lineSpacing(lineSpacing)
-            .textSelection(.enabled)
-            .fixedSize(horizontal: false, vertical: true)
-            .animation(.easeInOut(duration: 0.08), value: speechService.spokenRange)
+        Group {
+            if speechService.isSpeaking && speechService.currentSpeakerID == speakerID {
+                Text(attributedText)
+            } else if text.contains("*") || text.contains("`") || text.contains("[") {
+                Text(attributedText)
+            } else {
+                Text(text)
+                    .foregroundColor(defaultColor)
+            }
+        }
+        .font(font)
+        .lineSpacing(lineSpacing)
+        .textSelection(.enabled)
+        .fixedSize(horizontal: false, vertical: true)
+        .animation(.easeInOut(duration: 0.08), value: speechService.spokenRange)
     }
 
     private var attributedText: AttributedString {

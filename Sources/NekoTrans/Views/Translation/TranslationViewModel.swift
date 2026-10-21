@@ -220,6 +220,9 @@ public final class TranslationViewModel {
                 self.isStreaming = true
                 self.translatedText = ""
                 do {
+                    var accumulated = ""
+                    var lastFlush = CACurrentMediaTime()
+
                     let fullText = try await DirectAIService.shared.translateStreaming(
                         text: self.originalText,
                         from: self.detectedLanguage,
@@ -227,10 +230,17 @@ public final class TranslationViewModel {
                         domain: AppSettings.shared.translationDomain,
                         provider: AppSettings.shared.aiProvider
                     ) { [weak self] token in
-                        Task { @MainActor [weak self] in
-                            guard let self = self, self.translationTaskID == currentID else { return }
-                            self.translatedText += token
-                            self.isLoading = false
+                        accumulated += token
+                        let now = CACurrentMediaTime()
+                        // Throttle to ~32ms (30 FPS) to eliminate main thread flooding and UI stutter
+                        if now - lastFlush >= 0.032 {
+                            let textToDisplay = accumulated
+                            lastFlush = now
+                            Task { @MainActor [weak self] in
+                                guard let self = self, self.translationTaskID == currentID else { return }
+                                self.translatedText = textToDisplay
+                                self.isLoading = false
+                            }
                         }
                     }
                     guard self.translationTaskID == currentID else { return }
