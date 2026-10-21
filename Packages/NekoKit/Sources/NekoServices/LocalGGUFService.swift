@@ -170,6 +170,11 @@ public final class LocalGGUFService: @unchecked Sendable {
                         throw NSError(domain: "GGUF", code: 500, userInfo: [NSLocalizedDescriptionKey: "Không thể truy xuất từ điển (vocab) của model."])
                     }
                     
+                    // Clear KV cache / memory before each inference sequence
+                    if let mem = llama_get_memory(ctx) {
+                        llama_memory_clear(mem, true)
+                    }
+                    
                     // 1. Tokenize prompt
                     let promptUtf8 = prompt.utf8CString
                     let promptLen = Int32(promptUtf8.count - 1)
@@ -285,7 +290,7 @@ public final class LocalGGUFService: @unchecked Sendable {
                         for file in files where file.pathExtension.lowercased() == "gguf" {
                             let cleanName = file.deletingPathExtension().lastPathComponent
                             if !cleanName.allSatisfy({ $0.isHexDigit }) {
-                                return cleanName
+                                return cleanModelDisplayName(cleanName)
                             }
                         }
                     }
@@ -298,14 +303,85 @@ public final class LocalGGUFService: @unchecked Sendable {
                     let cleaned = comp.replacingOccurrences(of: "models--", with: "")
                     let parts = cleaned.components(separatedBy: "--")
                     if parts.count >= 2 {
-                        return parts[1]
+                        return cleanModelDisplayName(parts[1])
                     }
-                    return cleaned
+                    return cleanModelDisplayName(cleaned)
                 }
             }
         }
         
-        return filename.isEmpty ? "GGUF Model" : filename
+        return cleanModelDisplayName(filename.isEmpty ? "GGUF Model" : filename)
+    }
+
+    public static func cleanModelDisplayName(_ raw: String) -> String {
+        var name = raw
+        if name.lowercased().hasSuffix(".gguf") {
+            name = String(name.dropLast(5))
+        }
+        if name.hasSuffix("-GGUF") || name.hasSuffix("-gguf") {
+            name = String(name.dropLast(5))
+        }
+
+        let lower = name.lowercased()
+        if lower.contains("qwen2.5") {
+            for size in ["0.5b", "1.5b", "3b", "7b", "14b", "32b", "72b"] {
+                if lower.contains(size) {
+                    return "Qwen2.5-\(size.uppercased())"
+                }
+            }
+            return "Qwen2.5"
+        }
+        if lower.contains("qwen") {
+            return "Qwen"
+        }
+        if lower.contains("llama-3.2") || lower.contains("llama3.2") {
+            for size in ["1b", "3b", "11b", "90b"] {
+                if lower.contains(size) {
+                    return "Llama-3.2-\(size.uppercased())"
+                }
+            }
+            return "Llama-3.2"
+        }
+        if lower.contains("llama-3.1") || lower.contains("llama3.1") {
+            for size in ["8b", "70b"] {
+                if lower.contains(size) {
+                    return "Llama-3.1-\(size.uppercased())"
+                }
+            }
+            return "Llama-3.1"
+        }
+        if lower.contains("deepseek-r1") {
+            for size in ["1.5b", "7b", "8b", "14b", "32b", "70b"] {
+                if lower.contains(size) {
+                    return "DeepSeek-R1-\(size.uppercased())"
+                }
+            }
+            return "DeepSeek-R1"
+        }
+        if lower.contains("gemma-2") || lower.contains("gemma2") {
+            for size in ["2b", "9b", "27b"] {
+                if lower.contains(size) {
+                    return "Gemma-2-\(size.uppercased())"
+                }
+            }
+            return "Gemma-2"
+        }
+        if lower.contains("phi-3.5") || lower.contains("phi3.5") {
+            return "Phi-3.5"
+        }
+
+        let quantRegex = #"-q[0-9]_[a-z0-9_]+"#
+        if let range = name.range(of: quantRegex, options: .regularExpression) {
+            name.removeSubrange(range)
+        }
+        name = name.replacingOccurrences(of: "-instruct", with: "", options: .caseInsensitive)
+        name = name.replacingOccurrences(of: "-chat", with: "", options: .caseInsensitive)
+        name = name.replacingOccurrences(of: "-it", with: "", options: .caseInsensitive)
+
+        if name.count > 18 {
+            name = String(name.prefix(17)) + "…"
+        }
+        return name.isEmpty ? "GGUF Model" : name
     }
     
     // MARK: - Scanning Local GGUF Files

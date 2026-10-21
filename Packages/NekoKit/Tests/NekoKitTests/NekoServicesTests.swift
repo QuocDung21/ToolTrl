@@ -278,10 +278,10 @@ struct LocalGGUFServiceTests {
     @Test("friendlyModelName extracts clean names from paths and hashes")
     func friendlyModelNameTests() {
         let path1 = "/Users/test/Downloads/qwen2.5-0.5b-instruct-q4_k_m.gguf"
-        #expect(LocalGGUFService.friendlyModelName(from: path1) == "qwen2.5-0.5b-instruct-q4_k_m")
+        #expect(LocalGGUFService.friendlyModelName(from: path1) == "Qwen2.5-0.5B")
         
         let path2 = "/Users/test/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/blobs/74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db"
-        #expect(LocalGGUFService.friendlyModelName(from: path2) == "Qwen2.5-0.5B-Instruct-GGUF")
+        #expect(LocalGGUFService.friendlyModelName(from: path2) == "Qwen2.5-0.5B")
     }
 
     @Test("LocalGGUFModelItem formatted size works for MB and GB")
@@ -291,6 +291,24 @@ struct LocalGGUFServiceTests {
         
         let itemGB = LocalGGUFModelItem(name: "large", path: "/tmp/large.gguf", fileSize: Int64(2.5 * 1_073_741_824))
         #expect(itemGB.formattedSize == "2.5 GB")
+    }
+
+    @Test("Qwen translation into Vietnamese")
+    func testQwenTranslation() async throws {
+        let path = "/Users/dungnguyenquoc/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        guard FileManager.default.fileExists(atPath: path) else { return }
+        
+        try LocalGGUFService.shared.loadModel(at: path)
+        let sampleText = "Number of Parameters (Non-Embedding): 1.31B"
+
+        let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: "en", targetLang: "vi", domain: "Tổng hợp")
+        let user = AIPromptBuilder.localGGUFUserPrompt(text: sampleText, targetLang: "vi")
+        let prompt = LocalGGUFService.shared.formatPrompt(system: sys, user: user)
+        let res = try await LocalGGUFService.shared.streamInference(prompt: prompt, maxTokens: 64) { _ in }
+        
+        #expect(!res.isEmpty)
+        // Ensure it did not output Indonesian 'Jumlah'
+        #expect(!res.lowercased().contains("jumlah"))
     }
 }
 

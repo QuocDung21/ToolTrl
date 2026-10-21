@@ -69,7 +69,8 @@ public final class DirectAIService: Sendable {
                 try LocalGGUFService.shared.loadModel(at: path)
             }
             let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: sourceLang, targetLang: targetLang, domain: domain.rawValue)
-            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: text)
+            let userPrompt = AIPromptBuilder.localGGUFUserPrompt(text: text, targetLang: targetLang)
+            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: userPrompt)
             return try await LocalGGUFService.shared.streamInference(prompt: formattedPrompt, onToken: { _ in })
         }
         
@@ -122,7 +123,8 @@ public final class DirectAIService: Sendable {
                 try LocalGGUFService.shared.loadModel(at: path)
             }
             let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: sourceLang, targetLang: targetLang, domain: domain.rawValue)
-            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: text)
+            let userPrompt = AIPromptBuilder.localGGUFUserPrompt(text: text, targetLang: targetLang)
+            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: userPrompt)
             return try await LocalGGUFService.shared.streamInference(
                 prompt: formattedPrompt,
                 onToken: onToken

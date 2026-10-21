@@ -135,19 +135,44 @@ public enum AIPromptBuilder {
     }
 
     // MARK: 5b. Local GGUF System Prompt for Chat Templates
+    public static func languageDisplayName(for code: String) -> String {
+        switch code.lowercased() {
+        case "vi": return "Vietnamese (tiếng Việt)"
+        case "en": return "English"
+        case "ja": return "Japanese (日本語)"
+        case "zh": return "Chinese (中文)"
+        case "ko": return "Korean (한국어)"
+        case "fr": return "French (Français)"
+        case "de": return "German (Deutsch)"
+        case "es": return "Spanish (Español)"
+        case "auto": return "the source language"
+        default: return code
+        }
+    }
+
     public static func localGGUFSystemPrompt(
         sourceLang: String = "auto",
         targetLang: String = "vi",
         domain: String = "Tổng hợp"
     ) -> String {
+        let sourceName = languageDisplayName(for: sourceLang)
+        let targetName = languageDisplayName(for: targetLang)
         return """
-        You are a professional, accurate translator.
-        Translate the input text from '\(sourceLang)' to '\(targetLang)' with '\(domain)' context.
+        You are an expert, professional translator.
+        Your task is to accurately translate text from \(sourceName) into \(targetName).
         Strict Guidelines:
-        1. Output ONLY the translated text in \(targetLang).
-        2. Do NOT add conversational preamble, greetings, or explanations.
-        3. Never repeat the original text.
-        4. Preserve technical terms, variables, numbers, and code blocks verbatim.
+        1. Output ONLY the final translated text in \(targetName).
+        2. Do NOT add conversational responses, greetings, explanations, notes, or quotation marks.
+        3. Never repeat the original text or output in another language.
+        4. Preserve all numbers, variables, technical terms, and code blocks verbatim.
+        """
+    }
+
+    public static func localGGUFUserPrompt(text: String, targetLang: String = "vi") -> String {
+        let targetName = languageDisplayName(for: targetLang)
+        return """
+        Translate the following text into \(targetName):
+        \(text)
         """
     }
     

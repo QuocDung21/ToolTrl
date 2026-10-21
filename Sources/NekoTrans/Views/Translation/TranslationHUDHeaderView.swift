@@ -86,7 +86,7 @@ public struct TranslationHUDHeaderView: View {
                         .padding(.horizontal, 1)
                     
                     HStack(spacing: 3) {
-                        Image(systemName: viewModel.selectedEngine.icon)
+                        Image(systemName: (viewModel.selectedEngine == .directAI && settings.aiProvider == .inProcessGGUF) ? "cpu.fill" : viewModel.selectedEngine.icon)
                             .font(.system(size: 8))
                         Group {
                             if viewModel.selectedEngine == .auto {
@@ -95,12 +95,12 @@ public struct TranslationHUDHeaderView: View {
                                 let p = settings.aiProvider
                                 if p == .inProcessGGUF {
                                     let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? settings.customGGUFModelPath)
-                                    Text("⚡ \(name.isEmpty ? "GGUF Metal" : name)")
+                                    Text(name.isEmpty ? "GGUF Metal" : name)
                                 } else {
                                     let custom = settings.customAIModel
                                     let raw = custom.isEmpty ? p.defaultModel : custom
                                     let shortName = raw.contains("/") ? (raw.components(separatedBy: "/").last ?? raw) : raw
-                                    Text("⚡ \(shortName)")
+                                    Text(shortName)
                                 }
                             } else {
                                 Text(viewModel.selectedEngine.rawValue)
