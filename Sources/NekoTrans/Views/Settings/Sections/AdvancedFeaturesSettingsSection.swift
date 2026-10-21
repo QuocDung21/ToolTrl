@@ -894,7 +894,8 @@ public struct AdvancedFeaturesSettingsSection: View {
     private func loadGGUFIntoRAM(path: String) {
         do {
             try LocalGGUFService.shared.loadModel(at: path)
-            ggufLoadStatus = "✅ Đã nạp vào RAM Metal thành công: \(LocalGGUFService.shared.loadedModelName ?? "")"
+            let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? path)
+            ggufLoadStatus = "✅ Đã nạp vào RAM Metal thành công: \(name)"
         } catch {
             ggufLoadStatus = "❌ Lỗi: \(error.localizedDescription)"
         }
@@ -924,7 +925,8 @@ public struct AdvancedFeaturesSettingsSection: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Đã nạp trong RAM Metal: \(LocalGGUFService.shared.loadedModelName ?? "")")
+                        let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? settings.customGGUFModelPath)
+                        Text("Đã nạp trong RAM Metal: \(name)")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.green)
                         Text("Sẵn sàng dịch tức thì không qua mạng")

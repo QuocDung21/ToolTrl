@@ -94,7 +94,7 @@ public struct TranslationHUDHeaderView: View {
                             } else if viewModel.selectedEngine == .directAI {
                                 let p = settings.aiProvider
                                 if p == .inProcessGGUF {
-                                    let name = LocalGGUFService.shared.loadedModelName ?? URL(fileURLWithPath: settings.customGGUFModelPath).deletingPathExtension().lastPathComponent
+                                    let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? settings.customGGUFModelPath)
                                     Text("⚡ \(name.isEmpty ? "GGUF Metal" : name)")
                                 } else {
                                     let custom = settings.customAIModel

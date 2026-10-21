@@ -80,7 +80,7 @@ public final class LocalGGUFService: @unchecked Sendable {
             self.model = loadedModel
             self.context = loadedContext
             self.loadedModelPath = path
-            self.loadedModelName = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+            self.loadedModelName = Self.friendlyModelName(from: path)
             
             AppLog.ai.info("Nạp mô hình GGUF thành công: \(self.loadedModelName ?? "", privacy: .public)")
         }
@@ -103,6 +103,44 @@ public final class LocalGGUFService: @unchecked Sendable {
         }
         loadedModelPath = nil
         loadedModelName = nil
+    }
+    
+    // MARK: - Prompt Formatting
+    
+    public func formatPrompt(system: String, user: String) -> String {
+        if let model = self.model {
+            let tmpl = llama_model_chat_template(model, nil)
+            let sysRole = "system"
+            let userRole = "user"
+            
+            var formatted: String?
+            sysRole.withCString { sysRolePtr in
+                system.withCString { sysPtr in
+                    userRole.withCString { userRolePtr in
+                        user.withCString { userPtr in
+                            var msgs = [
+                                llama_chat_message(role: sysRolePtr, content: sysPtr),
+                                llama_chat_message(role: userRolePtr, content: userPtr)
+                            ]
+                            let neededLen = llama_chat_apply_template(tmpl, &msgs, msgs.count, true, nil, 0)
+                            if neededLen > 0 {
+                                var buffer = [CChar](repeating: 0, count: Int(neededLen) + 32)
+                                let res = llama_chat_apply_template(tmpl, &msgs, msgs.count, true, &buffer, Int32(buffer.count))
+                                if res > 0 {
+                                    formatted = String(cString: buffer)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if let f = formatted, !f.isEmpty {
+                return f
+            }
+        }
+        
+        // Universal ChatML fallback (Qwen, Llama, Yi, etc.)
+        return "<|im_start|>system\n\(system)<|im_end|>\n<|im_start|>user\n\(user)<|im_end|>\n<|im_start|>assistant\n"
     }
     
     // MARK: - Inference & Streaming
@@ -180,8 +218,10 @@ public final class LocalGGUFService: @unchecked Sendable {
                         if pieceLen > 0 {
                             let pieceData = Data(bytes: tokenBuffer, count: Int(pieceLen))
                             if let pieceStr = String(data: pieceData, encoding: .utf8) {
-                                generatedText += pieceStr
-                                onToken(pieceStr)
+                                if !pieceStr.contains("<|") {
+                                    generatedText += pieceStr
+                                    onToken(pieceStr)
+                                }
                             }
                         }
                         
@@ -196,7 +236,11 @@ public final class LocalGGUFService: @unchecked Sendable {
                         batch.n_tokens = 0
                     }
                     
-                    continuation.resume(returning: generatedText.trimmingCharacters(in: .whitespacesAndNewlines))
+                    let cleaned = generatedText
+                        .replacingOccurrences(of: "<|im_end|>", with: "")
+                        .replacingOccurrences(of: "<|endoftext|>", with: "")
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    continuation.resume(returning: cleaned)
                 } catch {
                     continuation.resume(throwing: error)
                 }
@@ -212,6 +256,47 @@ public final class LocalGGUFService: @unchecked Sendable {
         batch.seq_id[idx]?[0] = seqId
         batch.logits[idx] = logits ? 1 : 0
         batch.n_tokens += 1
+    }
+    
+    // MARK: - Friendly Model Name Resolver
+    
+    public static func friendlyModelName(from path: String) -> String {
+        guard !path.isEmpty else { return "GGUF Metal" }
+        let url = URL(fileURLWithPath: path)
+        let filename = url.deletingPathExtension().lastPathComponent
+        
+        let isHex = filename.count >= 32 && filename.allSatisfy { $0.isHexDigit }
+        if isHex || url.pathComponents.contains("blobs") {
+            // Check snapshots folder in HuggingFace cache
+            let parentDir = url.deletingLastPathComponent().deletingLastPathComponent()
+            let snapshotsDir = parentDir.appendingPathComponent("snapshots")
+            if let subdirs = try? FileManager.default.contentsOfDirectory(at: snapshotsDir, includingPropertiesForKeys: nil) {
+                for snap in subdirs {
+                    if let files = try? FileManager.default.contentsOfDirectory(at: snap, includingPropertiesForKeys: nil) {
+                        for file in files where file.pathExtension.lowercased() == "gguf" {
+                            let cleanName = file.deletingPathExtension().lastPathComponent
+                            if !cleanName.allSatisfy({ $0.isHexDigit }) {
+                                return cleanName
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check repo directory in huggingface cache (e.g. models--Qwen--Qwen2.5-0.5B-Instruct-GGUF)
+            for comp in url.pathComponents {
+                if comp.hasPrefix("models--") {
+                    let cleaned = comp.replacingOccurrences(of: "models--", with: "")
+                    let parts = cleaned.components(separatedBy: "--")
+                    if parts.count >= 2 {
+                        return parts[1]
+                    }
+                    return cleaned
+                }
+            }
+        }
+        
+        return filename.isEmpty ? "GGUF Model" : filename
     }
     
     // MARK: - Scanning Local GGUF Files
@@ -232,11 +317,11 @@ public final class LocalGGUFService: @unchecked Sendable {
         if !savedCustomPath.isEmpty {
             let customURL = URL(fileURLWithPath: savedCustomPath)
             if fileManager.fileExists(atPath: savedCustomPath) {
-                if customURL.pathExtension.lowercased() == "gguf" {
+                if customURL.pathExtension.lowercased() == "gguf" || fileManager.fileExists(atPath: savedCustomPath) {
                     if let attrs = try? fileManager.attributesOfItem(atPath: savedCustomPath),
                        let size = attrs[.size] as? Int64 {
                         results.append(LocalGGUFModelItem(
-                            name: customURL.deletingPathExtension().lastPathComponent,
+                            name: Self.friendlyModelName(from: savedCustomPath),
                             path: savedCustomPath,
                             fileSize: size
                         ))
@@ -260,9 +345,10 @@ public final class LocalGGUFService: @unchecked Sendable {
                     let resolved = fileURL.resolvingSymlinksInPath()
                     if let attrs = try? fileManager.attributesOfItem(atPath: resolved.path),
                        let size = attrs[.size] as? Int64 {
-                        let name = fileURL.deletingPathExtension().lastPathComponent
-                        if !results.contains(where: { $0.path == resolved.path }) {
-                            results.append(LocalGGUFModelItem(name: name, path: resolved.path, fileSize: size))
+                        let name = Self.friendlyModelName(from: fileURL.path)
+                        let pathToStore = fileURL.path
+                        if !results.contains(where: { $0.path == pathToStore || $0.path == resolved.path }) {
+                            results.append(LocalGGUFModelItem(name: name, path: pathToStore, fileSize: size))
                         }
                     }
                 }

@@ -60,6 +60,19 @@ public final class DirectAIService: Sendable {
         domain: TranslationDomain = .general,
         provider: DirectAIProvider = Defaults[.aiProvider]
     ) async throws -> String {
+        if provider == .inProcessGGUF {
+            if !LocalGGUFService.shared.isLoaded {
+                let path = Defaults[.customGGUFModelPath]
+                guard !path.isEmpty && FileManager.default.fileExists(atPath: path) else {
+                    throw NSError(domain: "GGUF", code: 404, userInfo: [NSLocalizedDescriptionKey: "Chưa chọn file model GGUF nào hoặc file không tồn tại. Vui lòng vào Cài đặt để chọn file .gguf."])
+                }
+                try LocalGGUFService.shared.loadModel(at: path)
+            }
+            let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: sourceLang, targetLang: targetLang, domain: domain.rawValue)
+            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: text)
+            return try await LocalGGUFService.shared.streamInference(prompt: formattedPrompt, onToken: { _ in })
+        }
+        
         let prompt = AIPromptBuilder.contextualTranslationPrompt(
             text: text,
             sourceLang: sourceLang,
@@ -79,15 +92,14 @@ public final class DirectAIService: Sendable {
         provider: DirectAIProvider = Defaults[.aiProvider],
         onToken: @escaping @Sendable (String) -> Void
     ) async throws -> String {
-        let prompt = AIPromptBuilder.contextualTranslationPrompt(
-            text: text,
-            sourceLang: sourceLang,
-            targetLang: targetLang,
-            domain: domain.rawValue
-        )
-        
         switch provider {
         case .openAI, .groq, .deepSeek:
+            let prompt = AIPromptBuilder.contextualTranslationPrompt(
+                text: text,
+                sourceLang: sourceLang,
+                targetLang: targetLang,
+                domain: domain.rawValue
+            )
             let (endpoint, apiKey, defaultModel) = getOpenAICompatibleConfig(for: provider)
             guard !apiKey.isEmpty else {
                 throw NSError(domain: "AI", code: 401, userInfo: [NSLocalizedDescriptionKey: "Vui lòng nhập API Key cho \(provider.rawValue) trong Cài đặt."])
@@ -102,6 +114,12 @@ public final class DirectAIService: Sendable {
                 onToken: onToken
             )
         case .ollama:
+            let prompt = AIPromptBuilder.contextualTranslationPrompt(
+                text: text,
+                sourceLang: sourceLang,
+                targetLang: targetLang,
+                domain: domain.rawValue
+            )
             let customModel = Defaults[.customAIModel]
             let model = customModel.isEmpty ? DirectAIProvider.ollama.defaultModel : customModel
             let endpoint = Defaults[.ollamaEndpoint]
@@ -119,12 +137,20 @@ public final class DirectAIService: Sendable {
                 }
                 try LocalGGUFService.shared.loadModel(at: path)
             }
+            let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: sourceLang, targetLang: targetLang, domain: domain.rawValue)
+            let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: text)
             return try await LocalGGUFService.shared.streamInference(
-                prompt: prompt,
+                prompt: formattedPrompt,
                 onToken: onToken
             )
         default:
             // One-shot fallback for other providers
+            let prompt = AIPromptBuilder.contextualTranslationPrompt(
+                text: text,
+                sourceLang: sourceLang,
+                targetLang: targetLang,
+                domain: domain.rawValue
+            )
             let result = try await sendPromptToAI(prompt: prompt, provider: provider)
             onToken(result)
             return result
@@ -289,7 +315,8 @@ public final class DirectAIService: Sendable {
                 }
                 try LocalGGUFService.shared.loadModel(at: path)
             }
-            return try await LocalGGUFService.shared.streamInference(prompt: prompt, onToken: { _ in })
+            let formattedPrompt = prompt.contains("<|") ? prompt : LocalGGUFService.shared.formatPrompt(system: "You are a helpful AI assistant.", user: prompt)
+            return try await LocalGGUFService.shared.streamInference(prompt: formattedPrompt, onToken: { _ in })
         }
     }
     

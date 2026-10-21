@@ -133,6 +133,23 @@ public enum AIPromptBuilder {
         \(text)
         """
     }
+
+    // MARK: 5b. Local GGUF System Prompt for Chat Templates
+    public static func localGGUFSystemPrompt(
+        sourceLang: String = "auto",
+        targetLang: String = "vi",
+        domain: String = "Tổng hợp"
+    ) -> String {
+        return """
+        You are a professional, accurate translator.
+        Translate the input text from '\(sourceLang)' to '\(targetLang)' with '\(domain)' context.
+        Strict Guidelines:
+        1. Output ONLY the translated text in \(targetLang).
+        2. Do NOT add conversational preamble, greetings, or explanations.
+        3. Never repeat the original text.
+        4. Preserve technical terms, variables, numbers, and code blocks verbatim.
+        """
+    }
     
     // MARK: 6. Grammar Checking & 3-Tone Polishing Prompt
     public static func grammarAndPolishingPrompt(text: String, targetLang: String = "vi") -> String {

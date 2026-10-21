@@ -239,7 +239,7 @@ public final class TranslationViewModel {
                     self.isStreaming = false
                     let p = AppSettings.shared.aiProvider
                     if p == .inProcessGGUF {
-                        let name = LocalGGUFService.shared.loadedModelName ?? URL(fileURLWithPath: AppSettings.shared.customGGUFModelPath).deletingPathExtension().lastPathComponent
+                        let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? AppSettings.shared.customGGUFModelPath)
                         self.activeEngineLabel = "⚡ \(name.isEmpty ? "GGUF Metal" : name) (In-Process Direct)"
                     } else {
                         let custom = AppSettings.shared.customAIModel
