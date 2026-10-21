@@ -82,6 +82,9 @@ public struct NekoCopyButton: View {
         }
         .buttonStyle(.plain)
         .help(isCopied ? "Đã sao chép vào bộ nhớ tạm" : "Sao chép vào bộ nhớ tạm")
+        // Icon-only variant has no text for VoiceOver to read; give it an explicit label.
+        .accessibilityLabel(Text(isCopied ? "Đã sao chép" : "Sao chép"))
+        .accessibilityHint(Text("Sao chép vào bộ nhớ tạm"))
         .sensoryFeedback(.success, trigger: isCopied)
     }
 

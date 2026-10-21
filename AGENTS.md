@@ -82,6 +82,12 @@ Sources/NekoTrans/                   # Layer 4: macOS App Shell, Windows, Views,
 │   ├── HotKeyManager.swift          # Global keyboard shortcut listener (KeyboardShortcuts).
 │   └── UpdaterService.swift         # Sparkle auto-update manager.
 │
+├── Intents/                         # App Intents: Shortcuts, Siri & Spotlight actions (macOS 15 APIs only).
+│   ├── VocabularyEntity.swift       # AppEntity + EntityStringQuery over SavedWordItem (id = persisted UUID).
+│   ├── IntentTargetLanguage.swift   # AppEnum mirror of TargetLanguage; raw values are a frozen contract.
+│   ├── NekoTransIntents.swift       # Translate / HUD / Save word / Review / Open notebook / Ask AI intents.
+│   └── NekoTransShortcuts.swift     # AppShortcutsProvider (max 10; every phrase needs \(.applicationName)).
+│
 ├── Views/
 │   ├── Workspace/        # MainWorkspaceView, translation/deep-AI/flashcard studios, history sheet.
 │   ├── Translation/      # TranslationHUDView, Header, Dictionary, Sentence, TranslationViewModel.

@@ -16,6 +16,30 @@ public final class SpotlightService: @unchecked Sendable {
     
     /// Index a single item into macOS Spotlight Search
     public func indexItem(_ item: SavedWordItem) {
+        index.indexSearchableItems([searchableItem(for: item)]) { error in
+            if let error = error {
+                AppLog.spotlight.error("Indexing failed for [\(item.cleanTitle, privacy: .private)]: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+    
+    /// Batch index all items into macOS Spotlight
+    public func indexAllItems(_ items: [SavedWordItem]) {
+        guard !items.isEmpty else {
+            clearAllIndex()
+            return
+        }
+        
+        index.indexSearchableItems(items.map(searchableItem(for:))) { error in
+            if let error = error {
+                AppLog.spotlight.error("Batch indexing failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+    
+    /// Single source of truth for how a notebook entry looks in Spotlight, so single and
+    /// batch indexing can no longer drift apart (they previously used different keywords).
+    func searchableItem(for item: SavedWordItem) -> CSSearchableItem {
         let attributeSet = CSSearchableItemAttributeSet(contentType: .text)
         attributeSet.title = item.cleanTitle
         attributeSet.displayName = item.cleanTitle
@@ -38,61 +62,11 @@ public final class SpotlightService: @unchecked Sendable {
             "NekoTrans"
         ]
         
-        let searchableItem = CSSearchableItem(
+        return CSSearchableItem(
             uniqueIdentifier: item.id.uuidString,
             domainIdentifier: domainIdentifier,
             attributeSet: attributeSet
         )
-        
-        index.indexSearchableItems([searchableItem]) { error in
-            if let error = error {
-                AppLog.spotlight.error("Indexing failed for [\(item.cleanTitle, privacy: .private)]: \(error.localizedDescription, privacy: .public)")
-            }
-        }
-    }
-    
-    /// Batch index all items into macOS Spotlight
-    public func indexAllItems(_ items: [SavedWordItem]) {
-        guard !items.isEmpty else {
-            clearAllIndex()
-            return
-        }
-        
-        let searchableItems: [CSSearchableItem] = items.map { item in
-            let attributeSet = CSSearchableItemAttributeSet(contentType: .text)
-            attributeSet.title = item.cleanTitle
-            attributeSet.displayName = item.cleanTitle
-            
-            var description = item.translation
-            if let ph = item.phonetic, !ph.isEmpty {
-                description += " • \(ph)"
-            }
-            if let ex = item.exampleEn, !ex.isEmpty {
-                description += "\n\"\(ex)\""
-            }
-            
-            attributeSet.contentDescription = description
-            attributeSet.keywords = [
-                item.cleanTitle,
-                item.translation,
-                item.aiThematicGenre.rawValue,
-                item.aiPartOfSpeech.rawValue,
-                item.isGrammarFormula ? "Ngữ pháp" : "Từ vựng",
-                "ToolTrL"
-            ]
-            
-            return CSSearchableItem(
-                uniqueIdentifier: item.id.uuidString,
-                domainIdentifier: domainIdentifier,
-                attributeSet: attributeSet
-            )
-        }
-        
-        index.indexSearchableItems(searchableItems) { error in
-            if let error = error {
-                AppLog.spotlight.error("Batch indexing failed: \(error.localizedDescription, privacy: .public)")
-            }
-        }
     }
     
     /// Remove an item from macOS Spotlight

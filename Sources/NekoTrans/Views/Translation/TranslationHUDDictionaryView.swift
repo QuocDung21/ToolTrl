@@ -569,15 +569,17 @@ public struct TranslationHUDDictionaryView: View {
 
     // MARK: - Dictionary Loading Skeleton (Matches Rich Content Layout)
     private var dictionaryLoadingSkeleton: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let displayWord = viewModel.originalText.capitalized
+        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
+
+        return VStack(alignment: .leading, spacing: 10) {
             // Hero Header matching richDictionaryContent
             HStack(alignment: .center, spacing: 8) {
-                Text(viewModel.originalText.capitalized)
+                Text(displayWord)
                     .font(.system(size: 19, weight: .bold))
                     .foregroundColor(.primary)
 
-                let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
-                if let ph = localPhonetic, !ph.isEmpty {
+                if settings.showPhonetics, let ph = localPhonetic, !ph.isEmpty {
                     Text(ph)
                         .font(.system(size: 11.5, design: .serif))
                         .foregroundColor(AppColors.phonetic)
@@ -589,148 +591,32 @@ public struct TranslationHUDDictionaryView: View {
 
                 Spacer(minLength: 4)
 
+                // Audio Pills & Bookmark
                 HStack(spacing: 5) {
-                    Text("UK")
-                        .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(Color.primary.opacity(0.04))
-                        .cornerRadius(4)
+                    let ukID = "uk_\(viewModel.originalText)"
+                    let usID = "us_\(viewModel.originalText)"
+                    let isUkPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == ukID) ||
+                        (speechService.isSpeaking && speechService.currentSpeakerID == ukID)
+                    let isUsPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == usID) ||
+                        (speechService.isSpeaking && speechService.currentSpeakerID == usID)
 
-                    Text("US")
-                        .font(.system(size: 9.5, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2.5)
-                        .background(Color.primary.opacity(0.04))
-                        .cornerRadius(4)
-                }
-            }
-
-            // Skeleton POS Summary Card (matching richDictionaryContent)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    Text("n.")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(AppColors.accent.opacity(0.6))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(AppColors.accent.opacity(0.08))
-                        .cornerRadius(4)
-
-                    if !viewModel.translatedText.isEmpty {
-                        Text(viewModel.translatedText)
-                            .font(.system(size: 13.5, weight: .medium))
-                            .foregroundColor(.primary)
-                    } else {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.primary.opacity(0.08))
-                            .frame(width: 140, height: 14)
-                    }
-                    Spacer()
-                }
-
-                HStack(spacing: 8) {
-                    Text("v.")
-                        .font(.system(size: 11, weight: .bold, design: .monospaced))
-                        .foregroundColor(AppColors.accent.opacity(0.4))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(AppColors.accent.opacity(0.06))
-                        .cornerRadius(4)
-
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.primary.opacity(0.05))
-                        .frame(width: 180, height: 14)
-                    Spacer()
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(AppColors.cardBackground)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.cardBorder, lineWidth: 0.8)
-            )
-            .shimmering(active: true)
-        }
-    }
-
-    // MARK: - Dictionary Fallback View
-    private var dictionaryFallbackView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center, spacing: 7) {
-                LiveSpokenTextView(
-                    text: viewModel.originalText.capitalized,
-                    speakerID: "original",
-                    font: .appTitleMedium,
-                    defaultColor: .primary
-                )
-
-                let phoneticString = DictionaryService.shared.extractPhonetic(for: viewModel.originalText)
-                if settings.showPhonetics, let phonetic = phoneticString, !phonetic.isEmpty {
-                    Text(phonetic)
-                        .font(.appPhonetic)
-                        .foregroundColor(AppColors.phonetic)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(AppColors.phoneticSubtle)
-                        .cornerRadius(4)
-                }
-
-                Spacer(minLength: 4)
-
-                // Pronunciation Buttons: UK & US Audio / TTS
-                HStack(spacing: 4.5) {
-                    // UK Audio Button
-                    Button(action: {
-                        viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-GB", speakerID: "uk_\(viewModel.originalText)")
-                    }) {
-                        HStack(spacing: 3) {
-                            Text("🇬🇧")
-                                .font(.appSubcaption)
-                            Text("UK")
-                                .font(.appSubcaptionBold)
-                            EqualizerWaveView(
-                                isActive: speechService.isSpeaking && speechService.currentSpeakerID == "uk_\(viewModel.originalText)",
-                                barColor: AppColors.accent,
-                                height: 9
-                            )
+                    NekoAudioButton(
+                        label: "UK",
+                        isPlaying: isUkPlaying,
+                        activeColor: AppColors.accent,
+                        action: {
+                            viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-GB", speakerID: ukID)
                         }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2.5)
-                        .background(AppColors.accentSubtle)
-                        .foregroundColor(AppColors.accent)
-                        .cornerRadius(4)
-                    }
-                    .buttonStyle(.plain)
-                    .help(l10n[.dictPronounceUk])
+                    )
 
-                    // US Audio Button
-                    Button(action: {
-                        viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-US", speakerID: "us_\(viewModel.originalText)")
-                    }) {
-                        HStack(spacing: 3) {
-                            Text("🇺🇸")
-                                .font(.appSubcaption)
-                            Text("US")
-                                .font(.appSubcaptionBold)
-                            EqualizerWaveView(
-                                isActive: speechService.isSpeaking && speechService.currentSpeakerID == "us_\(viewModel.originalText)",
-                                barColor: AppColors.phonetic,
-                                height: 9
-                            )
+                    NekoAudioButton(
+                        label: "US",
+                        isPlaying: isUsPlaying,
+                        activeColor: AppColors.phonetic,
+                        action: {
+                            viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-US", speakerID: usID)
                         }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2.5)
-                        .background(AppColors.phoneticSubtle)
-                        .foregroundColor(AppColors.phonetic)
-                        .cornerRadius(4)
-                    }
-                    .buttonStyle(.plain)
-                    .help(l10n[.dictPronounceUs])
+                    )
                 }
 
                 BookmarkBounceButton(isBookmarked: viewModel.isBookmarked) {
@@ -739,28 +625,148 @@ public struct TranslationHUDDictionaryView: View {
                 .help(viewModel.isBookmarked ? l10n[.dictUnbookmark] : l10n[.dictBookmark])
             }
 
-            HStack(alignment: .center, spacing: 8) {
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(AppColors.accent)
-                    .frame(width: 3, height: 16)
+            // Skeleton Part of Speech Breakdown matching richDictionaryContent
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    // POS Badge skeleton placeholder
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.primary.opacity(0.08))
+                        .frame(width: 58, height: 18)
 
-                LiveSpokenTextView(
-                    text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
-                    speakerID: "translated",
-                    font: .system(size: 14.5, weight: .bold),
-                    defaultColor: AppColors.accent
-                )
+                    // Vertical bulleted placeholder lines
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(Color(red: 0.56, green: 0.78, blue: 0.12).opacity(0.5))
+                                .frame(width: 3.5, height: 13)
+                                .offset(y: 1.5)
 
-                Spacer()
+                            if !viewModel.translatedText.isEmpty {
+                                Text(viewModel.translatedText)
+                                    .font(.system(size: 13.5, weight: .bold))
+                                    .foregroundColor(.primary)
+                            } else {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color.primary.opacity(0.08))
+                                    .frame(width: 130, height: 14)
+                            }
 
-                if !viewModel.translatedText.isEmpty {
-                    NekoCopyButton(textToCopy: viewModel.translatedText)
+                            Spacer(minLength: 4)
+                        }
+                        .padding(.leading, 8)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            RoundedRectangle(cornerRadius: 1.5)
+                                .fill(Color(red: 0.56, green: 0.78, blue: 0.12).opacity(0.3))
+                                .frame(width: 3.5, height: 13)
+                                .offset(y: 1.5)
+
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.primary.opacity(0.05))
+                                .frame(width: 170, height: 14)
+
+                            Spacer(minLength: 4)
+                        }
+                        .padding(.leading, 8)
+                    }
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(Color.primary.opacity(0.025))
-            .cornerRadius(6)
+            .padding(.vertical, 2)
+            .shimmering(active: viewModel.translatedText.isEmpty)
+        }
+    }
+
+    // MARK: - Dictionary Fallback View
+    private var dictionaryFallbackView: some View {
+        let displayWord = viewModel.originalText.capitalized
+        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
+
+        return VStack(alignment: .leading, spacing: 10) {
+            // Hero Header matching richDictionaryContent
+            HStack(alignment: .center, spacing: 8) {
+                LiveSpokenTextView(
+                    text: displayWord,
+                    speakerID: "original",
+                    font: .system(size: 19, weight: .bold),
+                    defaultColor: .primary
+                )
+
+                if settings.showPhonetics, let ph = localPhonetic, !ph.isEmpty {
+                    Text(ph)
+                        .font(.system(size: 11.5, design: .serif))
+                        .foregroundColor(AppColors.phonetic)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(AppColors.phoneticSubtle)
+                        .cornerRadius(4.5)
+                }
+
+                Spacer(minLength: 4)
+
+                // Pronunciation Buttons: UK & US
+                HStack(spacing: 5) {
+                    let ukID = "uk_\(viewModel.originalText)"
+                    let usID = "us_\(viewModel.originalText)"
+                    let isUkPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == ukID) ||
+                        (speechService.isSpeaking && speechService.currentSpeakerID == ukID)
+                    let isUsPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == usID) ||
+                        (speechService.isSpeaking && speechService.currentSpeakerID == usID)
+
+                    NekoAudioButton(
+                        label: "UK",
+                        isPlaying: isUkPlaying,
+                        activeColor: AppColors.accent,
+                        action: {
+                            viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-GB", speakerID: ukID)
+                        }
+                    )
+
+                    NekoAudioButton(
+                        label: "US",
+                        isPlaying: isUsPlaying,
+                        activeColor: AppColors.phonetic,
+                        action: {
+                            viewModel.speakCustom(text: viewModel.originalText, languageCode: "en-US", speakerID: usID)
+                        }
+                    )
+                }
+
+                BookmarkBounceButton(isBookmarked: viewModel.isBookmarked) {
+                    viewModel.toggleBookmark()
+                }
+                .help(viewModel.isBookmarked ? l10n[.dictUnbookmark] : l10n[.dictBookmark])
+            }
+
+            // Fallback Definition Card
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(Color(red: 0.56, green: 0.78, blue: 0.12))
+                        .frame(width: 3.5, height: 13)
+                        .offset(y: 1.5)
+
+                    LiveSpokenTextView(
+                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
+                        speakerID: "translated",
+                        font: .system(size: 14, weight: .bold),
+                        defaultColor: .primary
+                    )
+
+                    Spacer(minLength: 4)
+
+                    if !viewModel.translatedText.isEmpty {
+                        NekoCopyButton(
+                            textToCopy: viewModel.translatedText,
+                            iconOnly: true,
+                            iconSize: 9.5,
+                            horizontalPadding: 5,
+                            verticalPadding: 3.5
+                        )
+                    }
+                }
+                .padding(.leading, 8)
+            }
+            .padding(.vertical, 2)
 
             if let def = viewModel.definition, !def.isEmpty {
                 DisclosureGroup {

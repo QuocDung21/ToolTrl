@@ -70,5 +70,10 @@ public struct NekoAudioButton: View {
         }
         .buttonStyle(.plain)
         .frame(height: height)
+        // Collapse flag emoji + accent label + equalizer into one meaningful element.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Phát âm \(label)"))
+        .accessibilityValue(Text(isPlaying ? "Đang phát" : ""))
+        .accessibilityAddTraits([.isButton, .startsMediaSession])
     }
 }

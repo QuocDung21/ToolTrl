@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "skills": {
+    "accessibility-dynamic-type-specialist": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility-dynamic-type-specialist/SKILL.md",
+      "computedHash": "b2f819c9170692172a4957694d05391016afb0d8b39b08aabeb8d1ac56d2c548"
+    },
+    "accessibility-sufficient-contrast-specialist": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility-sufficient-contrast-specialist/SKILL.md",
+      "computedHash": "43554e7878c3bd3cfe3bff5108421ce12dd807b634b54a6b773313d7524d7a9a"
+    },
+    "accessibility-voiceover-specialist": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility-voiceover-specialist/SKILL.md",
+      "computedHash": "a0ba2a4ff7754224c3508d67c5f5d64e1525c8085a96e5c9d330e7aee5bb8e52"
+    },
+    "app-intents-specialist": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/app-intents-specialist/SKILL.md",
+      "computedHash": "a19c6f10731298281e1c86f48cb0f12511226010cb9cba931870e3f7e11dd818"
+    },
+    "app-intents-whats-new-27": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/app-intents-whats-new-27/SKILL.md",
+      "computedHash": "3a2f39429031b071ff77ff4e7fc979bd6d5fbc0e72de67d834dc4cddf5aef466"
+    },
+    "app-resizability": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/app-resizability/SKILL.md",
+      "computedHash": "648e10d53091b23a4839c01679e6a06d9c279546debefc419369877614ba7c55"
+    },
+    "audit-xcode-security-settings": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/audit-xcode-security-settings/SKILL.md",
+      "computedHash": "59cfe3b0b640beecba7bcea0a6877b35fc4a10bdfcb84344258c54384a219548"
+    },
+    "modernize-tests": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/modernize-tests/SKILL.md",
+      "computedHash": "4963af469e2c61ae9dbd3621c6da106a27fc883528b4741c44aa38942fc702b6"
+    },
+    "swiftui-specialist": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/swiftui-specialist/SKILL.md",
+      "computedHash": "65b3ecc978c340f3da80e3c2947d710392c1577ba1c01658d86041a736b7e90a"
+    },
+    "swiftui-whats-new-27": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/swiftui-whats-new-27/SKILL.md",
+      "computedHash": "7c0d6569dfcd2474b2b9de6e0f26a627aa7e4b397edb92d2f059510bcc8d68f4"
+    },
+    "translation": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/translation/SKILL.md",
+      "computedHash": "97fb20654756f7f1f146ed38d8a4a1c48af0fed9205f6af2c8b05c08b8c183ad"
+    },
+    "translation-coordinator": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/translation-coordinator/SKILL.md",
+      "computedHash": "f56d48f54dddc190f3163c02057c207ebdd5a78be7d50b016833a3087ef9ed6b"
+    },
+    "xctrace": {
+      "source": "artemnovichkov/xcode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/xctrace/SKILL.md",
+      "computedHash": "d107312a1aa2a92806265862470f56a036f464d2c350ab42d77ac910eae9933c"
+    }
+  }
+}
