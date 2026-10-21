@@ -509,6 +509,10 @@ public struct TranslationHUDSentenceView: View {
                         lineSpacing: 3.5
                     )
                 }
+
+                if !viewModel.translatedText.isEmpty {
+                    engineAttributionBadge
+                }
             }
         }
         .padding(12)
@@ -518,6 +522,18 @@ public struct TranslationHUDSentenceView: View {
             RoundedRectangle(cornerRadius: 9)
                 .stroke(AppColors.accent.opacity(0.15), lineWidth: 1)
         )
+    }
+
+    private var engineAttributionBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: viewModel.selectedEngine == .directAI ? "cpu.fill" : "globe")
+                .font(.system(size: 8))
+            Text("Dịch bởi: \(viewModel.activeEngineLabel.isEmpty ? (viewModel.selectedEngine == .directAI ? "AI Engine" : viewModel.selectedEngine.rawValue) : viewModel.activeEngineLabel)")
+                .font(.system(size: 9.5, weight: .medium))
+            Spacer()
+        }
+        .foregroundColor(.secondary.opacity(0.8))
+        .padding(.top, 2)
     }
 
     // MARK: - Mode 2: Chỉ Tiếng Việt
@@ -633,6 +649,7 @@ public struct TranslationHUDSentenceView: View {
                         defaultColor: .primary,
                         lineSpacing: 4.5
                     )
+                    engineAttributionBadge
                 }
             }
             .padding(12)
@@ -744,6 +761,8 @@ public struct TranslationHUDSentenceView: View {
 
                 // Action Bar under translated text
                 HStack {
+                    engineAttributionBadge
+
                     Spacer()
 
                     NekoCopyButton(

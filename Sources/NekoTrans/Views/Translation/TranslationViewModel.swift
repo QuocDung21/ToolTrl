@@ -64,6 +64,7 @@ public final class TranslationViewModel {
     public var isComparisonMode: Bool = false
     public var comparisonResults: [TranslationProviderResult] = []
     public var isComparing: Bool = false
+    public var activeEngineLabel: String = ""
     
     public private(set) var lookupHistory: [String] = []
     
@@ -236,6 +237,11 @@ public final class TranslationViewModel {
                     self.translatedText = fullText
                     self.isLoading = false
                     self.isStreaming = false
+                    let p = AppSettings.shared.aiProvider
+                    let custom = AppSettings.shared.customAIModel
+                    let model = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
+                    let shortModel = model.contains("/") ? (model.components(separatedBy: "/").last ?? model) : model
+                    self.activeEngineLabel = "⚡ \(shortModel) (\(p == .ollama ? "Local AI" : p.rawValue))"
                     self.recordHistory(translated: fullText)
                 } catch {
                     // Graceful fallback to regular translation if AI streaming fails
@@ -249,6 +255,7 @@ public final class TranslationViewModel {
                     ) {
                         guard self.translationTaskID == currentID else { return }
                         self.translatedText = result
+                        self.activeEngineLabel = "Google Translate (Tự động chuyển do Local AI chưa chạy)"
                         self.recordHistory(translated: result)
                     }
                     self.isLoading = false
@@ -269,6 +276,7 @@ public final class TranslationViewModel {
                 guard self.translationTaskID == currentID else { return }
                 if self.translatedText.isEmpty || self.isLoading {
                     self.translatedText = result
+                    self.activeEngineLabel = self.selectedEngine == .auto ? "Tự động (Google / MyMemory)" : self.selectedEngine.rawValue
                     self.isLoading = false
                     self.recordHistory(translated: result)
                 }

@@ -160,10 +160,11 @@ public final class LocalAIService: Sendable {
                     }
                 }
 
-                if let enumerator = fileManager.enumerator(at: firstSnapshot, includingPropertiesForKeys: [.fileSizeKey]) {
+                if let enumerator = fileManager.enumerator(at: firstSnapshot, includingPropertiesForKeys: nil) {
                     var sizeSum: Int64 = 0
                     for case let fileURL as URL in enumerator {
-                        if let attrs = try? fileManager.attributesOfItem(atPath: fileURL.path),
+                        let resolvedURL = fileURL.resolvingSymlinksInPath()
+                        if let attrs = try? fileManager.attributesOfItem(atPath: resolvedURL.path),
                            let s = attrs[.size] as? Int64 {
                             sizeSum += s
                         }

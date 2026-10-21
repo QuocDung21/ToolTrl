@@ -92,7 +92,11 @@ public struct TranslationHUDHeaderView: View {
                             if viewModel.selectedEngine == .auto {
                                 Text("Tự động")
                             } else if viewModel.selectedEngine == .directAI {
-                                Text("AI")
+                                let custom = settings.customAIModel
+                                let p = settings.aiProvider
+                                let raw = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
+                                let shortName = raw.contains("/") ? (raw.components(separatedBy: "/").last ?? raw) : raw
+                                Text("⚡ \(shortName)")
                             } else {
                                 Text(viewModel.selectedEngine.rawValue)
                             }

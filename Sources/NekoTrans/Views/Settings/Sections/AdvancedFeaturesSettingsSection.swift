@@ -247,12 +247,24 @@ public struct AdvancedFeaturesSettingsSection: View {
                                         }
 
                                         ForEach(localHFModels) { hf in
+                                            let isSelected = settings.customAIModel == hf.name
                                             HStack(spacing: 8) {
-                                                Image(systemName: "cube.transparent.fill")
-                                                    .foregroundColor(.purple)
+                                                Image(systemName: isSelected ? "checkmark.seal.fill" : "cube.transparent.fill")
+                                                    .foregroundColor(isSelected ? .green : .purple)
                                                 VStack(alignment: .leading, spacing: 1) {
-                                                    Text(hf.name)
-                                                        .font(.system(size: 11, weight: .medium))
+                                                    HStack(spacing: 4) {
+                                                        Text(hf.name)
+                                                            .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                                        if isSelected {
+                                                            Text("ĐANG CHỌN")
+                                                                .font(.system(size: 8.5, weight: .bold))
+                                                                .padding(.horizontal, 4)
+                                                                .padding(.vertical, 1)
+                                                                .background(Color.green.opacity(0.18))
+                                                                .foregroundColor(.green)
+                                                                .cornerRadius(3)
+                                                        }
+                                                    }
                                                     HStack(spacing: 4) {
                                                         if let arch = hf.parameterSize {
                                                             Text(arch)
@@ -269,34 +281,68 @@ public struct AdvancedFeaturesSettingsSection: View {
 
                                                 Spacer()
 
-                                                Button("Sử dụng") {
-                                                    settings.customAIModel = hf.name
-                                                    selectedBackendType = .mlxOrLocalAI
-                                                    settings.ollamaEndpoint = LocalAIBackendType.mlxOrLocalAI.defaultEndpoint
+                                                if isSelected {
+                                                    HStack(spacing: 3) {
+                                                        Image(systemName: "checkmark")
+                                                            .font(.system(size: 10, weight: .bold))
+                                                        Text("Đã kích hoạt")
+                                                            .font(.system(size: 10.5, weight: .semibold))
+                                                    }
+                                                    .foregroundColor(.green)
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 3)
+                                                } else {
+                                                    Button("Sử dụng") {
+                                                        settings.customAIModel = hf.name
+                                                        selectedBackendType = .mlxOrLocalAI
+                                                        settings.ollamaEndpoint = LocalAIBackendType.mlxOrLocalAI.defaultEndpoint
+                                                    }
+                                                    .buttonStyle(.bordered)
+                                                    .controlSize(.small)
                                                 }
-                                                .buttonStyle(.bordered)
-                                                .controlSize(.small)
 
                                                 Button(action: {
                                                     let cmd = "python3 -m mlx_lm.server --model \(hf.name) --port 8080"
                                                     NSPasteboard.general.clearContents()
                                                     NSPasteboard.general.setString(cmd, forType: .string)
-                                                    copiedCommandMessage = "Đã sao chép lệnh chạy MLX Server cho \(hf.name)!"
+                                                    copiedCommandMessage = "Đã sao chép: \(cmd)"
                                                 }) {
                                                     Image(systemName: "doc.on.doc")
                                                 }
                                                 .buttonStyle(.borderless)
-                                                .help("Sao chép lệnh chạy MLX Server")
+                                                .help("Sao chép lệnh chạy MLX Server cho \(hf.name)")
                                             }
                                             .padding(6)
-                                            .background(Color.purple.opacity(0.06))
+                                            .background(isSelected ? Color.green.opacity(0.08) : Color.purple.opacity(0.05))
                                             .cornerRadius(6)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .stroke(isSelected ? Color.green.opacity(0.4) : Color.clear, lineWidth: 1)
+                                            )
                                         }
 
                                         if let copiedMsg = copiedCommandMessage {
                                             Text(copiedMsg)
                                                 .font(.system(size: 10.5))
                                                 .foregroundColor(.green)
+                                        }
+
+                                        if case .offline = localServerState {
+                                            HStack(alignment: .top, spacing: 6) {
+                                                Image(systemName: "info.circle.fill")
+                                                    .foregroundColor(.orange)
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text("Máy chủ Local AI (\(selectedBackendType.rawValue)) hiện chưa được bật!")
+                                                        .font(.system(size: 11, weight: .bold))
+                                                        .foregroundColor(.orange)
+                                                    Text("Để dịch bằng mô hình Hugging Face này, hãy mở Terminal và dán lệnh khởi chạy (bấm icon 📋 bên phải mô hình). Khi máy chủ chưa bật, NekoTrans sẽ tạm chuyển sang dịch tự động để không ngắt quãng công việc.")
+                                                        .font(.system(size: 10))
+                                                        .foregroundColor(.secondary)
+                                                }
+                                            }
+                                            .padding(8)
+                                            .background(Color.orange.opacity(0.08))
+                                            .cornerRadius(6)
                                         }
                                     }
                                     .padding(.top, 4)
