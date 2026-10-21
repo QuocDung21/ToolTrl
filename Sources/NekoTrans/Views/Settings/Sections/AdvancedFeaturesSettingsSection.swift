@@ -236,6 +236,35 @@ public struct AdvancedFeaturesSettingsSection: View {
                                         .foregroundColor(.secondary)
                                 }
 
+                                HStack(spacing: 8) {
+                                    if settings.translationEngine == .directAI && settings.aiProvider == .ollama {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.green)
+                                            Text("Đang là Động cơ dịch chính (Direct AI • Local)")
+                                                .font(.system(size: 11, weight: .semibold))
+                                                .foregroundColor(.green)
+                                        }
+                                    } else {
+                                        HStack(spacing: 6) {
+                                            Text("Động cơ dịch hiện tại: \(settings.translationEngine.rawValue)")
+                                                .font(.system(size: 10.5))
+                                                .foregroundColor(.secondary)
+                                            Spacer()
+                                            Button(action: {
+                                                settings.translationEngine = .directAI
+                                                settings.aiProvider = .ollama
+                                            }) {
+                                                Label("Đặt làm bộ dịch chính", systemImage: "bolt.fill")
+                                                    .font(.system(size: 10.5, weight: .semibold))
+                                            }
+                                            .buttonStyle(.borderedProminent)
+                                            .controlSize(.small)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 2)
+
                                 // 5. Local Hugging Face Cache Models
                                 if !localHFModels.isEmpty {
                                     VStack(alignment: .leading, spacing: 6) {
@@ -247,7 +276,7 @@ public struct AdvancedFeaturesSettingsSection: View {
                                         }
 
                                         ForEach(localHFModels) { hf in
-                                            let isSelected = settings.customAIModel == hf.name
+                                            let isSelected = settings.customAIModel == hf.name && settings.translationEngine == .directAI && settings.aiProvider == .ollama
                                             HStack(spacing: 8) {
                                                 Image(systemName: isSelected ? "checkmark.seal.fill" : "cube.transparent.fill")
                                                     .foregroundColor(isSelected ? .green : .purple)
@@ -294,8 +323,11 @@ public struct AdvancedFeaturesSettingsSection: View {
                                                 } else {
                                                     Button("Sử dụng") {
                                                         settings.customAIModel = hf.name
+                                                        settings.translationEngine = .directAI
+                                                        settings.aiProvider = .ollama
                                                         selectedBackendType = .mlxOrLocalAI
                                                         settings.ollamaEndpoint = LocalAIBackendType.mlxOrLocalAI.defaultEndpoint
+                                                        scanLocalAI()
                                                     }
                                                     .buttonStyle(.bordered)
                                                     .controlSize(.small)
