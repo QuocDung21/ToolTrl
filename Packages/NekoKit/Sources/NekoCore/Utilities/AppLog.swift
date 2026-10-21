@@ -30,6 +30,8 @@ public enum AppLog {
     public static let dictionary = Logger(subsystem: subsystem, category: "dictionary")
     /// Multi-engine translation.
     public static let translation = Logger(subsystem: subsystem, category: "translation")
+    /// AI and Local LLM inference.
+    public static let ai = Logger(subsystem: subsystem, category: "ai")
     /// GitHub gist sync.
     public static let sync = Logger(subsystem: subsystem, category: "sync")
 }

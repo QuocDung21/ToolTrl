@@ -101,6 +101,16 @@ public final class DirectAIService: Sendable {
                 prompt: prompt,
                 onToken: onToken
             )
+        case .ollama:
+            let customModel = Defaults[.customAIModel]
+            let model = customModel.isEmpty ? DirectAIProvider.ollama.defaultModel : customModel
+            let endpoint = Defaults[.ollamaEndpoint]
+            return try await LocalAIService.shared.streamLocalInference(
+                endpoint: endpoint,
+                model: model,
+                prompt: prompt,
+                onToken: onToken
+            )
         default:
             // One-shot fallback for other providers
             let result = try await sendPromptToAI(prompt: prompt, provider: provider)
@@ -468,42 +478,16 @@ public final class DirectAIService: Sendable {
         throw NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: "Không nhận được phản hồi từ Gemini."])
     }
     
-    // Ollama Local LLM API
+    // Ollama / Local AI API
     private func queryOllama(prompt: String) async throws -> String {
-        var base = Defaults[.ollamaEndpoint].trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        if base.isEmpty { base = "http://localhost:11434" }
-        if base.hasSuffix("/") { base = String(base.dropLast()) }
-        
-        // User-typed endpoint: parse it instead of concatenating, so an odd character
-        // cannot make Foundation re-encode the whole URL.
-        guard var components = URLComponents(string: base) else { throw URLError(.badURL) }
-        components.path = components.path + "/api/generate"
-        guard let url = components.url else { throw URLError(.badURL) }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
         let customModel = Defaults[.customAIModel]
         let model = customModel.isEmpty ? DirectAIProvider.ollama.defaultModel : customModel
-        let body: [String: Any] = [
-            "model": model,
-            "prompt": prompt,
-            "stream": false
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (data, response) = try await urlSession.data(for: request)
-        guard let httpRes = response as? HTTPURLResponse, (200...299).contains(httpRes.statusCode) else {
-            let err = String(data: data, encoding: String.Encoding.utf8) ?? "Ollama Connection Error"
-            throw NSError(domain: "Ollama", code: (response as? HTTPURLResponse)?.statusCode ?? 500, userInfo: [NSLocalizedDescriptionKey: "Không thể kết nối tới Ollama tại \(base): \(err)"])
-        }
-        
-        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let responseText = json["response"] as? String {
-            return responseText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        }
-        
-        throw NSError(domain: "Ollama", code: -1, userInfo: [NSLocalizedDescriptionKey: "Không phân tích được phản hồi từ Ollama."])
+        let endpoint = Defaults[.ollamaEndpoint]
+        return try await LocalAIService.shared.streamLocalInference(
+            endpoint: endpoint,
+            model: model,
+            prompt: prompt,
+            onToken: { _ in }
+        )
     }
 }

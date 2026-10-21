@@ -265,3 +265,53 @@ struct ServiceIntegrationsTests {
         #expect(err2.errorDescription?.contains("Deck not found") == true)
     }
 }
+
+// MARK: - 5. LocalAIService Tests
+@Suite("NekoServices - LocalAIService Tests")
+struct LocalAIServiceTests {
+    @Test("normalizeEndpoint handles trailing slashes, whitespace, and missing scheme")
+    func normalizeEndpoint() {
+        let s = LocalAIService.shared
+
+        #expect(s.normalizeEndpoint("http://localhost:11434/") == "http://localhost:11434")
+        #expect(s.normalizeEndpoint("  http://localhost:11434///  ") == "http://localhost:11434")
+        #expect(s.normalizeEndpoint("localhost:11434") == "http://localhost:11434")
+        #expect(s.normalizeEndpoint("") == "http://localhost:11434")
+        #expect(s.normalizeEndpoint("https://my-local-ai.lan:8080/") == "https://my-local-ai.lan:8080")
+    }
+
+    @Test("appleSiliconChipName returns non-empty string on macOS")
+    func chipNameNonEmpty() {
+        let chip = LocalAIService.shared.appleSiliconChipName
+        #expect(!chip.isEmpty)
+    }
+
+    @Test("LocalAIModelInfo formatting handles parameter size, family, and byte count")
+    func modelInfoFormatting() {
+        let model = LocalAIModelInfo(
+            id: "llama3.2:latest",
+            name: "llama3.2:latest",
+            sizeInBytes: 2019393189,
+            parameterSize: "3.2B",
+            family: "llama",
+            quantization: "Q4_K_M"
+        )
+
+        #expect(model.id == "llama3.2:latest")
+        #expect(model.parameterSize == "3.2B")
+        #expect(model.quantization == "Q4_K_M")
+        #expect(model.formattedSize != nil)
+        #expect(model.displayName.contains("llama3.2:latest"))
+        #expect(model.displayName.contains("3.2B"))
+        #expect(model.displayName.contains("Q4_K_M"))
+    }
+
+    @Test("LocalAIBackendType default endpoints and descriptions")
+    func backendTypeProperties() {
+        #expect(LocalAIBackendType.ollama.defaultEndpoint == "http://localhost:11434")
+        #expect(LocalAIBackendType.lmStudio.defaultEndpoint == "http://localhost:1234")
+        #expect(LocalAIBackendType.mlxOrLocalAI.defaultEndpoint == "http://localhost:8080")
+        #expect(LocalAIBackendType.allCases.count == 4)
+    }
+}
+

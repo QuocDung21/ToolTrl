@@ -17,6 +17,12 @@ public struct AdvancedFeaturesSettingsSection: View {
     @State private var isTestingAnki: Bool = false
     @State private var ankiStatusMessage: String? = nil
     @State private var ankiSuccess: Bool = false
+
+    @State private var localServerState: LocalAIServerState = .idle
+    @State private var discoveredModels: [LocalAIModelInfo] = []
+    @State private var isScanningLocalAI: Bool = false
+    @State private var selectedBackendType: LocalAIBackendType = .ollama
+    @State private var customModelInputMode: Bool = false
     
     private var hasCustomConfig: Bool {
         !settings.openAIKey.isEmpty ||
@@ -95,8 +101,10 @@ public struct AdvancedFeaturesSettingsSection: View {
                 
                 DisclosureGroup(isExpanded: $isExpandedAIConfig) {
                     VStack(alignment: .leading, spacing: 10) {
-                        TextField("Model AI tùy chỉnh (để trống để dùng mặc định):", text: $settings.customAIModel)
-                            .textFieldStyle(.roundedBorder)
+                        if settings.aiProvider != .ollama {
+                            TextField("Model AI tùy chỉnh (để trống để dùng mặc định):", text: $settings.customAIModel)
+                                .textFieldStyle(.roundedBorder)
+                        }
                         
                         switch settings.aiProvider {
                         case .openAI:
@@ -115,8 +123,117 @@ public struct AdvancedFeaturesSettingsSection: View {
                             SecureField("DeepSeek API Key (sk-...):", text: $settings.deepSeekKey)
                                 .textFieldStyle(.roundedBorder)
                         case .ollama:
-                            TextField("Ollama Local Endpoint:", text: $settings.ollamaEndpoint)
-                                .textFieldStyle(.roundedBorder)
+                            VStack(alignment: .leading, spacing: 8) {
+                                // 1. Apple Silicon Hardware Acceleration Badge
+                                HStack(spacing: 6) {
+                                    Image(systemName: "cpu.fill")
+                                        .foregroundColor(.cyan)
+                                    Text("Apple Silicon Metal & Neural Engine (\(LocalAIService.shared.appleSiliconChipName))")
+                                        .font(.system(size: 11, weight: .semibold))
+                                    Spacer()
+                                    Text("100% Cục bộ • Miễn phí")
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(8)
+                                .background(Color.cyan.opacity(0.08))
+                                .cornerRadius(6)
+
+                                // 2. Live Server Status Banner
+                                HStack(spacing: 8) {
+                                    if isScanningLocalAI {
+                                        ProgressView().controlSize(.small)
+                                        Text("Đang dò tìm máy chủ Local AI...")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
+                                    } else {
+                                        switch localServerState {
+                                        case .online(let backend, let models):
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundColor(.green)
+                                            Text("\(backend.rawValue) Online: Phát hiện \(models.count) mô hình")
+                                                .font(.system(size: 11, weight: .medium))
+                                                .foregroundColor(.green)
+                                        case .offline:
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .foregroundColor(.orange)
+                                            Text("Chưa phát hiện máy chủ Local AI")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                        case .idle, .checking:
+                                            Image(systemName: "circle")
+                                                .foregroundColor(.secondary)
+                                            Text("Sẵn sàng kiểm tra")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                        }
+                                    }
+
+                                    Spacer()
+
+                                    Button(action: scanLocalAI) {
+                                        Label("Dò tìm / Quét lại", systemImage: "arrow.clockwise")
+                                            .font(.system(size: 11))
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .disabled(isScanningLocalAI)
+                                }
+
+                                // 3. Endpoint Presets
+                                Picker("Máy chủ Local:", selection: $selectedBackendType) {
+                                    ForEach(LocalAIBackendType.allCases) { b in
+                                        Text(b.shortDescription).tag(b)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .onChange(of: selectedBackendType) { _, newBackend in
+                                    if newBackend != .custom {
+                                        settings.ollamaEndpoint = newBackend.defaultEndpoint
+                                        scanLocalAI()
+                                    }
+                                }
+
+                                if selectedBackendType == .custom {
+                                    TextField("Endpoint tùy chỉnh:", text: $settings.ollamaEndpoint)
+                                        .textFieldStyle(.roundedBorder)
+                                }
+
+                                // 4. Discovered Models Picker / Input
+                                if !discoveredModels.isEmpty && !customModelInputMode {
+                                    HStack {
+                                        Picker("Mô hình AI trên máy:", selection: $settings.customAIModel) {
+                                            Text("Mặc định (\(discoveredModels.first?.name ?? DirectAIProvider.ollama.defaultModel))").tag("")
+                                            Divider()
+                                            ForEach(discoveredModels) { m in
+                                                Text(m.displayName).tag(m.name)
+                                            }
+                                        }
+                                        .pickerStyle(.menu)
+
+                                        Button(action: { customModelInputMode = true }) {
+                                            Image(systemName: "pencil")
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help("Tự gõ tên model khác")
+                                    }
+                                } else {
+                                    HStack {
+                                        TextField("Tên mô hình (vd: llama3.2, qwen2.5:7b, deepseek-r1):", text: $settings.customAIModel)
+                                            .textFieldStyle(.roundedBorder)
+
+                                        if !discoveredModels.isEmpty {
+                                            Button("Chọn từ danh sách") {
+                                                customModelInputMode = false
+                                            }
+                                            .font(.system(size: 11))
+                                        }
+                                    }
+
+                                    Text("💡 Gợi ý: Khởi động Ollama hoặc chạy lệnh `ollama run llama3.2` trong Terminal.")
+                                        .font(.system(size: 10.5))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
                         
                         SecureField("DeepL API Key (Tùy chọn):", text: $settings.deepLKey)
@@ -482,6 +599,67 @@ public struct AdvancedFeaturesSettingsSection: View {
             }
         }
         .formStyle(.grouped)
+        .onAppear {
+            syncSelectedBackendType()
+            if settings.aiProvider == .ollama {
+                scanLocalAI()
+            }
+        }
+        .onChange(of: settings.aiProvider) { _, newProvider in
+            if newProvider == .ollama {
+                scanLocalAI()
+            }
+        }
+    }
+
+    private func syncSelectedBackendType() {
+        let ep = settings.ollamaEndpoint
+        if ep.contains(":11434") {
+            selectedBackendType = .ollama
+        } else if ep.contains(":1234") {
+            selectedBackendType = .lmStudio
+        } else if ep.contains(":8080") {
+            selectedBackendType = .mlxOrLocalAI
+        } else {
+            selectedBackendType = .custom
+        }
+    }
+
+    private func scanLocalAI() {
+        isScanningLocalAI = true
+        Task {
+            let state = await LocalAIService.shared.checkHealth(endpoint: settings.ollamaEndpoint)
+            await MainActor.run {
+                self.localServerState = state
+                if case .online(_, let models) = state {
+                    self.discoveredModels = models
+                    self.isScanningLocalAI = false
+                    if self.settings.customAIModel.isEmpty, let first = models.first {
+                        self.settings.customAIModel = first.name
+                    }
+                } else {
+                    // Try auto-detecting on standard local AI ports (11434, 1234, 8080)
+                    Task {
+                        if let detected = await LocalAIService.shared.autoDetectLocalServer() {
+                            await MainActor.run {
+                                self.settings.ollamaEndpoint = detected.endpoint
+                                self.selectedBackendType = detected.backend
+                                self.discoveredModels = detected.models
+                                self.localServerState = .online(backend: detected.backend, models: detected.models)
+                                self.isScanningLocalAI = false
+                                if self.settings.customAIModel.isEmpty, let first = detected.models.first {
+                                    self.settings.customAIModel = first.name
+                                }
+                            }
+                        } else {
+                            await MainActor.run {
+                                self.isScanningLocalAI = false
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private func testAIConnection() {
