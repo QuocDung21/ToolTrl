@@ -113,22 +113,6 @@ public final class DirectAIService: Sendable {
                 prompt: prompt,
                 onToken: onToken
             )
-        case .ollama:
-            let prompt = AIPromptBuilder.contextualTranslationPrompt(
-                text: text,
-                sourceLang: sourceLang,
-                targetLang: targetLang,
-                domain: domain.rawValue
-            )
-            let customModel = Defaults[.customAIModel]
-            let model = customModel.isEmpty ? DirectAIProvider.ollama.defaultModel : customModel
-            let endpoint = Defaults[.ollamaEndpoint]
-            return try await LocalAIService.shared.streamLocalInference(
-                endpoint: endpoint,
-                model: model,
-                prompt: prompt,
-                onToken: onToken
-            )
         case .inProcessGGUF:
             if !LocalGGUFService.shared.isLoaded {
                 let path = Defaults[.customGGUFModelPath]
@@ -303,9 +287,6 @@ public final class DirectAIService: Sendable {
             
         case .googleGemini:
             return try await queryGemini(prompt: prompt)
-            
-        case .ollama:
-            return try await queryOllama(prompt: prompt)
             
         case .inProcessGGUF:
             if !LocalGGUFService.shared.isLoaded {
@@ -525,18 +506,5 @@ public final class DirectAIService: Sendable {
         }
         
         throw NSError(domain: "Gemini", code: -1, userInfo: [NSLocalizedDescriptionKey: "Không nhận được phản hồi từ Gemini."])
-    }
-    
-    // Ollama / Local AI API
-    private func queryOllama(prompt: String) async throws -> String {
-        let customModel = Defaults[.customAIModel]
-        let model = customModel.isEmpty ? DirectAIProvider.ollama.defaultModel : customModel
-        let endpoint = Defaults[.ollamaEndpoint]
-        return try await LocalAIService.shared.streamLocalInference(
-            endpoint: endpoint,
-            model: model,
-            prompt: prompt,
-            onToken: { _ in }
-        )
     }
 }

@@ -40,6 +40,15 @@ public final class LocalGGUFService: @unchecked Sendable {
         model != nil && context != nil
     }
     
+    public var appleSiliconChipName: String {
+        var size: Int = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        var machine = [CChar](repeating: 0, count: size)
+        sysctlbyname("machdep.cpu.brand_string", &machine, &size, nil, 0)
+        let brand = String(cString: machine).trimmingCharacters(in: .whitespacesAndNewlines)
+        return brand.isEmpty ? "Apple Silicon" : brand
+    }
+    
     private init() {
         llama_backend_init()
     }

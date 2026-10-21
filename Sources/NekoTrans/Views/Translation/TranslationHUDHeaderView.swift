@@ -98,7 +98,7 @@ public struct TranslationHUDHeaderView: View {
                                     Text("⚡ \(name.isEmpty ? "GGUF Metal" : name)")
                                 } else {
                                     let custom = settings.customAIModel
-                                    let raw = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
+                                    let raw = custom.isEmpty ? p.defaultModel : custom
                                     let shortName = raw.contains("/") ? (raw.components(separatedBy: "/").last ?? raw) : raw
                                     Text("⚡ \(shortName)")
                                 }

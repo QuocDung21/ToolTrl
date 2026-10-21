@@ -243,9 +243,9 @@ public final class TranslationViewModel {
                         self.activeEngineLabel = "⚡ \(name.isEmpty ? "GGUF Metal" : name) (In-Process Direct)"
                     } else {
                         let custom = AppSettings.shared.customAIModel
-                        let model = custom.isEmpty ? (p == .ollama ? DirectAIProvider.ollama.defaultModel : p.defaultModel) : custom
+                        let model = custom.isEmpty ? p.defaultModel : custom
                         let shortModel = model.contains("/") ? (model.components(separatedBy: "/").last ?? model) : model
-                        self.activeEngineLabel = "⚡ \(shortModel) (\(p == .ollama ? "Local AI" : p.rawValue))"
+                        self.activeEngineLabel = "⚡ \(shortModel) (\(p.rawValue))"
                     }
                     self.recordHistory(translated: fullText)
                 } catch {

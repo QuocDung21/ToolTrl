@@ -50,7 +50,6 @@ public enum DirectAIProvider: String, CaseIterable, Identifiable, Sendable {
     case googleGemini = "Google Gemini"
     case groq = "Groq (Llama 3.3 Siêu tốc)"
     case deepSeek = "DeepSeek (V3 / R1)"
-    case ollama = "Ollama Local LLM (Offline)"
     case inProcessGGUF = "Mô hình GGUF Trực tiếp (Metal In-Process)"
 
     public var id: String { rawValue }
@@ -62,7 +61,6 @@ public enum DirectAIProvider: String, CaseIterable, Identifiable, Sendable {
         case .googleGemini: return "gemini-1.5-flash"
         case .groq: return "llama-3.3-70b-versatile"
         case .deepSeek: return "deepseek-chat"
-        case .ollama: return "llama3"
         case .inProcessGGUF: return "gguf-metal"
         }
     }

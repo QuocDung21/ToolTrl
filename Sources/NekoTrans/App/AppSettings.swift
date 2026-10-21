@@ -109,10 +109,6 @@ public final class AppSettings {
         didSet { Defaults[.aiProvider] = aiProvider }
     }
 
-    public var ollamaEndpoint: String {
-        didSet { Defaults[.ollamaEndpoint] = ollamaEndpoint }
-    }
-
     public var customAIModel: String {
         didSet { Defaults[.customAIModel] = customAIModel }
     }
@@ -236,7 +232,6 @@ public final class AppSettings {
         self.translationDomain = Defaults[.translationDomain]
         self.translationEngine = Defaults[.translationEngine]
         self.aiProvider = Defaults[.aiProvider]
-        self.ollamaEndpoint = Defaults[.ollamaEndpoint]
         self.customAIModel = Defaults[.customAIModel]
         self.customGGUFModelPath = Defaults[.customGGUFModelPath]
 

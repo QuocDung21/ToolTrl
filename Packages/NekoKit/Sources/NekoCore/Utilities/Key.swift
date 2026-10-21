@@ -35,7 +35,6 @@ public extension Defaults.Keys {
     static let translationDomain = Key<TranslationDomain>("translationDomain", default: .general)
     static let translationEngine = Key<TranslationEngine>("translationEngine", default: .auto)
     static let aiProvider = Key<DirectAIProvider>("aiProvider", default: .openAI)
-    static let ollamaEndpoint = Key<String>("ollamaEndpoint", default: "http://localhost:11434")
     static let customAIModel = Key<String>("customAiModel", default: "")
     static let customGGUFModelPath = Key<String>("customGGUFModelPath", default: "")
 

@@ -34,7 +34,6 @@ public extension DirectAIProvider {
         case .googleGemini: return .providerGoogleGemini
         case .groq: return .providerGroq
         case .deepSeek: return .providerDeepSeek
-        case .ollama: return .providerOllama
         case .inProcessGGUF: return LocalizedStringResource("Mô hình GGUF Trực tiếp (Metal In-Process)")
         }
     }

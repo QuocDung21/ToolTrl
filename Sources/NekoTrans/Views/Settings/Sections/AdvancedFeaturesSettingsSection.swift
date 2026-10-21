@@ -19,15 +19,8 @@ public struct AdvancedFeaturesSettingsSection: View {
     @State private var ankiStatusMessage: String? = nil
     @State private var ankiSuccess: Bool = false
 
-    @State private var localServerState: LocalAIServerState = .idle
-    @State private var discoveredModels: [LocalAIModelInfo] = []
-    @State private var isScanningLocalAI: Bool = false
-    @State private var selectedBackendType: LocalAIBackendType = .ollama
-    @State private var customModelInputMode: Bool = false
-    @State private var localHFModels: [LocalAIModelInfo] = []
     @State private var localGGUFModels: [LocalGGUFModelItem] = []
     @State private var ggufLoadStatus: String? = nil
-    @State private var copiedCommandMessage: String? = nil
     
     private var hasCustomConfig: Bool {
         !settings.openAIKey.isEmpty ||
@@ -106,7 +99,7 @@ public struct AdvancedFeaturesSettingsSection: View {
                 
                 DisclosureGroup(isExpanded: $isExpandedAIConfig) {
                     VStack(alignment: .leading, spacing: 10) {
-                        if settings.aiProvider != .ollama && settings.aiProvider != .inProcessGGUF {
+                        if settings.aiProvider != .inProcessGGUF {
                             TextField("Model AI tùy chỉnh (để trống để dùng mặc định):", text: $settings.customAIModel)
                                 .textFieldStyle(.roundedBorder)
                         }
@@ -127,262 +120,6 @@ public struct AdvancedFeaturesSettingsSection: View {
                         case .deepSeek:
                             SecureField("DeepSeek API Key (sk-...):", text: $settings.deepSeekKey)
                                 .textFieldStyle(.roundedBorder)
-                        case .ollama:
-                            VStack(alignment: .leading, spacing: 8) {
-                                // 1. Apple Silicon Hardware Acceleration Badge
-                                HStack(spacing: 6) {
-                                    Image(systemName: "cpu.fill")
-                                        .foregroundColor(.cyan)
-                                    Text("Apple Silicon Metal & Neural Engine (\(LocalAIService.shared.appleSiliconChipName))")
-                                        .font(.system(size: 11, weight: .semibold))
-                                    Spacer()
-                                    Text("100% Cục bộ • Miễn phí")
-                                        .font(.system(size: 10, weight: .medium))
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(8)
-                                .background(Color.cyan.opacity(0.08))
-                                .cornerRadius(6)
-
-                                // 2. Live Server Status Banner
-                                HStack(spacing: 8) {
-                                    if isScanningLocalAI {
-                                        ProgressView().controlSize(.small)
-                                        Text("Đang dò tìm máy chủ Local AI...")
-                                            .font(.system(size: 11))
-                                            .foregroundColor(.secondary)
-                                    } else {
-                                        switch localServerState {
-                                        case .online(let backend, let models):
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.green)
-                                            Text("\(backend.rawValue) Online: Phát hiện \(models.count) mô hình")
-                                                .font(.system(size: 11, weight: .medium))
-                                                .foregroundColor(.green)
-                                        case .offline:
-                                            Image(systemName: "exclamationmark.triangle.fill")
-                                                .foregroundColor(.orange)
-                                            Text("Chưa phát hiện máy chủ Local AI")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(.secondary)
-                                        case .idle, .checking:
-                                            Image(systemName: "circle")
-                                                .foregroundColor(.secondary)
-                                            Text("Sẵn sàng kiểm tra")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-
-                                    Spacer()
-
-                                    Button(action: scanLocalAI) {
-                                        Label("Dò tìm / Quét lại", systemImage: "arrow.clockwise")
-                                            .font(.system(size: 11))
-                                    }
-                                    .buttonStyle(.borderless)
-                                    .disabled(isScanningLocalAI)
-                                }
-
-                                // 3. Endpoint Presets
-                                Picker("Máy chủ Local:", selection: $selectedBackendType) {
-                                    ForEach(LocalAIBackendType.allCases) { b in
-                                        Text(b.shortDescription).tag(b)
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                                .onChange(of: selectedBackendType) { _, newBackend in
-                                    if newBackend != .custom {
-                                        settings.ollamaEndpoint = newBackend.defaultEndpoint
-                                        scanLocalAI()
-                                    }
-                                }
-
-                                if selectedBackendType == .custom {
-                                    TextField("Endpoint tùy chỉnh:", text: $settings.ollamaEndpoint)
-                                        .textFieldStyle(.roundedBorder)
-                                }
-
-                                // 4. Discovered Models Picker / Input
-                                if !discoveredModels.isEmpty && !customModelInputMode {
-                                    HStack {
-                                        Picker("Mô hình AI trên máy:", selection: $settings.customAIModel) {
-                                            Text("Mặc định (\(discoveredModels.first?.name ?? DirectAIProvider.ollama.defaultModel))").tag("")
-                                            Divider()
-                                            ForEach(discoveredModels) { m in
-                                                Text(m.displayName).tag(m.name)
-                                            }
-                                        }
-                                        .pickerStyle(.menu)
-
-                                        Button(action: { customModelInputMode = true }) {
-                                            Image(systemName: "pencil")
-                                        }
-                                        .buttonStyle(.borderless)
-                                        .help("Tự gõ tên model khác")
-                                    }
-                                } else {
-                                    HStack {
-                                        TextField("Tên mô hình (vd: llama3.2, qwen2.5:7b, deepseek-r1):", text: $settings.customAIModel)
-                                            .textFieldStyle(.roundedBorder)
-
-                                        if !discoveredModels.isEmpty {
-                                            Button("Chọn từ danh sách") {
-                                                customModelInputMode = false
-                                            }
-                                            .font(.system(size: 11))
-                                        }
-                                    }
-
-                                    Text("💡 Gợi ý: Khởi động Ollama hoặc chạy lệnh `ollama run llama3.2` trong Terminal.")
-                                        .font(.system(size: 10.5))
-                                        .foregroundColor(.secondary)
-                                }
-
-                                HStack(spacing: 8) {
-                                    if settings.translationEngine == .directAI && settings.aiProvider == .ollama {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundColor(.green)
-                                            Text("Đang là Động cơ dịch chính (Direct AI • Local)")
-                                                .font(.system(size: 11, weight: .semibold))
-                                                .foregroundColor(.green)
-                                        }
-                                    } else {
-                                        HStack(spacing: 6) {
-                                            Text("Động cơ dịch hiện tại: \(settings.translationEngine.rawValue)")
-                                                .font(.system(size: 10.5))
-                                                .foregroundColor(.secondary)
-                                            Spacer()
-                                            Button(action: {
-                                                settings.translationEngine = .directAI
-                                                settings.aiProvider = .ollama
-                                            }) {
-                                                Label("Đặt làm bộ dịch chính", systemImage: "bolt.fill")
-                                                    .font(.system(size: 10.5, weight: .semibold))
-                                            }
-                                            .buttonStyle(.borderedProminent)
-                                            .controlSize(.small)
-                                        }
-                                    }
-                                }
-                                .padding(.vertical, 2)
-
-                                // 5. Local Hugging Face Cache Models
-                                if !localHFModels.isEmpty {
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        HStack {
-                                            Label("Phát hiện \(localHFModels.count) mô hình Hugging Face trên máy:", systemImage: "shippingbox.fill")
-                                                .font(.system(size: 11, weight: .semibold))
-                                                .foregroundColor(.purple)
-                                            Spacer()
-                                        }
-
-                                        ForEach(localHFModels) { hf in
-                                            let isSelected = settings.customAIModel == hf.name && settings.translationEngine == .directAI && settings.aiProvider == .ollama
-                                            HStack(spacing: 8) {
-                                                Image(systemName: isSelected ? "checkmark.seal.fill" : "cube.transparent.fill")
-                                                    .foregroundColor(isSelected ? .green : .purple)
-                                                VStack(alignment: .leading, spacing: 1) {
-                                                    HStack(spacing: 4) {
-                                                        Text(hf.name)
-                                                            .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                                                        if isSelected {
-                                                            Text("ĐANG CHỌN")
-                                                                .font(.system(size: 8.5, weight: .bold))
-                                                                .padding(.horizontal, 4)
-                                                                .padding(.vertical, 1)
-                                                                .background(Color.green.opacity(0.18))
-                                                                .foregroundColor(.green)
-                                                                .cornerRadius(3)
-                                                        }
-                                                    }
-                                                    HStack(spacing: 4) {
-                                                        if let arch = hf.parameterSize {
-                                                            Text(arch)
-                                                                .font(.system(size: 9.5))
-                                                                .foregroundColor(.secondary)
-                                                        }
-                                                        if let size = hf.formattedSize {
-                                                            Text("• \(size)")
-                                                                .font(.system(size: 9.5))
-                                                                .foregroundColor(.secondary)
-                                                        }
-                                                    }
-                                                }
-
-                                                Spacer()
-
-                                                if isSelected {
-                                                    HStack(spacing: 3) {
-                                                        Image(systemName: "checkmark")
-                                                            .font(.system(size: 10, weight: .bold))
-                                                        Text("Đã kích hoạt")
-                                                            .font(.system(size: 10.5, weight: .semibold))
-                                                    }
-                                                    .foregroundColor(.green)
-                                                    .padding(.horizontal, 6)
-                                                    .padding(.vertical, 3)
-                                                } else {
-                                                    Button("Sử dụng") {
-                                                        settings.customAIModel = hf.name
-                                                        settings.translationEngine = .directAI
-                                                        settings.aiProvider = .ollama
-                                                        selectedBackendType = .mlxOrLocalAI
-                                                        settings.ollamaEndpoint = LocalAIBackendType.mlxOrLocalAI.defaultEndpoint
-                                                        scanLocalAI()
-                                                    }
-                                                    .buttonStyle(.bordered)
-                                                    .controlSize(.small)
-                                                }
-
-                                                Button(action: {
-                                                    let cmd = "python3 -m mlx_lm.server --model \(hf.name) --port 8080"
-                                                    NSPasteboard.general.clearContents()
-                                                    NSPasteboard.general.setString(cmd, forType: .string)
-                                                    copiedCommandMessage = "Đã sao chép: \(cmd)"
-                                                }) {
-                                                    Image(systemName: "doc.on.doc")
-                                                }
-                                                .buttonStyle(.borderless)
-                                                .help("Sao chép lệnh chạy MLX Server cho \(hf.name)")
-                                            }
-                                            .padding(6)
-                                            .background(isSelected ? Color.green.opacity(0.08) : Color.purple.opacity(0.05))
-                                            .cornerRadius(6)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(isSelected ? Color.green.opacity(0.4) : Color.clear, lineWidth: 1)
-                                            )
-                                        }
-
-                                        if let copiedMsg = copiedCommandMessage {
-                                            Text(copiedMsg)
-                                                .font(.system(size: 10.5))
-                                                .foregroundColor(.green)
-                                        }
-
-                                        if case .offline = localServerState {
-                                            HStack(alignment: .top, spacing: 6) {
-                                                Image(systemName: "info.circle.fill")
-                                                    .foregroundColor(.orange)
-                                                VStack(alignment: .leading, spacing: 2) {
-                                                    Text("Máy chủ Local AI (\(selectedBackendType.rawValue)) hiện chưa được bật!")
-                                                        .font(.system(size: 11, weight: .bold))
-                                                        .foregroundColor(.orange)
-                                                    Text("Để dịch bằng mô hình Hugging Face này, hãy mở Terminal và dán lệnh khởi chạy (bấm icon 📋 bên phải mô hình). Khi máy chủ chưa bật, NekoTrans sẽ tạm chuyển sang dịch tự động để không ngắt quãng công việc.")
-                                                        .font(.system(size: 10))
-                                                        .foregroundColor(.secondary)
-                                                }
-                                            }
-                                            .padding(8)
-                                            .background(Color.orange.opacity(0.08))
-                                            .cornerRadius(6)
-                                        }
-                                    }
-                                    .padding(.top, 4)
-                                }
-                            }
                         case .inProcessGGUF:
                             ggufInProcessView
                         }
@@ -751,67 +488,7 @@ public struct AdvancedFeaturesSettingsSection: View {
         }
         .formStyle(.grouped)
         .onAppear {
-            syncSelectedBackendType()
-            if settings.aiProvider == .ollama {
-                scanLocalAI()
-            }
-        }
-        .onChange(of: settings.aiProvider) { _, newProvider in
-            if newProvider == .ollama {
-                scanLocalAI()
-            }
-        }
-    }
-
-    private func syncSelectedBackendType() {
-        let ep = settings.ollamaEndpoint
-        if ep.contains(":11434") {
-            selectedBackendType = .ollama
-        } else if ep.contains(":1234") {
-            selectedBackendType = .lmStudio
-        } else if ep.contains(":8080") {
-            selectedBackendType = .mlxOrLocalAI
-        } else {
-            selectedBackendType = .custom
-        }
-    }
-
-    private func scanLocalAI() {
-        isScanningLocalAI = true
-        self.localHFModels = LocalAIService.shared.scanHuggingFaceLocalCache()
-        self.localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
-        Task {
-            let state = await LocalAIService.shared.checkHealth(endpoint: settings.ollamaEndpoint)
-            await MainActor.run {
-                self.localServerState = state
-                if case .online(_, let models) = state {
-                    self.discoveredModels = models
-                    self.isScanningLocalAI = false
-                    if self.settings.customAIModel.isEmpty, let first = models.first {
-                        self.settings.customAIModel = first.name
-                    }
-                } else {
-                    // Try auto-detecting on standard local AI ports (11434, 1234, 8080)
-                    Task {
-                        if let detected = await LocalAIService.shared.autoDetectLocalServer() {
-                            await MainActor.run {
-                                self.settings.ollamaEndpoint = detected.endpoint
-                                self.selectedBackendType = detected.backend
-                                self.discoveredModels = detected.models
-                                self.localServerState = .online(backend: detected.backend, models: detected.models)
-                                self.isScanningLocalAI = false
-                                if self.settings.customAIModel.isEmpty, let first = detected.models.first {
-                                    self.settings.customAIModel = first.name
-                                }
-                            }
-                        } else {
-                            await MainActor.run {
-                                self.isScanningLocalAI = false
-                            }
-                        }
-                    }
-                }
-            }
+            localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
         }
     }
     
@@ -886,7 +563,7 @@ public struct AdvancedFeaturesSettingsSection: View {
             settings.customGGUFModelPath = url.path
             settings.translationEngine = .directAI
             settings.aiProvider = .inProcessGGUF
-            scanLocalAI()
+            localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
             loadGGUFIntoRAM(path: url.path)
         }
     }
@@ -908,7 +585,7 @@ public struct AdvancedFeaturesSettingsSection: View {
             HStack(spacing: 6) {
                 Image(systemName: "cpu.fill")
                     .foregroundColor(.cyan)
-                Text("Apple Silicon Metal In-Process (\(LocalAIService.shared.appleSiliconChipName))")
+                Text("Apple Silicon Metal In-Process (\(LocalGGUFService.shared.appleSiliconChipName))")
                     .font(.system(size: 11, weight: .semibold))
                 Spacer()
                 Text("100% In-Process • Không cần Server")
