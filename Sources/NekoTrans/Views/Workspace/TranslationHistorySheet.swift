@@ -3,7 +3,7 @@ import AppKit
 
 public struct TranslationHistorySheet: View {
     @ObservedObject var historyService = TranslationHistoryService.shared
-    @ObservedObject var viewModel: TranslationViewModel
+    var viewModel: TranslationViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var searchFilter: String = ""

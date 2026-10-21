@@ -1,12 +1,14 @@
 import Foundation
 import NaturalLanguage
 import Defaults
+import Observation
 
+@Observable
 @MainActor
-public final class VocabularyService: ObservableObject {
+public final class VocabularyService {
     public static let shared = VocabularyService()
     
-    @Published public var savedWords: [SavedWordItem] = []
+    public var savedWords: [SavedWordItem] = []
     
     private init() {
         loadWords()

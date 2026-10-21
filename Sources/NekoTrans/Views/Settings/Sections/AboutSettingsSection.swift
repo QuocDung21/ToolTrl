@@ -3,7 +3,7 @@ import Sparkle
 import SwiftUI
 
 public struct AboutSettingsSection: View {
-    @ObservedObject private var iconService = AppIconService.shared
+    private var iconService = AppIconService.shared
     @ObservedObject private var flags = FeatureFlagService.shared
     @ObservedObject private var updaterService = UpdaterService.shared
 

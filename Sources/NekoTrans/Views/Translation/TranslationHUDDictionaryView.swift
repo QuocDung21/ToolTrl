@@ -1,10 +1,10 @@
 import SwiftUI
 
 public struct TranslationHUDDictionaryView: View {
-    @ObservedObject var viewModel: TranslationViewModel
+    var viewModel: TranslationViewModel
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var audioPlayerService = AudioPlayerService.shared
-    @ObservedObject var settings = AppSettings.shared
+    var settings = AppSettings.shared
     @EnvironmentObject private var l10n: Localization
     @State private var showAdvancedWordDetails: Bool = false
     @State private var showSynonymsAndNeighbors: Bool = false

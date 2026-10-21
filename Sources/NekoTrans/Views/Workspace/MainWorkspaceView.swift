@@ -4,8 +4,8 @@ import SettingsAccess
 
 public struct MainWorkspaceView: View {
     @Environment(\.openSettingsLegacy) private var openSettingsLegacy
-    @ObservedObject var settings = AppSettings.shared
-    @ObservedObject var vocabService = VocabularyService.shared
+    @Bindable var settings = AppSettings.shared
+    var vocabService = VocabularyService.shared
     @ObservedObject var githubSync = GitHubSyncService.shared
     
     // Notebook local states

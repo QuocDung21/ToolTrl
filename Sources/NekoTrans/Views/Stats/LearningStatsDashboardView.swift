@@ -36,7 +36,7 @@ public enum ChartPresentationStyle: String, CaseIterable, Identifiable {
 
 public struct LearningStatsDashboardView: View {
     @ObservedObject var statsService = LookupStatsService.shared
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var timeRange: StatsTimeRange = .week

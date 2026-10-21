@@ -3,7 +3,7 @@ import AppKit
 import Defaults
 
 public struct AdvancedFeaturesSettingsSection: View {
-    @ObservedObject var settings = AppSettings.shared
+    @Bindable var settings = AppSettings.shared
     @ObservedObject var hotKeyManager = HotKeyManager.shared
     @ObservedObject var ankiService = AnkiConnectService.shared
     @ObservedObject var appExclusionService = AppExclusionService.shared

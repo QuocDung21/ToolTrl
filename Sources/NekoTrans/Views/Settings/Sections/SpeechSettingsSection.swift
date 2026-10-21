@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct SpeechSettingsSection: View {
-    @ObservedObject var settings = AppSettings.shared
+    @Bindable var settings = AppSettings.shared
     @ObservedObject var speechService = SpeechService.shared
     
     public init() {}

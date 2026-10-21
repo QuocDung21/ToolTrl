@@ -5,8 +5,8 @@ import Translation
 #endif
 
 public struct MainTranslationStudioView: View {
-    @StateObject private var vm = TranslationViewModel()
-    @ObservedObject var settings = AppSettings.shared
+    @State private var vm = TranslationViewModel()
+    var settings = AppSettings.shared
     @State private var inputDebounceTask: Task<Void, Never>? = nil
     @State private var showCopiedAlert: Bool = false
     @State private var showHistorySheet: Bool = false

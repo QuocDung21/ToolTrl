@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct MainFlashcardHubView: View {
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @State private var isStudying: Bool = false
     @State private var selectedDeckTitle: String = "Tất cả từ vựng"
     @State private var studyItems: [SavedWordItem] = []

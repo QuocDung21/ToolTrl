@@ -4,7 +4,7 @@ public struct NotebookTableView: View {
     let items: [SavedWordItem]
     @Binding var selectedItemID: UUID?
     @Binding var sortOption: NotebookSortOption
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
     @State private var editingItem: SavedWordItem? = nil
     

@@ -3,7 +3,7 @@ import AppKit
 
 public struct AddWordSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
     
     public let editingItem: SavedWordItem?

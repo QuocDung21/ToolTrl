@@ -3,9 +3,9 @@ import NaturalLanguage
 import Defaults
 
 public struct TranslationHUDSentenceView: View {
-    @ObservedObject var viewModel: TranslationViewModel
+    var viewModel: TranslationViewModel
     @ObservedObject var speechService = SpeechService.shared
-    @ObservedObject var settings = AppSettings.shared
+    var settings = AppSettings.shared
     @State private var copied: Bool = false
 
     @State private var showGrammarPanel: Bool = false

@@ -93,7 +93,7 @@ public enum WordDetailTab: String, CaseIterable, Identifiable {
 }
 
 public struct VocabularyNotebookView: View {
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var githubSync = GitHubSyncService.shared
     

@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct GeneralSettingsSection: View {
-    @ObservedObject var settings = AppSettings.shared
+    @Bindable var settings = AppSettings.shared
     @ObservedObject private var flags = FeatureFlagService.shared
     @EnvironmentObject private var l10n: Localization
 

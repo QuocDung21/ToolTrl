@@ -3,7 +3,7 @@ import AppKit
 
 public struct AddGrammarSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     
     @State private var grammarTitle: String = ""
     @State private var contextExample: String = ""

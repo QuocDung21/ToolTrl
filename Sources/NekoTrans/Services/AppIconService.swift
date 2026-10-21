@@ -2,12 +2,14 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 import Defaults
+import Observation
 
+@Observable
 @MainActor
-public final class AppIconService: ObservableObject {
+public final class AppIconService {
     public static let shared = AppIconService()
     
-    @Published public var selectedType: AppIconType {
+    public var selectedType: AppIconType {
         didSet {
             Defaults[.appIconType] = selectedType
             updateDockIcon()
@@ -15,7 +17,7 @@ public final class AppIconService: ObservableObject {
         }
     }
     
-    @Published public var customImageName: String? = nil
+    public var customImageName: String? = nil
     
     /// Directory name is frozen on purpose: it holds the user's custom app icon on
     /// disk, so renaming it would make existing custom icons disappear.

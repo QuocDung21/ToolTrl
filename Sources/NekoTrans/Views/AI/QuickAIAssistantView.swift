@@ -3,7 +3,7 @@ import WebKit
 
 public struct QuickAIAssistantView: View {
     @ObservedObject var promptService = QuickPromptService.shared
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     
     @State private var selectedProvider: AIProvider = .chatgpt
     @State private var webView: WKWebView?

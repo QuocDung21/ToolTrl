@@ -25,8 +25,8 @@ private struct HUDTotalHeightKey: PreferenceKey {
 }
 
 public struct TranslationHUDView: View {
-    @ObservedObject var viewModel: TranslationViewModel
-    @ObservedObject var settings = AppSettings.shared
+    var viewModel: TranslationViewModel
+    var settings = AppSettings.shared
     var onClose: () -> Void
     var onTogglePin: (() -> Void)?
     var onHeightChanged: ((CGFloat) -> Void)?
@@ -272,7 +272,7 @@ public struct TranslationHUDView: View {
 // MARK: - Translation ViewModifier for macOS 15+
 #if canImport(Translation)
 public struct TranslationModifier: ViewModifier {
-    @ObservedObject public var viewModel: TranslationViewModel
+    public var viewModel: TranslationViewModel
 
     public init(viewModel: TranslationViewModel) {
         self.viewModel = viewModel

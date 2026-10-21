@@ -1,8 +1,10 @@
 import SwiftUI
 import ServiceManagement
 import Defaults
+import Observation
 
-public final class AppSettings: ObservableObject {
+@Observable
+public final class AppSettings {
     public static let shared = AppSettings()
 
     private static func secret(_ account: String) -> String {
@@ -10,30 +12,30 @@ public final class AppSettings: ObservableObject {
     }
 
     // MARK: - In-Memory
-    @Published public var selectedSidebarItem: WorkspaceSidebarItem = .translate
+    public var selectedSidebarItem: WorkspaceSidebarItem = .translate
 
     // MARK: - 🎨 App & UI
-    @Published public var appFontSize: AppFontSize {
+    public var appFontSize: AppFontSize {
         didSet { Defaults[.appFontSize] = appFontSize }
     }
 
-    @Published public var mainWorkspaceTab: MainWorkspaceTab {
+    public var mainWorkspaceTab: MainWorkspaceTab {
         didSet { Defaults[.mainWorkspaceTab] = mainWorkspaceTab }
     }
 
-    @Published public var quitActionPreference: QuitActionPreference {
+    public var quitActionPreference: QuitActionPreference {
         didSet { Defaults[.quitActionPreference] = quitActionPreference }
     }
 
-    @Published public var showMainWindowOnLaunch: Bool {
+    public var showMainWindowOnLaunch: Bool {
         didSet { Defaults[.showMainWindowOnLaunch] = showMainWindowOnLaunch }
     }
 
-    @Published public var clickOutsideDismiss: Bool {
+    public var clickOutsideDismiss: Bool {
         didSet { Defaults[.clickOutsideDismiss] = clickOutsideDismiss }
     }
 
-    @Published public var showInDock: Bool {
+    public var showInDock: Bool {
         didSet {
             Defaults[.showInDock] = showInDock
             DispatchQueue.main.async {
@@ -48,7 +50,7 @@ public final class AppSettings: ObservableObject {
         }
     }
 
-    @Published public var appLanguage: AppLanguage? {
+    public var appLanguage: AppLanguage? {
         didSet {
             Defaults[.appLanguage] = appLanguage
             Task { @MainActor in
@@ -58,110 +60,110 @@ public final class AppSettings: ObservableObject {
     }
 
     // MARK: - 🔊 Speech & Audio
-    @Published public var speechRate: Double {
+    public var speechRate: Double {
         didSet { Defaults[.speechRate] = speechRate }
     }
 
-    @Published public var speechPitch: Double {
+    public var speechPitch: Double {
         didSet { Defaults[.speechPitch] = speechPitch }
     }
 
-    @Published public var speechVolume: Double {
+    public var speechVolume: Double {
         didSet { Defaults[.speechVolume] = speechVolume }
     }
 
-    @Published public var speechSpeedPreset: Double {
+    public var speechSpeedPreset: Double {
         didSet { Defaults[.speechSpeedPreset] = speechSpeedPreset }
     }
 
-    @Published public var autoSpeakWord: Bool {
+    public var autoSpeakWord: Bool {
         didSet { Defaults[.autoSpeakWord] = autoSpeakWord }
     }
 
     // MARK: - 🌐 Translation & AI
-    @Published public var targetLanguage: String {
+    public var targetLanguage: String {
         didSet { Defaults[.targetLanguage] = targetLanguage }
     }
 
-    @Published public var autoTranslateOnSelectionWhenPinned: Bool {
+    public var autoTranslateOnSelectionWhenPinned: Bool {
         didSet { Defaults[.autoTranslateOnSelectionWhenPinned] = autoTranslateOnSelectionWhenPinned }
     }
 
-    @Published public var translationDisplayMode: TranslationDisplayMode {
+    public var translationDisplayMode: TranslationDisplayMode {
         didSet { Defaults[.translationDisplayMode] = translationDisplayMode }
     }
 
-    @Published public var wordLookupMode: WordLookupMode {
+    public var wordLookupMode: WordLookupMode {
         didSet { Defaults[.wordLookupMode] = wordLookupMode }
     }
 
-    @Published public var translationDomain: TranslationDomain {
+    public var translationDomain: TranslationDomain {
         didSet { Defaults[.translationDomain] = translationDomain }
     }
 
-    @Published public var translationEngine: TranslationEngine {
+    public var translationEngine: TranslationEngine {
         didSet { Defaults[.translationEngine] = translationEngine }
     }
 
-    @Published public var aiProvider: DirectAIProvider {
+    public var aiProvider: DirectAIProvider {
         didSet { Defaults[.aiProvider] = aiProvider }
     }
 
-    @Published public var ollamaEndpoint: String {
+    public var ollamaEndpoint: String {
         didSet { Defaults[.ollamaEndpoint] = ollamaEndpoint }
     }
 
-    @Published public var customAIModel: String {
+    public var customAIModel: String {
         didSet { Defaults[.customAIModel] = customAIModel }
     }
 
     // MARK: - 📖 Dictionary
-    @Published public var showPhonetics: Bool {
+    public var showPhonetics: Bool {
         didSet { Defaults[.showPhonetics] = showPhonetics }
     }
 
-    @Published public var showExamples: Bool {
+    public var showExamples: Bool {
         didSet { Defaults[.showExamples] = showExamples }
     }
 
-    @Published public var showSynonyms: Bool {
+    public var showSynonyms: Bool {
         didSet { Defaults[.showSynonyms] = showSynonyms }
     }
 
-    @Published public var showOfflineDictionary: Bool {
+    public var showOfflineDictionary: Bool {
         didSet { Defaults[.showOfflineDictionary] = showOfflineDictionary }
     }
 
     // MARK: - 🧩 Menu
-    @Published public var showAIAssistantInMenu: Bool {
+    public var showAIAssistantInMenu: Bool {
         didSet { Defaults[.showAIAssistantInMenu] = showAIAssistantInMenu }
     }
 
-    @Published public var showAIVocabGrammarInMenu: Bool {
+    public var showAIVocabGrammarInMenu: Bool {
         didSet { Defaults[.showAIVocabGrammarInMenu] = showAIVocabGrammarInMenu }
     }
 
-    @Published public var showOCRInMenu: Bool {
+    public var showOCRInMenu: Bool {
         didSet { Defaults[.showOCRInMenu] = showOCRInMenu }
     }
 
-    @Published public var showDomainSelectorInMenu: Bool {
+    public var showDomainSelectorInMenu: Bool {
         didSet { Defaults[.showDomainSelectorInMenu] = showDomainSelectorInMenu }
     }
 
-    @Published public var showNotebookInMenu: Bool {
+    public var showNotebookInMenu: Bool {
         didSet { Defaults[.showNotebookInMenu] = showNotebookInMenu }
     }
 
     // MARK: - ⚡ Triggers & Flags
-    @Published public var enableSelectionBubble: Bool {
+    public var enableSelectionBubble: Bool {
         didSet {
             Defaults[.enableSelectionBubble] = enableSelectionBubble
             NotificationCenter.default.post(name: .featureFlagsDidChange, object: nil)
         }
     }
 
-    @Published public var enableDoubleCmdCTrigger: Bool {
+    public var enableDoubleCmdCTrigger: Bool {
         didSet {
             Defaults[.enableDoubleCmdCTrigger] = enableDoubleCmdCTrigger
             NotificationCenter.default.post(name: .featureFlagsDidChange, object: nil)
@@ -169,24 +171,24 @@ public final class AppSettings: ObservableObject {
     }
 
     // MARK: - ✍️ In-Place Replace & ActionManager
-    @Published public var enableInPlaceReplace: Bool {
+    public var enableInPlaceReplace: Bool {
         didSet { Defaults[.enableInPlaceReplace] = enableInPlaceReplace }
     }
 
-    @Published public var inPlaceReplaceSound: Bool {
+    public var inPlaceReplaceSound: Bool {
         didSet { Defaults[.inPlaceReplaceSound] = inPlaceReplaceSound }
     }
 
     // MARK: - 🔐 Keychain Secrets
-    @Published public var openAIKey: String    { didSet { KeychainStore.set(openAIKey, for: KeyStore.Secret.openAI) } }
-    @Published public var anthropicKey: String { didSet { KeychainStore.set(anthropicKey, for: KeyStore.Secret.anthropic) } }
-    @Published public var geminiKey: String    { didSet { KeychainStore.set(geminiKey, for: KeyStore.Secret.gemini) } }
-    @Published public var groqKey: String      { didSet { KeychainStore.set(groqKey, for: KeyStore.Secret.groq) } }
-    @Published public var deepSeekKey: String  { didSet { KeychainStore.set(deepSeekKey, for: KeyStore.Secret.deepSeek) } }
-    @Published public var deepLKey: String     { didSet { KeychainStore.set(deepLKey, for: KeyStore.Secret.deepL) } }
+    public var openAIKey: String    { didSet { KeychainStore.set(openAIKey, for: KeyStore.Secret.openAI) } }
+    public var anthropicKey: String { didSet { KeychainStore.set(anthropicKey, for: KeyStore.Secret.anthropic) } }
+    public var geminiKey: String    { didSet { KeychainStore.set(geminiKey, for: KeyStore.Secret.gemini) } }
+    public var groqKey: String      { didSet { KeychainStore.set(groqKey, for: KeyStore.Secret.groq) } }
+    public var deepSeekKey: String  { didSet { KeychainStore.set(deepSeekKey, for: KeyStore.Secret.deepSeek) } }
+    public var deepLKey: String     { didSet { KeychainStore.set(deepLKey, for: KeyStore.Secret.deepL) } }
 
     // MARK: - 🚦 Launch at Login
-    @Published public var launchAtLogin: Bool = false
+    public var launchAtLogin: Bool = false
 
     // MARK: - 🧪 Active State
     @MainActor public var isSelectionBubbleActive: Bool {

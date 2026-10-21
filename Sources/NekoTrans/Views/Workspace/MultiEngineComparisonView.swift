@@ -3,7 +3,7 @@ import SwiftUI
 /// Thẻ hiển thị so sánh kết quả dịch song song giữa nhiều động cơ (Google Web, Google GTX, DeepL, Direct AI).
 /// Kế thừa logic so sánh multi-service trực quan từ Easydict.
 public struct MultiEngineComparisonView: View {
-    @ObservedObject var viewModel: TranslationViewModel
+    var viewModel: TranslationViewModel
     
     public init(viewModel: TranslationViewModel) {
         self.viewModel = viewModel

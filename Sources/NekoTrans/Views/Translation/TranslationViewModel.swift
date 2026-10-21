@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import NaturalLanguage
 import Defaults
+import Observation
 #if canImport(Translation)
 import Translation
 #endif
@@ -20,18 +21,19 @@ public struct WordGloss: Identifiable, Sendable, Hashable {
     }
 }
 
+@Observable
 @MainActor
-public final class TranslationViewModel: ObservableObject {
-    @Published public var originalText: String = ""
-    @Published public var translatedText: String = ""
-    @Published public var detectedLanguage: String = "en"
-    @Published public var definition: String? = nil
-    @Published public var richEntry: RichWordEntry? = nil
-    @Published public var wordGlosses: [WordGloss] = []
-    @Published public var isLoading: Bool = false
-    @Published public var isDictionaryLoading: Bool = false
-    @Published public var isBookmarked: Bool = false
-    @Published public var targetLanguage: TargetLanguage {
+public final class TranslationViewModel {
+    public var originalText: String = ""
+    public var translatedText: String = ""
+    public var detectedLanguage: String = "en"
+    public var definition: String? = nil
+    public var richEntry: RichWordEntry? = nil
+    public var wordGlosses: [WordGloss] = []
+    public var isLoading: Bool = false
+    public var isDictionaryLoading: Bool = false
+    public var isBookmarked: Bool = false
+    public var targetLanguage: TargetLanguage {
         didSet {
             Defaults[.targetLanguage] = targetLanguage.rawValue
             AppSettings.shared.targetLanguage = targetLanguage.rawValue
@@ -42,9 +44,9 @@ public final class TranslationViewModel: ObservableObject {
         }
     }
     
-    @Published public var activeTargetLanguage: TargetLanguage
+    public var activeTargetLanguage: TargetLanguage
     
-    @Published public var selectedEngine: TranslationEngine {
+    public var selectedEngine: TranslationEngine {
         didSet {
             AppSettings.shared.translationEngine = selectedEngine
             if !originalText.isEmpty {
@@ -53,17 +55,17 @@ public final class TranslationViewModel: ObservableObject {
         }
     }
     
-    @Published public var grammarRewriteResult: GrammarRewriteResult? = nil
-    @Published public var isAnalyzingGrammar: Bool = false
-    @Published public var inspectedWordToken: (word: String, explanation: String)? = nil
-    @Published public var isInspectingWord: Bool = false
-    @Published public var isStreaming: Bool = false
-    @Published public var isHistoryPresented: Bool = false
-    @Published public var isComparisonMode: Bool = false
-    @Published public var comparisonResults: [TranslationProviderResult] = []
-    @Published public var isComparing: Bool = false
+    public var grammarRewriteResult: GrammarRewriteResult? = nil
+    public var isAnalyzingGrammar: Bool = false
+    public var inspectedWordToken: (word: String, explanation: String)? = nil
+    public var isInspectingWord: Bool = false
+    public var isStreaming: Bool = false
+    public var isHistoryPresented: Bool = false
+    public var isComparisonMode: Bool = false
+    public var comparisonResults: [TranslationProviderResult] = []
+    public var isComparing: Bool = false
     
-    @Published public private(set) var lookupHistory: [String] = []
+    public private(set) var lookupHistory: [String] = []
     
     public var canGoBack: Bool {
         return !lookupHistory.isEmpty
@@ -77,9 +79,10 @@ public final class TranslationViewModel: ObservableObject {
     }
     
     #if canImport(Translation)
-    @Published public var translationConfig: TranslationSession.Configuration?
+    public var translationConfig: TranslationSession.Configuration?
     #endif
     
+    @ObservationIgnored
     private var translationTaskID: UUID = UUID()
     
     public init() {

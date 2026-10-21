@@ -3,7 +3,7 @@ import SwiftUI
 public struct WordDetailHeaderView: View {
     public let item: SavedWordItem
     public let richDictionaryEntry: RichWordEntry?
-    @ObservedObject var vocabService = VocabularyService.shared
+    var vocabService = VocabularyService.shared
     @ObservedObject var speechService = SpeechService.shared
     @ObservedObject var audioPlayerService = AudioPlayerService.shared
     @State private var showDeleteConfirmation: Bool = false

@@ -1,9 +1,9 @@
 import SwiftUI
 import KeyboardShortcuts
 public struct TranslationHUDHeaderView: View {
-    @ObservedObject var viewModel: TranslationViewModel
-    @ObservedObject var iconService = AppIconService.shared
-    @ObservedObject var settings = AppSettings.shared
+    var viewModel: TranslationViewModel
+    var iconService = AppIconService.shared
+    var settings = AppSettings.shared
     @Binding var isPinned: Bool
     var onTogglePin: (() -> Void)?
     var onClose: () -> Void

@@ -1,8 +1,8 @@
 import SwiftUI
 
 public struct AppearanceSettingsSection: View {
-    @ObservedObject var settings = AppSettings.shared
-    @ObservedObject var iconService = AppIconService.shared
+    @Bindable var settings = AppSettings.shared
+    @Bindable var iconService = AppIconService.shared
     
     public init() {}
     
