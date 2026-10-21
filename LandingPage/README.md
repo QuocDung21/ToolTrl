@@ -23,6 +23,9 @@ cd LandingPage && python3 -m http.server 8080
 LandingPage/
 ├── index.html              # toàn bộ nội dung, một trang
 ├── styles.css              # design tokens + layout + responsive + dark mode
+├── i18n.js                 # bản dịch tiếng Việt và tiếng Anh
+├── site-data.js            # thông số dùng chung cho nội dung và thống kê
+├── app.js                  # đổi ngôn ngữ, ghi nhớ lựa chọn, cập nhật meta
 ├── assets/
 │   ├── favicon.svg         # logo mèo
 │   ├── hero-hud.svg        # mock bảng dịch nổi (dùng ở mục 00)
@@ -30,6 +33,18 @@ LandingPage/
 │   └── flashcard.svg       # mock thẻ ôn tập (mục 03)
 └── README.md
 ```
+
+## Đa ngôn ngữ
+
+Trang hỗ trợ tiếng Việt (`vi`) và tiếng Anh (`en`). Bộ chọn nằm ở thanh điều
+hướng; lựa chọn được ghi nhớ trong `localStorage` và lần đầu sẽ tự nhận diện
+ngôn ngữ trình duyệt (mặc định là tiếng Anh nếu không phải tiếng Việt). Nội
+dung mặc định trong HTML vẫn là tiếng Việt để trang có thể đọc được khi
+JavaScript bị tắt.
+
+Khi thêm hoặc sửa nội dung, thêm cùng một khoá vào cả hai dictionary trong
+`i18n.js`, rồi gắn `data-i18n`, `data-i18n-html`, `data-i18n-alt` hoặc
+`data-i18n-label` tương ứng trong `index.html`.
 
 Các icon nhỏ trong phần Tính năng nằm trong một **sprite SVG inline** ở đầu
 `index.html` (`<symbol id="i-...">`) và được gọi bằng `<use href="#i-...">`.
@@ -53,16 +68,13 @@ grep -n 'data-placeholder' LandingPage/index.html
 | `support-url` | 1 | Kênh hỗ trợ (email, issue, Discord…) |
 | `privacy-url` | 1 | Chính sách quyền riêng tư |
 
-### 2. Kiểm chứng lại các con số trong trang
+### 2. Nguồn thông số
 
-Trang đang nêu những điểm sau, tất cả đều lấy từ code chứ không phải nội dung
-marketing tự nghĩ ra — nếu code đổi thì sửa lại cho khớp:
-
-- **6 nhà cung cấp AI trực tiếp** — `DirectAIProvider` trong `AppSettings.swift`.
-- **6 phần phân tích AI** — `AIPromptBuilder.structuredWordPrompt(for:)`.
-- **Khoảng 14 MB** — kích thước binary release hiện tại.
-- **macOS 15.0 trở lên** — vì engine on-device dùng framework `Translation`.
-- **Phím tắt mặc định `⌥D` và `⌥S`** — `KeyShortcut.defaultTranslate` / `defaultOCR`.
+Các thông số hiển thị trên trang không nằm rải rác trong HTML hoặc bản dịch.
+Chúng được bind từ `site-data.js` khi trang chạy: số provider, số phần phân
+tích, phiên bản macOS tối thiểu, kích thước bản phát hành và phím tắt. Khi
+thay đổi code hoặc artifact release, chỉ cập nhật nguồn dữ liệu này; nội dung
+giao diện sẽ tự dùng giá trị mới ở cả tiếng Việt và tiếng Anh.
 
 ### 3. Phần giá (chưa có, cố ý)
 

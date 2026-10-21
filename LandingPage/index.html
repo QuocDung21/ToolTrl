@@ -4,19 +4,16 @@
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>NekoTrans — Dịch và học từ vựng ngay trên màn hình Mac</title>
-        <meta
-        name="description"
-        content="Bôi đen là dịch. Lưu từ vào sổ tay, nghe phát âm, ôn bằng flashcard. Ứng dụng menu bar cho macOS 15+, dữ liệu ở lại máy."
-        />
+        <meta name="description" content="" />
         <meta name="theme-color" content="#F7F4EF" />
         <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
         <meta
-        property="og:title"
-        content="NekoTrans — Dịch và học từ vựng ngay trên màn hình Mac"
+            property="og:title"
+            content=""
         />
         <meta
-        property="og:description"
-        content="Bôi đen là dịch, lưu vào sổ tay, ôn bằng flashcard. Dữ liệu ở lại máy."
+            property="og:description"
+            content=""
         />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="assets/hero-hud.svg" />
@@ -30,7 +27,7 @@
             style="position: absolute"
             aria-hidden="true"
             focusable="false"
-            >
+        >
             <symbol
                 id="i-select"
                 viewBox="0 0 24 24"
@@ -39,7 +36,7 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path d="M4 7V5h4M20 7V5h-4M4 17v2h4M20 17v2h-4" />
                 <path d="M8 12h8" />
             </symbol>
@@ -51,7 +48,7 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z" />
             </symbol>
             <symbol
@@ -62,9 +59,9 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path
-                d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"
+                    d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"
                 />
                 <path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5" />
             </symbol>
@@ -76,7 +73,7 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path d="M3 8V5h3M21 8V5h-3M3 16v3h3M21 16v3h-3" />
                 <path d="M3 12h18" />
             </symbol>
@@ -88,7 +85,7 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <circle cx="11" cy="11" r="6.5" />
                 <path d="M16 16l4.5 4.5" />
             </symbol>
@@ -100,9 +97,9 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path
-                d="M7 18h9.5a4 4 0 0 0 .4-8A6 6 0 0 0 5.6 10.6 3.7 3.7 0 0 0 7 18z"
+                    d="M7 18h9.5a4 4 0 0 0 .4-8A6 6 0 0 0 5.6 10.6 3.7 3.7 0 0 0 7 18z"
                 />
                 <path d="M12 15V8m0 0-2.6 2.6M12 8l2.6 2.6" />
             </symbol>
@@ -114,7 +111,7 @@
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <path d="M4.5 12.5 9.5 17.5 19.5 7" />
             </symbol>
             <symbol
@@ -125,7 +122,7 @@
                 stroke-width="1.7"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                >
+            >
                 <rect x="4.5" y="10.5" width="15" height="10" rx="3" />
                 <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
             </symbol>
@@ -136,11 +133,11 @@
                 <circle cx="26" cy="34" r="2.4" fill="#2A1B0C" />
                 <circle cx="38" cy="34" r="2.4" fill="#2A1B0C" />
                 <path
-                d="M30 42q2 2 4 0"
-                stroke="#2A1B0C"
-                stroke-width="1.8"
-                fill="none"
-                stroke-linecap="round"
+                    d="M30 42q2 2 4 0"
+                    stroke="#2A1B0C"
+                    stroke-width="1.8"
+                    fill="none"
+                    stroke-linecap="round"
                 />
             </symbol>
         </svg>
@@ -152,7 +149,7 @@
                 class="nav"
                 aria-label="Điều hướng chính"
                 data-i18n-label="nav.ariaLabel"
-                >
+            >
                 <a class="brand" href="#top">
                     <svg class="brand-mark" aria-hidden="true">
                         <use href="#i-cat" />
@@ -181,7 +178,12 @@
                     </li>
                 </ul>
                 <div class="nav-right">
-                    <span class="chip">macOS 15+</span>
+                    <span class="chip" data-site-value="minimumMacOS" data-site-prefix="macOS " data-site-suffix="+"></span>
+                    <div class="lang-switcher" role="group" data-i18n-label="nav.langLabel">
+                        <span class="lang-label" data-i18n="nav.langLabel">Ngôn ngữ</span>
+                        <button class="lang-button" type="button" data-lang="vi" aria-label="Tiếng Việt" aria-pressed="true">VI</button>
+                        <button class="lang-button" type="button" data-lang="en" aria-label="English" aria-pressed="false">EN</button>
+                    </div>
                     <a
                         class="btn btn-dark btn-sm"
                         href="#"
@@ -197,22 +199,22 @@
             <!-- Hero -->
             <section class="hero" id="top">
                 <p class="eyebrow" data-i18n="hero.eyebrow">
-                Phiên bản 1.0 · Dành cho macOS
+                    Phiên bản 1.0 · Dành cho macOS
                 </p>
                 <h1 class="hero-title">
                     NekoTrans <span class="hero-glyph">猫</span>
                 </h1>
                 <p class="hero-lead" data-i18n="hero.lead">
-                Bôi đen một câu trên màn hình là có bản dịch ngay bên cạnh.
-                Từ nào đáng học thì lưu vào sổ tay, nghe phát âm, rồi ôn
-                bằng flashcard.
+                    Bôi đen một câu trên màn hình là có bản dịch ngay bên cạnh.
+                    Từ nào đáng học thì lưu vào sổ tay, nghe phát âm, rồi ôn
+                    bằng flashcard.
                 </p>
                 <p class="hero-meta" data-i18n-html="hero.metaHtml">
-                Không cần tài khoản <span aria-hidden="true">·</span> Dữ
-                liệu ở lại máy <span aria-hidden="true">·</span> Bảo mật
-                bằng Keychain <span aria-hidden="true">·</span> macOS 15 trở
-                lên <span aria-hidden="true">·</span>
-                Cập nhật miễn phí
+                    Không cần tài khoản <span aria-hidden="true">·</span> Dữ
+                    liệu ở lại máy <span aria-hidden="true">·</span> Bảo mật
+                    bằng Keychain <span aria-hidden="true">·</span> macOS trở
+                    lên <span aria-hidden="true">·</span>
+                    Cập nhật miễn phí
                 </p>
                 <div class="hero-actions">
                     <a
@@ -230,7 +232,7 @@
                     >
                 </div>
                 <p class="hero-note" data-i18n="hero.note">
-                Bản dựng ký sẵn, mở là chạy. Gỡ bằng cách kéo vào Thùng rác.
+                    Bản dựng ký sẵn, mở là chạy. Gỡ bằng cách kéo vào Thùng rác.
                 </p>
             </section>
 
@@ -239,25 +241,23 @@
                 class="stats"
                 aria-label="Số liệu nổi bật"
                 data-i18n-label="stats.ariaLabel"
-                >
+            >
                 <div class="stat">
-                    <span class="stat-num">6</span
+                    <span class="stat-num" data-site-value="aiProviders.length"></span
                     ><span class="stat-label" data-i18n-html="stats.aiLabelHtml"
-                        >nhà cung cấp AI trực tiếp<br />OpenAI · Claude · Gemini
-                        · Groq · DeepSeek · Ollama</span
+                        >nhà cung cấp AI trực tiếp</span
                     >
                 </div>
                 <div class="stat">
-                    <span class="stat-num">6</span
+                    <span class="stat-num" data-site-value="analysisSections.length"></span
                     ><span
                         class="stat-label"
                         data-i18n-html="stats.analysisLabelHtml"
-                        >phần phân tích cho mỗi từ<br />nghĩa · họ từ ·
-                        collocation · sắc thái · ví dụ · mẹo nhớ</span
+                        >phần phân tích cho mỗi từ</span
                     >
                 </div>
                 <div class="stat">
-                    <span class="stat-num">100%</span
+                    <span class="stat-num" data-site-value="localDataPercentage"></span
                     ><span
                         class="stat-label"
                         data-i18n-html="stats.dataLabelHtml"
@@ -272,23 +272,23 @@
             <!-- 00 · See it -->
             <section class="section reveal" id="xem-qua">
                 <p class="label" data-i18n-html="s00.labelHtml">
-                00 <span aria-hidden="true">·</span> Xem qua
+                    00 <span aria-hidden="true">·</span> Xem qua
                 </p>
                 <h2 class="h2" data-i18n="s00.h2">
                     Một tiện ích, cả bộ công cụ
                 </h2>
                 <p class="section-lead" data-i18n="s00.lead">
-                Dịch, tra từ, lưu từ vựng, chép màn hình, ôn tập và thống kê
-                — gói trong một ứng dụng menu bar, không mở thêm cửa sổ nào
-                khi bạn đang đọc.
+                    Dịch, tra từ, lưu từ vựng, chép màn hình, ôn tập và thống kê
+                    — gói trong một ứng dụng menu bar, không mở thêm cửa sổ nào
+                    khi bạn đang đọc.
                 </p>
                 <figure class="shot reveal reveal-scale">
                     <img
-                    src="assets/hero-hud.svg"
-                    width="1200"
-                    height="760"
-                    alt="Bôi đen một câu trên trang web, bảng dịch NekoTrans hiện ngay bên cạnh con trỏ"
-                    data-i18n-alt="s00.imgAlt"
+                        src="assets/hero-hud.svg"
+                        width="1200"
+                        height="760"
+                        alt="Bôi đen một câu trên trang web, bảng dịch NekoTrans hiện ngay bên cạnh con trỏ"
+                        data-i18n-alt="s00.imgAlt"
                     />
                     <figcaption data-i18n="s00.caption">
                         Bảng dịch nổi gần con trỏ. Ghim lại thì nó tự dịch mỗi
@@ -302,14 +302,14 @@
             <!-- 01 · Features -->
             <section class="section" id="tinh-nang">
                 <p class="label reveal" data-i18n-html="s01.labelHtml">
-                01 <span aria-hidden="true">·</span> Tính năng
+                    01 <span aria-hidden="true">·</span> Tính năng
                 </p>
                 <h2 class="h2 reveal" data-i18n="s01.h2">
                     Sáu việc bạn làm mỗi ngày
                 </h2>
                 <p class="section-lead reveal" data-i18n="s01.lead">
-                Mỗi tính năng đều có phím tắt riêng và đổi được trong Cài
-                đặt.
+                    Mỗi tính năng đều có phím tắt riêng và đổi được trong Cài
+                    đặt.
                 </p>
 
                 <ul class="grid stagger">
@@ -317,83 +317,83 @@
                         <span class="card-icon"
                             ><svg aria-hidden="true">
                                 <use href="#i-select" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f1.title">Bôi đen là dịch</h3>
                         <p data-i18n-html="f1.bodyHtml">
-                        Nhấn <kbd>⌥D</kbd> (hoặc bấm bong bóng nổi cạnh vùng
-                        chọn) để dịch đoạn đang bôi đen. Bảng dịch hiện ngay
-                        dưới con trỏ, không cần chuyển ứng dụng.
+                            Nhấn phím dịch (hoặc bấm bong bóng nổi cạnh vùng
+                            chọn) để dịch đoạn đang bôi đen. Bảng dịch hiện ngay
+                            dưới con trỏ, không cần chuyển ứng dụng.
                         </p>
                     </li>
                     <li class="card">
                         <span class="card-icon"
                             ><svg aria-hidden="true"><use href="#i-bolt" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f2.title">
                             Nhiều engine, tự chọn cái nhanh nhất
                         </h3>
                         <p data-i18n="f2.body">
-                        Apple dịch on-device, Google, DeepL, MyMemory và 6
-                        nhà cung cấp AI. NekoTrans chạy song song rồi lấy
-                        kết quả về trước — engine lỗi sẽ tự tạm nghỉ thay vì
-                        treo bảng dịch.
+                            Apple dịch on-device, Google, DeepL, MyMemory và 6
+                            nhà cung cấp AI. NekoTrans chạy song song rồi lấy
+                            kết quả về trước — engine lỗi sẽ tự tạm nghỉ thay vì
+                            treo bảng dịch.
                         </p>
                     </li>
                     <li class="card">
                         <span class="card-icon"
                             ><svg aria-hidden="true"><use href="#i-book" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f3.title">Tra từ điển có phiên âm</h3>
                         <p data-i18n-html="f3.bodyHtml">
-                        Phiên âm IPA, nghĩa tiếng Việt, ví dụ, từ đồng nghĩa
-                        và phát âm bản xứ. Từ chia thì vẫn tra được: gõ
-                        <em>went</em> sẽ hiểu là <em>go</em>.
+                            Phiên âm IPA, nghĩa tiếng Việt, ví dụ, từ đồng nghĩa
+                            và phát âm bản xứ. Từ chia thì vẫn tra được: gõ
+                            <em>went</em> sẽ hiểu là <em>go</em>.
                         </p>
                     </li>
                     <li class="card">
                         <span class="card-icon"
                             ><svg aria-hidden="true"><use href="#i-scan" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f4.title">Chụp màn hình để lấy chữ</h3>
                         <p data-i18n-html="f4.bodyHtml">
-                        Nhấn <kbd>⌥S</kbd>, khoanh vùng có chữ, NekoTrans
-                        đọc chữ trong ảnh và dịch luôn. Dùng cho ảnh chụp,
-                        video, hay đoạn chữ không copy được.
+                            Dùng phím chụp màn hình, khoanh vùng có chữ, NekoTrans
+                            đọc chữ trong ảnh và dịch luôn. Dùng cho ảnh chụp,
+                            video, hay đoạn chữ không copy được.
                         </p>
                     </li>
                     <li class="card">
                         <span class="card-icon"
                             ><svg aria-hidden="true">
                                 <use href="#i-search" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f5.title">
                             Tìm từ vựng trong Spotlight
                         </h3>
                         <p data-i18n-html="f5.bodyHtml">
-                        Mọi mục trong sổ tay được đánh chỉ mục vào
-                        Spotlight, nên <kbd>⌘Space</kbd> rồi gõ từ là ra
-                        ngay nghĩa đã lưu.
+                            Mọi mục trong sổ tay được đánh chỉ mục vào
+                            Spotlight, nên <kbd>⌘Space</kbd> rồi gõ từ là ra
+                            ngay nghĩa đã lưu.
                         </p>
                     </li>
                     <li class="card">
                         <span class="card-icon"
                             ><svg aria-hidden="true">
                                 <use href="#i-cloud" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="f6.title">Sao lưu lên GitHub Gist</h3>
                         <p data-i18n="f6.body">
-                        Đồng bộ hai chiều sổ tay và thống kê vào một Gist
-                        riêng tư, dữ liệu nén LZFSE trước khi gửi. Đổi máy
-                        thì khôi phục lại trong một lần bấm.
+                            Đồng bộ hai chiều sổ tay và thống kê vào một Gist
+                            riêng tư, dữ liệu nén LZFSE trước khi gửi. Đổi máy
+                            thì khôi phục lại trong một lần bấm.
                         </p>
                     </li>
                 </ul>
 
                 <p class="also reveal" data-i18n="s01.also">
-                Kèm theo: chạy ở menu bar không chiếm Dock, phím tắt tuỳ
-                biến, 4 chế độ hiển thị bản dịch (từng từ · chỉ dịch · tiêu
-                chuẩn · tô màu cú pháp), thống kê mục tiêu theo ngày, và
-                iPad Studio để viết tay bằng Apple Pencil.
+                    Kèm theo: chạy ở menu bar không chiếm Dock, phím tắt tuỳ
+                    biến, 4 chế độ hiển thị bản dịch (từng từ · chỉ dịch · tiêu
+                    chuẩn · tô màu cú pháp), thống kê mục tiêu theo ngày, và
+                    iPad Studio để viết tay bằng Apple Pencil.
                 </p>
             </section>
 
@@ -402,26 +402,26 @@
             <!-- 02 · Notebook -->
             <section class="section" id="so-tay">
                 <p class="label reveal" data-i18n-html="s02.labelHtml">
-                02 <span aria-hidden="true">·</span> Sổ tay
+                    02 <span aria-hidden="true">·</span> Sổ tay
                 </p>
                 <h2 class="h2 reveal" data-i18n="s02.h2">
                     Từ vựng và ngữ pháp, tách bạch
                 </h2>
 
                 <p class="section-lead reveal" data-i18n="s02.lead">
-                Mỗi mục lưu vào sổ tay đều được gắn loại ngay lúc tạo, nên
-                từ vựng và công thức ngữ pháp có cách hiển thị riêng, không
-                lẫn vào nhau.
+                    Mỗi mục lưu vào sổ tay đều được gắn loại ngay lúc tạo, nên
+                    từ vựng và công thức ngữ pháp có cách hiển thị riêng, không
+                    lẫn vào nhau.
                 </p>
 
                 <div class="twocol">
                     <p
-                    class="twocol-lead reveal reveal-left"
-                    data-i18n="s02.twocolLead"
+                        class="twocol-lead reveal reveal-left"
+                        data-i18n="s02.twocolLead"
                     >
-                    Công thức ngữ pháp nằm ở khung riêng bằng chữ đẳng
-                    khoảng màu xanh, ngay trên đầu mục — không trộn lẫn với
-                    phần nghĩa.
+                        Công thức ngữ pháp nằm ở khung riêng bằng chữ đẳng
+                        khoảng màu xanh, ngay trên đầu mục — không trộn lẫn với
+                        phần nghĩa.
                     </p>
                     <ul class="ticks stagger">
                         <li data-i18n-html="s02.t1Html">
@@ -442,11 +442,11 @@
 
                 <figure class="shot reveal reveal-scale">
                     <img
-                    src="assets/notebook.svg"
-                    width="1000"
-                    height="640"
-                    alt="Sổ tay từ vựng: danh sách từ kèm phiên âm, bộ lọc theo loại, và khung công thức ngữ pháp riêng"
-                    data-i18n-alt="s02.imgAlt"
+                        src="assets/notebook.svg"
+                        width="1000"
+                        height="640"
+                        alt="Sổ tay từ vựng: danh sách từ kèm phiên âm, bộ lọc theo loại, và khung công thức ngữ pháp riêng"
+                        data-i18n-alt="s02.imgAlt"
                     />
                     <figcaption data-i18n="s02.caption">
                         Sổ tay: danh sách bên trái, chi tiết bên phải. Công thức
@@ -460,7 +460,7 @@
             <!-- 03 · Flashcards -->
             <section class="section" id="on-tap">
                 <p class="label reveal" data-i18n-html="s03.labelHtml">
-                03 <span aria-hidden="true">·</span> Ôn tập
+                    03 <span aria-hidden="true">·</span> Ôn tập
                 </p>
                 <h2 class="h2 reveal" data-i18n="s03.h2">
                     Học lại đúng thứ bạn sắp quên
@@ -469,9 +469,9 @@
                 <div class="split split-reverse">
                     <div class="split-text">
                         <p class="reveal reveal-right" data-i18n="s03.body">
-                        Thẻ lật hai mặt lấy dữ liệu từ chính sổ tay: mặt
-                        trước là từ hoặc công thức, mặt sau là nghĩa và ví
-                        dụ.
+                            Thẻ lật hai mặt lấy dữ liệu từ chính sổ tay: mặt
+                            trước là từ hoặc công thức, mặt sau là nghĩa và ví
+                            dụ.
                         </p>
                         <ul class="ticks stagger">
                             <li data-i18n-html="s03.t1Html">
@@ -490,11 +490,11 @@
                     </div>
                     <figure class="shot shot-sm reveal reveal-left">
                         <img
-                        src="assets/flashcard.svg"
-                        width="720"
-                        height="480"
-                        alt="Thẻ flashcard công thức ngữ pháp với hai lựa chọn Đã nhớ và Chưa nhớ"
-                        data-i18n-alt="s03.imgAlt"
+                            src="assets/flashcard.svg"
+                            width="720"
+                            height="480"
+                            alt="Thẻ flashcard công thức ngữ pháp với hai lựa chọn Đã nhớ và Chưa nhớ"
+                            data-i18n-alt="s03.imgAlt"
                         />
                     </figure>
                 </div>
@@ -505,68 +505,68 @@
             <!-- 04 · Privacy -->
             <section class="section" id="rieng-tu">
                 <p class="label reveal" data-i18n-html="s04.labelHtml">
-                04 <span aria-hidden="true">·</span> Riêng tư
+                    04 <span aria-hidden="true">·</span> Riêng tư
                 </p>
                 <h2 class="h2 reveal" data-i18n="s04.h2">
                     Khoá API nằm trong Keychain, không phải trong file cấu hình
                 </h2>
                 <p class="section-lead reveal" data-i18n="s04.lead">
-                Nhiều ứng dụng dịch lưu khoá API dạng văn bản thường trong
-                thư mục cấu hình — đọc được bằng bất kỳ tiến trình nào.
-                NekoTrans thì không.
+                    Nhiều ứng dụng dịch lưu khoá API dạng văn bản thường trong
+                    thư mục cấu hình — đọc được bằng bất kỳ tiến trình nào.
+                    NekoTrans thì không.
                 </p>
 
                 <ul class="grid grid-2 stagger">
                     <li class="card card-plain">
                         <span class="card-icon"
                             ><svg aria-hidden="true"><use href="#i-lock" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="p1.title">
                             Khoá và token trong Keychain
                         </h3>
                         <p data-i18n="p1.body">
-                        Sáu khoá API và token GitHub đều nằm trong Keychain
-                        của macOS. Bản cũ còn sót trong cấu hình sẽ được
-                        chuyển sang Keychain ở lần chạy đầu, rồi xoá đi.
+                            Sáu khoá API và token GitHub đều nằm trong Keychain
+                            của macOS. Bản cũ còn sót trong cấu hình sẽ được
+                            chuyển sang Keychain ở lần chạy đầu, rồi xoá đi.
                         </p>
                     </li>
                     <li class="card card-plain">
                         <span class="card-icon"
                             ><svg aria-hidden="true"><use href="#i-book" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="p2.title">Dữ liệu học ở lại máy</h3>
                         <p data-i18n="p2.body">
-                        Sổ tay, lịch sử dịch, thống kê và cache đều nằm
-                        trong thư mục Application Support của bạn. Không có
-                        máy chủ trung gian nào của NekoTrans.
+                            Sổ tay, lịch sử dịch, thống kê và cache đều nằm
+                            trong thư mục Application Support của bạn. Không có
+                            máy chủ trung gian nào của NekoTrans.
                         </p>
                     </li>
                     <li class="card card-plain">
                         <span class="card-icon"
                             ><svg aria-hidden="true">
                                 <use href="#i-cloud" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="p3.title">
                             Chỉ gọi ra ngoài khi bạn yêu cầu
                         </h3>
                         <p data-i18n="p3.body">
-                        NekoTrans chỉ kết nối tới engine bạn chọn, và tới
-                        GitHub nếu bạn tự bật đồng bộ. Không có tài khoản,
-                        không telemetry, không quảng cáo.
+                            NekoTrans chỉ kết nối tới engine bạn chọn, và tới
+                            GitHub nếu bạn tự bật đồng bộ. Không có tài khoản,
+                            không telemetry, không quảng cáo.
                         </p>
                     </li>
                     <li class="card card-plain">
                         <span class="card-icon"
                             ><svg aria-hidden="true">
                                 <use href="#i-check" /></svg
-                            ></span>
+                        ></span>
                         <h3 data-i18n="p4.title">
                             Nội dung bạn dịch không vào log
                         </h3>
                         <p data-i18n="p4.body">
-                        Nhật ký chỉ ghi lỗi kỹ thuật. Phần chữ bạn bôi đen
-                        được đánh dấu riêng tư, nên không xuất hiện trong
-                        Console hay khi bạn gửi log cho ai đó.
+                            Nhật ký chỉ ghi lỗi kỹ thuật. Phần chữ bạn bôi đen
+                            được đánh dấu riêng tư, nên không xuất hiện trong
+                            Console hay khi bạn gửi log cho ai đó.
                         </p>
                     </li>
                 </ul>
@@ -577,7 +577,7 @@
             <!-- 05 · Requirements -->
             <section class="section" id="yeu-cau">
                 <p class="label reveal" data-i18n-html="s05.labelHtml">
-                05 <span aria-hidden="true">·</span> Yêu cầu
+                    05 <span aria-hidden="true">·</span> Yêu cầu
                 </p>
                 <h2 class="h2 reveal" data-i18n="s05.h2">Trước khi tải</h2>
 
@@ -585,16 +585,15 @@
                     <div>
                         <dt data-i18n="spec.os.dt">Hệ điều hành</dt>
                         <dd data-i18n-html="spec.os.ddHtml">
-                            macOS 15.0 trở lên (Sequoia). Bản dịch on-device
-                            dùng framework Translation của Apple, chỉ có từ
-                            macOS 15.
+                            macOS trở lên (Sequoia). Bản dịch on-device dùng
+                            framework Translation của Apple.
                         </dd>
                     </div>
                     <div>
                         <dt data-i18n="spec.size.dt">Dung lượng</dt>
                         <dd data-i18n="spec.size.dd">
-                            Khoảng 14 MB. Không kèm model AI nào — engine
-                            on-device do macOS cung cấp.
+                            Không kèm model AI nào — engine on-device do macOS
+                            cung cấp.
                         </dd>
                     </div>
                     <div>
@@ -630,8 +629,8 @@
                 <div class="cta-inner reveal">
                     <h2 data-i18n="cta.h2">Cài xong là dịch được ngay</h2>
                     <p data-i18n-html="cta.bodyHtml">
-                    Không đăng ký, không cấu hình. Tải về, mở lên, bôi đen
-                    một câu bất kỳ và nhấn <kbd>⌥D</kbd>.
+                        Không đăng ký, không cấu hình. Tải về, mở lên, bôi đen
+                        một câu bất kỳ và dùng phím dịch.
                     </p>
                     <div class="hero-actions">
                         <a
@@ -662,8 +661,8 @@
                     <span>NekoTrans</span>
                 </a>
                 <p class="footer-note" data-i18n="footer.note">
-                Ứng dụng dịch và học từ vựng cho macOS. Dữ liệu của bạn ở
-                lại máy.
+                    Ứng dụng dịch và học từ vựng cho macOS. Dữ liệu của bạn ở
+                    lại máy.
                 </p>
                 <ul class="footer-links">
                     <li>
@@ -700,18 +699,21 @@
                     </li>
                 </ul>
                 <p class="footer-legal">
-                © <span id="year">2026</span> NekoTrans.
-                <span data-i18n="footer.trademark"
-                    >Apple, macOS là thương hiệu của Apple Inc.</span
-                >
+                    © <span id="year">2026</span> NekoTrans.
+                    <span data-i18n="footer.trademark"
+                        >Apple, macOS là thương hiệu của Apple Inc.</span
+                    >
                 </p>
             </div>
         </footer>
 
         <script>
             document.getElementById("year").textContent =
-            new Date().getFullYear();
+                new Date().getFullYear();
         </script>
+        <script src="site-data.js"></script>
+        <script src="i18n.js"></script>
+        <script src="app.js"></script>
         <script src="animations.js"></script>
     </body>
 </html>

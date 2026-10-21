@@ -51,36 +51,58 @@
   function applyLang(lang) {
     var dictionary = window.I18N && window.I18N[lang];
     if (!dictionary) return;
+    var siteData = window.SITE_DATA || {};
+
+    function interpolate(value) {
+      return String(value).replace(/\{\{([\w.]+)\}\}/g, function (_, path) {
+        var current = siteData;
+        path.split(".").forEach(function (part) {
+          current = current == null ? undefined : current[part];
+        });
+        return current == null ? "" : current;
+      });
+    }
+
+    document.querySelectorAll("[data-site-value]").forEach(function (el) {
+      var current = siteData;
+      el.getAttribute("data-site-value").split(".").forEach(function (part) {
+        current = current == null ? undefined : current[part];
+      });
+      if (current == null) return;
+      var prefix = el.getAttribute("data-site-prefix") || "";
+      var suffix = el.getAttribute("data-site-suffix") || "";
+      el.textContent = prefix + current + suffix;
+    });
 
     document.documentElement.lang = lang;
 
     // Chuỗi thuần
     document.querySelectorAll("[data-i18n]").forEach(function (el) {
       var value = dictionary[el.getAttribute("data-i18n")];
-      if (value != null) el.textContent = value;
+      if (value != null) el.textContent = interpolate(value);
     });
 
     // Chuỗi có thẻ inline (<kbd>, <strong>, <br>…) — dữ liệu tĩnh nội bộ
     document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
       var value = dictionary[el.getAttribute("data-i18n-html")];
-      if (value != null) el.innerHTML = value;
+      if (value != null) el.innerHTML = interpolate(value);
     });
 
     // Thuộc tính
     document.querySelectorAll("[data-i18n-alt]").forEach(function (el) {
       var value = dictionary[el.getAttribute("data-i18n-alt")];
-      if (value != null) el.setAttribute("alt", value);
+      if (value != null) el.setAttribute("alt", interpolate(value));
     });
     document.querySelectorAll("[data-i18n-label]").forEach(function (el) {
       var value = dictionary[el.getAttribute("data-i18n-label")];
-      if (value != null) el.setAttribute("aria-label", value);
+      if (value != null) el.setAttribute("aria-label", interpolate(value));
     });
 
     // Thẻ <title> và các thẻ meta
-    if (dictionary["meta.title"]) document.title = dictionary["meta.title"];
-    setMeta("name", "description", dictionary["meta.description"]);
-    setMeta("property", "og:title", dictionary["meta.title"]);
-    setMeta("property", "og:description", dictionary["meta.description"]);
+    if (dictionary["meta.title"]) document.title = interpolate(dictionary["meta.title"]);
+    setMeta("name", "description", interpolate(dictionary["meta.description"]));
+    setMeta("property", "og:title", interpolate(dictionary["meta.title"]));
+    setMeta("property", "og:description", interpolate(dictionary["meta.description"]));
 
     // Trạng thái nút chuyển ngôn ngữ
     document.querySelectorAll("[data-lang]").forEach(function (button) {
@@ -95,9 +117,12 @@
 
   // Một listener duy nhất cho cả nhóm nút
   document.addEventListener("click", function (event) {
-    var button = event.target.closest("[data-lang]");
+    var target = event.target;
+    var button = target && target.closest ? target.closest("[data-lang]") : null;
     if (!button) return;
-    applyLang(button.getAttribute("data-lang"));
+    var lang = button.getAttribute("data-lang");
+    if (SUPPORTED.indexOf(lang) === -1) return;
+    applyLang(lang);
   });
 
   // Năm hiện tại ở chân trang

@@ -83,16 +83,16 @@ find "$APP_DIR/Contents/Resources" -name "*.bundle" -type d 2>/dev/null | while 
     codesign --force --sign "$SIGN_TARGET" "$bundle" >/dev/null 2>&1 || true
 done
 
-# Sign Sparkle XPC services, helper binaries, and Sparkle.framework (Atoll pattern)
-if [ -d "$APP_DIR/Contents/Frameworks/Sparkle.framework" ]; then
-    find "$APP_DIR/Contents/Frameworks/Sparkle.framework" -name "*.xpc" -type d 2>/dev/null | while read -r xpc; do
-        codesign --force --options runtime --sign "$SIGN_TARGET" "$xpc" >/dev/null 2>&1 || true
-    done
-    find "$APP_DIR/Contents/Frameworks/Sparkle.framework" \( -name "Autoupdate" -o -name "Updater.app" \) 2>/dev/null | while read -r helper; do
-        codesign --force --options runtime --sign "$SIGN_TARGET" "$helper" >/dev/null 2>&1 || true
-    done
-    codesign --force --options runtime --sign "$SIGN_TARGET" "$APP_DIR/Contents/Frameworks/Sparkle.framework" >/dev/null 2>&1 || true
-fi
+# Sign Sparkle XPC services, helper binaries, and all frameworks (Sparkle.framework, llama.framework)
+find "$APP_DIR/Contents/Frameworks" -name "*.xpc" -type d 2>/dev/null | while read -r xpc; do
+    codesign --force --options runtime --sign "$SIGN_TARGET" "$xpc" >/dev/null 2>&1 || true
+done
+find "$APP_DIR/Contents/Frameworks" \( -name "Autoupdate" -o -name "Updater.app" \) 2>/dev/null | while read -r helper; do
+    codesign --force --options runtime --sign "$SIGN_TARGET" "$helper" >/dev/null 2>&1 || true
+done
+find "$APP_DIR/Contents/Frameworks" -name "*.framework" -type d 2>/dev/null | while read -r fw; do
+    codesign --force --options runtime --sign "$SIGN_TARGET" "$fw" >/dev/null 2>&1 || true
+done
 
 if [ -n "$IDENTITY" ]; then
     echo "🔏 Ký ứng dụng với chứng chỉ Developer (SHA-1: $IDENTITY)..."

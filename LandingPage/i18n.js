@@ -13,7 +13,7 @@ window.I18N = {
   vi: {
     /* --- Meta ------------------------------------------------------------- */
     "meta.title": "NekoTrans — Dịch và học từ vựng ngay trên màn hình Mac",
-    "meta.description": "Bôi đen là dịch. Lưu từ vào sổ tay, nghe phát âm, ôn bằng flashcard. Ứng dụng menu bar cho macOS 15+, dữ liệu ở lại máy.",
+    "meta.description": "Bôi đen là dịch. Lưu từ vào sổ tay, nghe phát âm, ôn bằng flashcard. Ứng dụng menu bar cho macOS {{minimumMacOS}}+, dữ liệu ở lại máy.",
 
     /* --- Chung ------------------------------------------------------------ */
     "action.download": "Tải cho Mac",
@@ -33,13 +33,13 @@ window.I18N = {
     /* --- Hero ------------------------------------------------------------- */
     "hero.eyebrow": "Phiên bản 1.0 · Dành cho macOS",
     "hero.lead": "Bôi đen một câu trên màn hình là có bản dịch ngay bên cạnh. Từ nào đáng học thì lưu vào sổ tay, nghe phát âm, rồi ôn bằng flashcard.",
-    "hero.metaHtml": "Không cần tài khoản <span aria-hidden=\"true\">·</span> Dữ liệu ở lại máy <span aria-hidden=\"true\">·</span> Bảo mật bằng Keychain <span aria-hidden=\"true\">·</span> macOS 15 trở lên <span aria-hidden=\"true\">·</span> Cập nhật miễn phí",
+    "hero.metaHtml": "Không cần tài khoản <span aria-hidden=\"true\">·</span> Dữ liệu ở lại máy <span aria-hidden=\"true\">·</span> Bảo mật bằng Keychain <span aria-hidden=\"true\">·</span> macOS {{minimumMacOS}} trở lên <span aria-hidden=\"true\">·</span> Cập nhật miễn phí",
     "hero.note": "Bản dựng ký sẵn, mở là chạy. Gỡ bằng cách kéo vào Thùng rác.",
 
     /* --- Số liệu ---------------------------------------------------------- */
     "stats.ariaLabel": "Số liệu nổi bật",
-    "stats.aiLabelHtml": "nhà cung cấp AI trực tiếp<br>OpenAI · Claude · Gemini · Groq · DeepSeek · Ollama",
-    "stats.analysisLabelHtml": "phần phân tích cho mỗi từ<br>nghĩa · họ từ · collocation · sắc thái · ví dụ · mẹo nhớ",
+    "stats.aiLabelHtml": "nhà cung cấp AI trực tiếp<br>{{aiProviderNames}}",
+    "stats.analysisLabelHtml": "phần phân tích cho mỗi từ<br>{{analysisNames}}",
     "stats.dataLabelHtml": "dữ liệu học ở lại máy<br>không tài khoản, không telemetry",
 
     /* --- 00 · Xem qua ----------------------------------------------------- */
@@ -54,13 +54,13 @@ window.I18N = {
     "s01.h2": "Sáu việc bạn làm mỗi ngày",
     "s01.lead": "Mỗi tính năng đều có phím tắt riêng và đổi được trong Cài đặt.",
     "f1.title": "Bôi đen là dịch",
-    "f1.bodyHtml": "Nhấn <kbd>⌥D</kbd> (hoặc bấm bong bóng nổi cạnh vùng chọn) để dịch đoạn đang bôi đen. Bảng dịch hiện ngay dưới con trỏ, không cần chuyển ứng dụng.",
+    "f1.bodyHtml": "Nhấn <kbd>{{shortcuts.translate}}</kbd> (hoặc bấm bong bóng nổi cạnh vùng chọn) để dịch đoạn đang bôi đen. Bảng dịch hiện ngay dưới con trỏ, không cần chuyển ứng dụng.",
     "f2.title": "Nhiều engine, tự chọn cái nhanh nhất",
-    "f2.body": "Apple dịch on-device, Google, DeepL, MyMemory và 6 nhà cung cấp AI. NekoTrans chạy song song rồi lấy kết quả về trước — engine lỗi sẽ tự tạm nghỉ thay vì treo bảng dịch.",
+    "f2.body": "Apple dịch on-device, Google, DeepL, MyMemory và {{aiProviders.length}} nhà cung cấp AI. NekoTrans chạy song song rồi lấy kết quả về trước — engine lỗi sẽ tự tạm nghỉ thay vì treo bảng dịch.",
     "f3.title": "Tra từ điển có phiên âm",
     "f3.bodyHtml": "Phiên âm IPA, nghĩa tiếng Việt, ví dụ, từ đồng nghĩa và phát âm bản xứ. Từ chia thì vẫn tra được: gõ <em>went</em> sẽ hiểu là <em>go</em>.",
     "f4.title": "Chụp màn hình để lấy chữ",
-    "f4.bodyHtml": "Nhấn <kbd>⌥S</kbd>, khoanh vùng có chữ, NekoTrans đọc chữ trong ảnh và dịch luôn. Dùng cho ảnh chụp, video, hay đoạn chữ không copy được.",
+    "f4.bodyHtml": "Nhấn <kbd>{{shortcuts.ocr}}</kbd>, khoanh vùng có chữ, NekoTrans đọc chữ trong ảnh và dịch luôn. Dùng cho ảnh chụp, video, hay đoạn chữ không copy được.",
     "f5.title": "Tìm từ vựng trong Spotlight",
     "f5.bodyHtml": "Mọi mục trong sổ tay được đánh chỉ mục vào Spotlight, nên <kbd>⌘Space</kbd> rồi gõ từ là ra ngay nghĩa đã lưu.",
     "f6.title": "Sao lưu lên GitHub Gist",
@@ -104,9 +104,9 @@ window.I18N = {
     "s05.labelHtml": "05 <span aria-hidden=\"true\">·</span> Yêu cầu",
     "s05.h2": "Trước khi tải",
     "spec.os.dt": "Hệ điều hành",
-    "spec.os.ddHtml": "macOS 15.0 trở lên (Sequoia). Bản dịch on-device dùng framework Translation của Apple, chỉ có từ macOS 15.",
+    "spec.os.ddHtml": "macOS {{minimumMacOS}} trở lên (Sequoia). Bản dịch on-device dùng framework Translation của Apple, chỉ có từ macOS {{minimumMacOS}}.",
     "spec.size.dt": "Dung lượng",
-    "spec.size.dd": "Khoảng 14 MB. Không kèm model AI nào — engine on-device do macOS cung cấp.",
+    "spec.size.dd": "Khoảng {{releaseSize}}. Không kèm model AI nào — engine on-device do macOS cung cấp.",
     "spec.perm.dt": "Quyền cần cấp",
     "spec.perm.ddHtml": "<strong>Trợ năng</strong> để lấy đoạn văn bản đang chọn · <strong>Ghi màn hình</strong> cho tính năng chụp chữ · <strong>Mạng cục bộ</strong> nếu bạn dùng iPad Studio.",
     "spec.account.dt": "Tài khoản",
@@ -116,7 +116,7 @@ window.I18N = {
 
     /* --- CTA cuối --------------------------------------------------------- */
     "cta.h2": "Cài xong là dịch được ngay",
-    "cta.bodyHtml": "Không đăng ký, không cấu hình. Tải về, mở lên, bôi đen một câu bất kỳ và nhấn <kbd>⌥D</kbd>.",
+    "cta.bodyHtml": "Không đăng ký, không cấu hình. Tải về, mở lên, bôi đen một câu bất kỳ và nhấn <kbd>{{shortcuts.translate}}</kbd>.",
 
     /* --- Chân trang ------------------------------------------------------- */
     "footer.note": "Ứng dụng dịch và học từ vựng cho macOS. Dữ liệu của bạn ở lại máy.",
@@ -130,7 +130,7 @@ window.I18N = {
   en: {
     /* --- Meta ------------------------------------------------------------- */
     "meta.title": "NekoTrans — Translate and learn vocabulary right on your Mac",
-    "meta.description": "Select text and it is translated. Save words to a notebook, hear them pronounced, review with flashcards. A menu bar app for macOS 15+ that keeps your data on your Mac.",
+    "meta.description": "Select text and it is translated. Save words to a notebook, hear them pronounced, review with flashcards. A menu bar app for macOS {{minimumMacOS}}+ that keeps your data on your Mac.",
 
     /* --- Shared ----------------------------------------------------------- */
     "action.download": "Download for Mac",
@@ -150,13 +150,13 @@ window.I18N = {
     /* --- Hero ------------------------------------------------------------- */
     "hero.eyebrow": "Version 1.0 · Built for macOS",
     "hero.lead": "Select a sentence anywhere on screen and the translation appears right beside it. Save the words worth learning, hear them pronounced, then review with flashcards.",
-    "hero.metaHtml": "No account needed <span aria-hidden=\"true\">·</span> Data stays on your Mac <span aria-hidden=\"true\">·</span> Secured with Keychain <span aria-hidden=\"true\">·</span> macOS 15 or later <span aria-hidden=\"true\">·</span> Free updates",
+    "hero.metaHtml": "No account needed <span aria-hidden=\"true\">·</span> Data stays on your Mac <span aria-hidden=\"true\">·</span> Secured with Keychain <span aria-hidden=\"true\">·</span> macOS {{minimumMacOS}} or later <span aria-hidden=\"true\">·</span> Free updates",
     "hero.note": "Signed build — just open it. Uninstall by dragging it to the Trash.",
 
     /* --- Stats ------------------------------------------------------------ */
     "stats.ariaLabel": "Key numbers",
-    "stats.aiLabelHtml": "direct AI providers<br>OpenAI · Claude · Gemini · Groq · DeepSeek · Ollama",
-    "stats.analysisLabelHtml": "analysis sections per word<br>senses · word family · collocations · nuances · examples · mnemonics",
+    "stats.aiLabelHtml": "direct AI providers<br>{{aiProviderNames}}",
+    "stats.analysisLabelHtml": "analysis sections per word<br>{{analysisNames}}",
     "stats.dataLabelHtml": "of your study data stays local<br>no account, no telemetry",
 
     /* --- 00 · See it ------------------------------------------------------ */
@@ -171,13 +171,13 @@ window.I18N = {
     "s01.h2": "Six things you do every day",
     "s01.lead": "Every feature has its own shortcut, and all of them can be changed in Settings.",
     "f1.title": "Select text, get a translation",
-    "f1.bodyHtml": "Press <kbd>⌥D</kbd> — or click the bubble next to your selection — to translate the highlighted text. The panel opens under your cursor, so you never switch apps.",
+    "f1.bodyHtml": "Press <kbd>{{shortcuts.translate}}</kbd> — or click the bubble next to your selection — to translate the highlighted text. The panel opens under your cursor, so you never switch apps.",
     "f2.title": "Many engines, fastest one wins",
-    "f2.body": "Apple's on-device translation, Google, DeepL, MyMemory and 6 AI providers. NekoTrans runs them in parallel and keeps the first result back — a failing engine backs off instead of freezing the panel.",
+    "f2.body": "Apple's on-device translation, Google, DeepL, MyMemory and {{aiProviders.length}} AI providers. NekoTrans runs them in parallel and keeps the first result back — a failing engine backs off instead of freezing the panel.",
     "f3.title": "Dictionary with phonetics",
     "f3.bodyHtml": "IPA, Vietnamese meanings, examples, synonyms and native audio. Inflected words work too: type <em>went</em> and it understands <em>go</em>.",
     "f4.title": "Capture text from your screen",
-    "f4.bodyHtml": "Press <kbd>⌥S</kbd>, drag over any text, and NekoTrans reads it out of the image and translates it. Handy for screenshots, videos and text you cannot select.",
+    "f4.bodyHtml": "Press <kbd>{{shortcuts.ocr}}</kbd>, drag over any text, and NekoTrans reads it out of the image and translates it. Handy for screenshots, videos and text you cannot select.",
     "f5.title": "Find vocabulary in Spotlight",
     "f5.bodyHtml": "Every notebook entry is indexed into Spotlight, so <kbd>⌘Space</kbd> and the word brings up the meaning you saved.",
     "f6.title": "Back up to a GitHub Gist",
@@ -221,9 +221,9 @@ window.I18N = {
     "s05.labelHtml": "05 <span aria-hidden=\"true\">·</span> Requirements",
     "s05.h2": "Before you download",
     "spec.os.dt": "Operating system",
-    "spec.os.ddHtml": "macOS 15.0 or later (Sequoia). On-device translation uses Apple's Translation framework, which is only available from macOS 15.",
+    "spec.os.ddHtml": "macOS {{minimumMacOS}} or later (Sequoia). On-device translation uses Apple's Translation framework, which is only available from macOS {{minimumMacOS}}.",
     "spec.size.dt": "Size",
-    "spec.size.dd": "About 14 MB. It ships no AI models of its own — the on-device engine comes with macOS.",
+    "spec.size.dd": "About {{releaseSize}}. It ships no AI models of its own — the on-device engine comes with macOS.",
     "spec.perm.dt": "Permissions",
     "spec.perm.ddHtml": "<strong>Accessibility</strong> to read the text you select · <strong>Screen Recording</strong> for text capture · <strong>Local Network</strong> if you use iPad Studio.",
     "spec.account.dt": "Account",
@@ -233,7 +233,7 @@ window.I18N = {
 
     /* --- Final CTA -------------------------------------------------------- */
     "cta.h2": "Install it and translate something",
-    "cta.bodyHtml": "No sign-up, no configuration. Download it, open it, select any sentence and press <kbd>⌥D</kbd>.",
+    "cta.bodyHtml": "No sign-up, no configuration. Download it, open it, select any sentence and press <kbd>{{shortcuts.translate}}</kbd>.",
 
     /* --- Footer ----------------------------------------------------------- */
     "footer.note": "A translator and vocabulary builder for macOS. Your data stays on your Mac.",
