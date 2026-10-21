@@ -28,7 +28,10 @@ public enum InputTextNormalizer {
         // 2. Remove code comments if text begins with or consists of comments
         text = stripCommentSymbols(text)
 
-        // 3. If text is a single identifier that looks like code, split it
+        // 3. Strip quotes exposed after removing comments
+        text = stripSurroundingQuotes(text)
+
+        // 4. If text is a single identifier that looks like code, split it
         if isCodeIdentifier(text) {
             text = splitCodeIdentifiers(text)
         }
