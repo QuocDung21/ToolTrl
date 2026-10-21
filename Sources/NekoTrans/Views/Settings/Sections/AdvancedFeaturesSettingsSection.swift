@@ -23,6 +23,8 @@ public struct AdvancedFeaturesSettingsSection: View {
     @State private var isScanningLocalAI: Bool = false
     @State private var selectedBackendType: LocalAIBackendType = .ollama
     @State private var customModelInputMode: Bool = false
+    @State private var localHFModels: [LocalAIModelInfo] = []
+    @State private var copiedCommandMessage: String? = nil
     
     private var hasCustomConfig: Bool {
         !settings.openAIKey.isEmpty ||
@@ -232,6 +234,72 @@ public struct AdvancedFeaturesSettingsSection: View {
                                     Text("💡 Gợi ý: Khởi động Ollama hoặc chạy lệnh `ollama run llama3.2` trong Terminal.")
                                         .font(.system(size: 10.5))
                                         .foregroundColor(.secondary)
+                                }
+
+                                // 5. Local Hugging Face Cache Models
+                                if !localHFModels.isEmpty {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack {
+                                            Label("Phát hiện \(localHFModels.count) mô hình Hugging Face trên máy:", systemImage: "shippingbox.fill")
+                                                .font(.system(size: 11, weight: .semibold))
+                                                .foregroundColor(.purple)
+                                            Spacer()
+                                        }
+
+                                        ForEach(localHFModels) { hf in
+                                            HStack(spacing: 8) {
+                                                Image(systemName: "cube.transparent.fill")
+                                                    .foregroundColor(.purple)
+                                                VStack(alignment: .leading, spacing: 1) {
+                                                    Text(hf.name)
+                                                        .font(.system(size: 11, weight: .medium))
+                                                    HStack(spacing: 4) {
+                                                        if let arch = hf.parameterSize {
+                                                            Text(arch)
+                                                                .font(.system(size: 9.5))
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                        if let size = hf.formattedSize {
+                                                            Text("• \(size)")
+                                                                .font(.system(size: 9.5))
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                    }
+                                                }
+
+                                                Spacer()
+
+                                                Button("Sử dụng") {
+                                                    settings.customAIModel = hf.name
+                                                    selectedBackendType = .mlxOrLocalAI
+                                                    settings.ollamaEndpoint = LocalAIBackendType.mlxOrLocalAI.defaultEndpoint
+                                                }
+                                                .buttonStyle(.bordered)
+                                                .controlSize(.small)
+
+                                                Button(action: {
+                                                    let cmd = "python3 -m mlx_lm.server --model \(hf.name) --port 8080"
+                                                    NSPasteboard.general.clearContents()
+                                                    NSPasteboard.general.setString(cmd, forType: .string)
+                                                    copiedCommandMessage = "Đã sao chép lệnh chạy MLX Server cho \(hf.name)!"
+                                                }) {
+                                                    Image(systemName: "doc.on.doc")
+                                                }
+                                                .buttonStyle(.borderless)
+                                                .help("Sao chép lệnh chạy MLX Server")
+                                            }
+                                            .padding(6)
+                                            .background(Color.purple.opacity(0.06))
+                                            .cornerRadius(6)
+                                        }
+
+                                        if let copiedMsg = copiedCommandMessage {
+                                            Text(copiedMsg)
+                                                .font(.system(size: 10.5))
+                                                .foregroundColor(.green)
+                                        }
+                                    }
+                                    .padding(.top, 4)
                                 }
                             }
                         }
@@ -627,6 +695,7 @@ public struct AdvancedFeaturesSettingsSection: View {
 
     private func scanLocalAI() {
         isScanningLocalAI = true
+        self.localHFModels = LocalAIService.shared.scanHuggingFaceLocalCache()
         Task {
             let state = await LocalAIService.shared.checkHealth(endpoint: settings.ollamaEndpoint)
             await MainActor.run {

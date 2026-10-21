@@ -130,6 +130,61 @@ public final class LocalAIService: Sendable {
         return trimmed
     }
 
+    /// Scans the local user directory `~/.cache/huggingface/hub/` to discover already downloaded Hugging Face models.
+    public func scanHuggingFaceLocalCache() -> [LocalAIModelInfo] {
+        let fileManager = FileManager.default
+        let homeURL = fileManager.homeDirectoryForCurrentUser
+        let hfHubURL = homeURL.appendingPathComponent(".cache/huggingface/hub")
+
+        guard let contents = try? fileManager.contentsOfDirectory(at: hfHubURL, includingPropertiesForKeys: [.isDirectoryKey]) else {
+            return []
+        }
+
+        var models: [LocalAIModelInfo] = []
+
+        for url in contents where url.lastPathComponent.hasPrefix("models--") {
+            let rawName = String(url.lastPathComponent.dropFirst("models--".count))
+            let modelID = rawName.replacingOccurrences(of: "--", with: "/")
+
+            let snapshotsURL = url.appendingPathComponent("snapshots")
+            var totalSize: Int64?
+            var archName: String?
+
+            if let snapshots = try? fileManager.contentsOfDirectory(at: snapshotsURL, includingPropertiesForKeys: nil),
+               let firstSnapshot = snapshots.first {
+                let configURL = firstSnapshot.appendingPathComponent("config.json")
+                if let configData = try? Data(contentsOf: configURL),
+                   let json = try? JSONSerialization.jsonObject(with: configData) as? [String: Any] {
+                    if let archs = json["architectures"] as? [String], let firstArch = archs.first {
+                        archName = firstArch
+                    }
+                }
+
+                if let enumerator = fileManager.enumerator(at: firstSnapshot, includingPropertiesForKeys: [.fileSizeKey]) {
+                    var sizeSum: Int64 = 0
+                    for case let fileURL as URL in enumerator {
+                        if let attrs = try? fileManager.attributesOfItem(atPath: fileURL.path),
+                           let s = attrs[.size] as? Int64 {
+                            sizeSum += s
+                        }
+                    }
+                    if sizeSum > 0 { totalSize = sizeSum }
+                }
+            }
+
+            models.append(LocalAIModelInfo(
+                id: modelID,
+                name: modelID,
+                sizeInBytes: totalSize,
+                parameterSize: archName,
+                family: "Hugging Face Cache",
+                quantization: "safetensors"
+            ))
+        }
+
+        return models.sorted { ($0.sizeInBytes ?? 0) > ($1.sizeInBytes ?? 0) }
+    }
+
     /// Checks the health of a local AI endpoint and discovers its available models.
     public func checkHealth(endpoint: String) async -> LocalAIServerState {
         let base = normalizeEndpoint(endpoint)
