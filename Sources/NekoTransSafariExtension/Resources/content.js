@@ -756,6 +756,9 @@
         } else if (request.action === 'restorePage') {
             restorePage();
             sendResponse({ success: true });
+        } else if (request.action === 'getPageStatus') {
+            const hasTranslations = document.querySelectorAll('.nekotrans-bilingual-block, [data-nekotrans-translated]').length > 0;
+            sendResponse({ isTranslated: hasTranslations, isTranslating: isTranslatingPage });
         } else if (request.action === 'togglePageTranslation') {
             const hasTranslations = document.querySelectorAll('.nekotrans-bilingual-block, [data-nekotrans-translated]').length > 0;
             if (hasTranslations) {
