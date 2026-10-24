@@ -10,6 +10,8 @@ public final class LocalBridgeServer: @unchecked Sendable {
 
     public static let defaultPort: UInt16 = 42421
 
+    public var onOpenAppRequested: (@MainActor () -> Void)?
+
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.nekotrans.bridge.server", qos: .userInitiated)
     private var isRunning: Bool = false
@@ -161,6 +163,12 @@ public final class LocalBridgeServer: @unchecked Sendable {
 
         case ("GET", "/api/check-word"), ("POST", "/api/check-word"):
             handleCheckWordRequest(path: path, body: body, connection: connection)
+
+        case ("POST", "/api/open-app"), ("GET", "/api/open-app"):
+            Task { @MainActor in
+                self.onOpenAppRequested?()
+                self.sendResponse(json: ["success": true], connection: connection)
+            }
 
         default:
             sendResponse(statusCode: 404, statusText: "Not Found", json: ["error": "Endpoint not found"], connection: connection)

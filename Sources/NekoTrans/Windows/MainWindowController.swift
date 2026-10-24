@@ -24,7 +24,14 @@ public final class MainWindowController: NSObject, ObservableObject, NSWindowDel
             }
         }
         
+        if NSApp.activationPolicy() == .accessory {
+            NSApp.setActivationPolicy(.regular)
+        }
+        
         if let win = window {
+            if win.isMiniaturized {
+                win.deminiaturize(nil)
+            }
             win.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
@@ -61,6 +68,9 @@ public final class MainWindowController: NSObject, ObservableObject, NSWindowDel
     
     public func hideMainWindow() {
         window?.orderOut(nil)
+        if !AppSettings.shared.showInDock {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
     
     public func toggleMainWindow() {
@@ -73,6 +83,9 @@ public final class MainWindowController: NSObject, ObservableObject, NSWindowDel
     
     public func windowShouldClose(_ sender: NSWindow) -> Bool {
         sender.orderOut(nil)
+        if !AppSettings.shared.showInDock {
+            NSApp.setActivationPolicy(.accessory)
+        }
         return true
     }
 }

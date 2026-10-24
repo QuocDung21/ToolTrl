@@ -51,6 +51,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         checkAccessibilityOnLaunch()
 
         // Start Local HTTP loopback bridge server for Web Extensions
+        LocalBridgeServer.shared.onOpenAppRequested = {
+            NSApp.activate(ignoringOtherApps: true)
+            MainWindowController.shared.showMainWindow()
+        }
         LocalBridgeServer.shared.start()
 
         if !AppSettings.shared.hasCompletedOnboarding {
@@ -72,9 +76,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            MainWindowController.shared.showMainWindow()
-        }
+        MainWindowController.shared.showMainWindow()
         return true
     }
 
@@ -132,8 +134,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         case "safari-extension", "safari":
             SettingsWindowController.shared.showSettings()
 
+        case "open", "main", "":
+            NSApp.activate(ignoringOtherApps: true)
+            MainWindowController.shared.showMainWindow()
+
         default:
             NSApp.activate(ignoringOtherApps: true)
+            MainWindowController.shared.showMainWindow()
         }
     }
 

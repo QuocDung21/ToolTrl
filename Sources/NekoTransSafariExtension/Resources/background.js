@@ -181,8 +181,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'openApp') {
-        const url = request.url || 'nekotrans://';
-        openNekoTransURL(url);
+        const url = request.url || 'nekotrans://open';
+        // 1. Try local bridge first to open app window instantly without temporary browser tab
+        fetch(`${BRIDGE_URL}/api/open-app`, { method: 'POST' })
+            .then(res => {
+                if (!res.ok) openNekoTransURL(url);
+            })
+            .catch(() => {
+                openNekoTransURL(url);
+            });
         sendResponse({ success: true });
         return true;
     }

@@ -15,7 +15,7 @@ public extension Defaults.Keys {
     static let mainWorkspaceTab = Key<MainWorkspaceTab>("mainWorkspaceTab", default: .translate)
     static let quitActionPreference = Key<QuitActionPreference>("quitActionPreference", default: .terminateImmediately)
     static let showInDock = Key<Bool>("showInDock", default: true)
-    static let showMainWindowOnLaunch = Key<Bool>("showMainWindowOnLaunch", default: false)
+    static let showMainWindowOnLaunch = Key<Bool>("showMainWindowOnLaunch", default: true)
     static let hasCompletedOnboarding = Key<Bool>("hasCompletedOnboarding", default: false)
     static let clickOutsideDismiss = Key<Bool>("clickOutsideDismiss", default: true)
     static let appIconType = Key<AppIconType>("app_icon_type", default: .defaultCat)
