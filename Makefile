@@ -2,7 +2,7 @@
 # NekoTrans - Modern macOS AI-Powered Translator & Vocabulary Assistant
 # =============================================================================
 
-.PHONY: all build run install reinstall stop kill restart dmg test clean help
+.PHONY: all build run install reinstall stop kill restart dmg chrome chrome-extension package-chrome test clean help
 
 # Colors for terminal output
 CYAN    := \033[36m
@@ -73,6 +73,10 @@ dmg:
 	@echo "$(CYAN)💿 Tạo file cài đặt DMG...$(RESET)"
 	@./Scripts/create_dmg.sh
 
+## 🌐 Đóng gói tiện ích mở rộng cho Google Chrome / Chromium (.zip & unpacked)
+chrome chrome-extension package-chrome:
+	@./Scripts/package_chrome.sh
+
 ## 🧪 Chạy Unit Tests
 test:
 	@echo "$(CYAN)🧪 Chạy kiểm thử Xcode Test...$(RESET)"
@@ -98,6 +102,7 @@ help:
 	@echo "  $(GREEN)make stop$(RESET) / $(GREEN)make kill$(RESET)  - Dừng tiến trình NekoTrans"
 	@echo "  $(GREEN)make restart$(RESET)          - Khởi động lại NekoTrans"
 	@echo "  $(GREEN)make dmg$(RESET)              - Tạo gói cài đặt .dmg"
+	@echo "  $(GREEN)make chrome$(RESET)           - Đóng gói tiện ích cho Google Chrome (.zip & unpacked)"
 	@echo "  $(GREEN)make test$(RESET)             - Chạy kiểm thử tự động"
 	@echo "  $(GREEN)make clean$(RESET)            - Dọn dẹp toàn bộ file build"
 	@echo "$(CYAN)====================================================$(RESET)"
