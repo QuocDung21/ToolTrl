@@ -201,13 +201,29 @@ public final class LocalBridgeServer: @unchecked Sendable {
         let requestedTarget = json["targetLang"] as? String
         let requestedSource = (json["sourceLang"] as? String) ?? "auto"
 
-        Task { @MainActor in
+        var currentTask: Task<Void, Never>?
+        connection.stateUpdateHandler = { state in
+            switch state {
+            case .cancelled, .failed:
+                currentTask?.cancel()
+            default:
+                break
+            }
+        }
+
+        currentTask = Task { @MainActor in
+            guard !Task.isCancelled else { return }
             let target = (requestedTarget != nil && !requestedTarget!.isEmpty) ? requestedTarget! : Defaults[.targetLanguage]
             let translated = await TranslationService.shared.translate(
                 text: text,
                 from: requestedSource,
                 to: target
             )
+
+            guard !Task.isCancelled else {
+                connection.cancel()
+                return
+            }
 
             if let translated = translated {
                 var resp: [String: Any] = [
@@ -234,13 +250,25 @@ public final class LocalBridgeServer: @unchecked Sendable {
         let requestedTarget = json["targetLang"] as? String
         let requestedSource = (json["sourceLang"] as? String) ?? "auto"
 
-        Task { @MainActor in
+        var currentTask: Task<Void, Never>?
+        connection.stateUpdateHandler = { state in
+            switch state {
+            case .cancelled, .failed:
+                currentTask?.cancel()
+            default:
+                break
+            }
+        }
+
+        currentTask = Task { @MainActor in
+            guard !Task.isCancelled else { return }
             let target = (requestedTarget != nil && !requestedTarget!.isEmpty) ? requestedTarget! : Defaults[.targetLanguage]
             var results: [String] = Array(repeating: "", count: texts.count)
 
             await withTaskGroup(of: (Int, String?).self) { group in
                 for (index, text) in texts.enumerated() {
                     group.addTask {
+                        guard !Task.isCancelled else { return (index, nil) }
                         let res = await TranslationService.shared.translate(
                             text: text,
                             from: requestedSource,
@@ -250,8 +278,14 @@ public final class LocalBridgeServer: @unchecked Sendable {
                     }
                 }
                 for await (idx, res) in group {
+                    guard !Task.isCancelled else { break }
                     results[idx] = res ?? texts[idx]
                 }
+            }
+
+            guard !Task.isCancelled else {
+                connection.cancel()
+                return
             }
 
             self.sendResponse(json: [

@@ -25,6 +25,8 @@
     let isTranslatingPage = false;
     let pageTranslatedCount = 0;
     let totalPageBlocks = 0;
+    let currentSessionId = 0;
+    let lastKnownUrl = window.location.href;
 
     // MARK: - Selection Translation Event Listeners
 
@@ -332,6 +334,7 @@
     async function startPageTranslation() {
         if (isTranslatingPage) return;
         isTranslatingPage = true;
+        const sessionId = ++currentSessionId;
 
         const rawBlocks = getTranslatableBlocks();
         totalPageBlocks = rawBlocks.length;
@@ -351,7 +354,8 @@
         // Process in progressive chunks of 10
         const chunkSize = 10;
         for (let i = 0; i < blocks.length; i += chunkSize) {
-            if (!isTranslatingPage) break; // User stopped translation
+            // Guard: Stopped, restored, or navigated away before chunk
+            if (!isTranslatingPage || sessionId !== currentSessionId) break;
 
             const chunkBlocks = blocks.slice(i, i + chunkSize);
             const chunkTexts = chunkBlocks.map(b => b.innerText.trim());
@@ -366,8 +370,13 @@
                     }, resolve);
                 });
 
-                if (res && res.success && res.results) {
+                // Guard: Stopped, restored, or navigated away during network await
+                if (!isTranslatingPage || sessionId !== currentSessionId) break;
+
+                if (res && res.success && Array.isArray(res.results)) {
                     chunkBlocks.forEach((elem, idx) => {
+                        // Guard: Element detached from DOM by SPA or dynamic UI change
+                        if (!document.contains(elem)) return;
                         const translated = res.results[idx];
                         if (translated && translated !== chunkTexts[idx]) {
                             applyBlockTranslation(elem, translated);
@@ -378,12 +387,14 @@
                 // Continue with next chunk
             }
 
+            if (!isTranslatingPage || sessionId !== currentSessionId) break;
+
             pageTranslatedCount = Math.min(i + chunkSize, totalPageBlocks);
             const percent = Math.round((pageTranslatedCount / totalPageBlocks) * 100);
             updatePageHUD('Đang dịch trang', `${pageTranslatedCount}/${totalPageBlocks} đoạn`, true, percent);
         }
 
-        if (isTranslatingPage) {
+        if (isTranslatingPage && sessionId === currentSessionId) {
             isTranslatingPage = false;
             const completedTitle = settings.displayMode === 'replace' ? 'Đã dịch toàn trang' : 'Đã dịch song ngữ';
             updatePageHUD(completedTitle, `${totalPageBlocks}/${totalPageBlocks} đoạn`, false, 100);
@@ -430,6 +441,9 @@
     }
 
     function applyBlockTranslation(element, translatedText) {
+        // Guard: ensure element is still connected to the DOM
+        if (!element || !element.parentNode || !document.contains(element)) return;
+
         element.setAttribute('data-nekotrans-translated', 'true');
 
         if (settings.displayMode === 'replace') {
@@ -453,6 +467,10 @@
 
     function restorePage() {
         isTranslatingPage = false;
+        currentSessionId++; // Invalidate active session immediately
+        try {
+            chrome.runtime.sendMessage({ action: 'cancelPageTranslation' });
+        } catch (e) {}
 
         // Remove bilingual blocks
         const bilingualBlocks = document.querySelectorAll('.nekotrans-bilingual-block');
@@ -521,6 +539,10 @@
         if (stopBtn) {
             stopBtn.addEventListener('click', () => {
                 isTranslatingPage = false;
+                currentSessionId++;
+                try {
+                    chrome.runtime.sendMessage({ action: 'cancelPageTranslation' });
+                } catch (e) {}
                 updatePageHUD('Đã dừng dịch', `${pageTranslatedCount}/${totalPageBlocks} đoạn`, false, 0);
             });
         }
@@ -627,6 +649,51 @@
             sendResponse({ success: true });
         }
     });
+
+    // MARK: - Lifecycle & Navigation Handlers (Tab Close, Navigation, SPA Route Changes)
+
+    function cancelOngoingTranslationOnTeardown() {
+        if (isTranslatingPage) {
+            isTranslatingPage = false;
+            currentSessionId++;
+            try {
+                chrome.runtime.sendMessage({ action: 'cancelPageTranslation' });
+            } catch (e) {}
+            removePageHUD();
+        }
+    }
+
+    // Teardown: Tab close / Page navigation away
+    window.addEventListener('pagehide', cancelOngoingTranslationOnTeardown);
+    window.addEventListener('beforeunload', cancelOngoingTranslationOnTeardown);
+
+    // SPA Navigation Detection (YouTube, GitHub, React, Next.js...)
+    function checkSPANavigation() {
+        if (window.location.href !== lastKnownUrl) {
+            lastKnownUrl = window.location.href;
+            cancelOngoingTranslationOnTeardown();
+        }
+    }
+
+    window.addEventListener('popstate', checkSPANavigation);
+    window.addEventListener('hashchange', checkSPANavigation);
+
+    // Intercept pushState & replaceState
+    const originalPushState = history.pushState;
+    if (originalPushState) {
+        history.pushState = function(...args) {
+            originalPushState.apply(this, args);
+            checkSPANavigation();
+        };
+    }
+
+    const originalReplaceState = history.replaceState;
+    if (originalReplaceState) {
+        history.replaceState = function(...args) {
+            originalReplaceState.apply(this, args);
+            checkSPANavigation();
+        };
+    }
 
     function escapeHtml(string) {
         if (!string) return '';

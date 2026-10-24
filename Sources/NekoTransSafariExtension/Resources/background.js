@@ -104,11 +104,38 @@ async function checkBridgeStatus() {
     return null;
 }
 
-// Initial status check
-checkBridgeStatus();
+// Active tab abort controllers to cancel in-flight network/bridge requests on tab close/navigation
+const activeTabAbortControllers = new Map();
+
+function registerTabAbortController(tabId, controller) {
+    if (!tabId) return;
+    const existing = activeTabAbortControllers.get(tabId);
+    if (existing) {
+        try { existing.abort(); } catch (e) {}
+    }
+    activeTabAbortControllers.set(tabId, controller);
+}
+
+function cancelTabTranslation(tabId) {
+    if (!tabId) return;
+    const controller = activeTabAbortControllers.get(tabId);
+    if (controller) {
+        try { controller.abort(); } catch (e) {}
+        activeTabAbortControllers.delete(tabId);
+    }
+}
+
+// Cleanup when tab is closed
+if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.onRemoved) {
+    chrome.tabs.onRemoved.addListener((tabId) => {
+        cancelTabTranslation(tabId);
+    });
+}
 
 // Communication Hub
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    const tabId = sender.tab ? sender.tab.id : null;
+
     if (request.action === 'translateText') {
         fetchTranslation(request.text, request.targetLang || 'vi', request.sourceLang || 'auto')
             .then(result => sendResponse(result))
@@ -117,10 +144,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'translateBatch') {
-        translateBatch(request.texts, request.targetLang || 'vi', request.sourceLang || 'auto')
+        translateBatch(request.texts, request.targetLang || 'vi', request.sourceLang || 'auto', tabId)
             .then(results => sendResponse({ success: true, results }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // asynchronous response
+    }
+
+    if (request.action === 'cancelPageTranslation') {
+        cancelTabTranslation(tabId);
+        sendResponse({ success: true });
+        return true;
     }
 
     if (request.action === 'saveWord') {
@@ -416,45 +449,54 @@ async function fetchMyMemory(cleanText, targetLang, sourceLang) {
 }
 
 // Bridge Batch Translation Request
-async function translateBatchViaBridge(texts, targetLang, sourceLang) {
+async function translateBatchViaBridge(texts, targetLang, sourceLang, tabId) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    registerTabAbortController(tabId, controller);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    const response = await fetch(`${BRIDGE_URL}/api/translate-batch`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            texts: texts,
-            targetLang: targetLang,
-            sourceLang: sourceLang
-        }),
-        signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+    try {
+        const response = await fetch(`${BRIDGE_URL}/api/translate-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                texts: texts,
+                targetLang: targetLang,
+                sourceLang: sourceLang
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
-    if (!response.ok) {
-        throw new Error(`Bridge HTTP ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`Bridge HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (data && data.success && Array.isArray(data.results)) {
+            isBridgeConnected = true;
+            return data.results;
+        }
+        throw new Error(data.error || 'Bridge batch translation failed');
+    } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
     }
-
-    const data = await response.json();
-    if (data && data.success && Array.isArray(data.results)) {
-        isBridgeConnected = true;
-        return data.results;
-    }
-    throw new Error(data.error || 'Bridge batch translation failed');
 }
 
 // Smart High-Speed Packed Batch Translation
-async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto') {
+async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto', tabId = null) {
     if (!texts || texts.length === 0) return [];
 
     // Priority: Try NekoTrans Local Bridge (Unified App Core)
     try {
-        const bridgeResults = await translateBatchViaBridge(texts, targetLang, sourceLang);
+        const bridgeResults = await translateBatchViaBridge(texts, targetLang, sourceLang, tabId);
         if (bridgeResults && bridgeResults.length === texts.length) {
             return bridgeResults;
         }
     } catch (e) {
+        if (e.name === 'AbortError') {
+            return texts; // Tab closed or translation cancelled
+        }
         // Fallback to standalone web packed translation below
     }
 
