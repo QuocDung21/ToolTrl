@@ -298,7 +298,25 @@
     font-size: 0.94em !important;
     line-height: 1.55 !important;
     color: #4338ca !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    word-break: break-word !important;
+    text-align: left !important;
+    clear: both !important;
     animation: nekotrans-fade-in 0.3s ease-out !important;
+}
+
+li > .nekotrans-bilingual-block {
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+    font-size: 0.9em !important;
+}
+
+td > .nekotrans-bilingual-block, th > .nekotrans-bilingual-block {
+    margin-top: 4px !important;
+    margin-bottom: 2px !important;
+    padding: 2px 6px !important;
+    font-size: 0.88em !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -307,6 +325,11 @@
         border-left: 3px solid #818cf8 !important;
         color: #c7d2fe !important;
     }
+}
+
+/* In-place Translated Text Smooth Transition */
+[data-nekotrans-translated="true"] {
+    transition: opacity 0.2s ease-in-out;
 }
 
 /* Floating Status HUD - Modern Apple Native Glassmorphism */

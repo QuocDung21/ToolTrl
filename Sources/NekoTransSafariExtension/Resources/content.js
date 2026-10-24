@@ -12,10 +12,19 @@
         autoSpeak: false
     };
 
-    // Load initial settings
+    // Load initial settings and listen to dynamic updates
     if (chrome && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(settings, (items) => {
             if (items) settings = { ...settings, ...items };
+        });
+    }
+    if (chrome && chrome.storage && chrome.storage.onChanged) {
+        chrome.storage.onChanged.addListener((changes, area) => {
+            for (let key in changes) {
+                if (key in settings) {
+                    settings[key] = changes[key].newValue;
+                }
+            }
         });
     }
 
@@ -329,10 +338,164 @@
         window.speechSynthesis.speak(utterance);
     }
 
-    // MARK: - Full Web Page Bilingual Translation
+    // MARK: - Full Web Page Translation (DOM-Preserving & Style-Safe)
+
+    // Block-level HTML container tags that should NEVER be treated as translatable leaf nodes
+    const BLOCK_CONTAINER_TAGS = new Set([
+        'ARTICLE', 'SECTION', 'NAV', 'HEADER', 'FOOTER', 'ASIDE', 'MAIN',
+        'DIV', 'UL', 'OL', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR',
+        'FORM', 'FIELDSET', 'DETAILS', 'FIGURE'
+    ]);
+
+    // Ignored tags where text should never be translated as regular prose
+    const IGNORED_TAGS = new Set([
+        'SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'CANVAS', 'VIDEO', 'AUDIO',
+        'SVG', 'MATH', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION', 'CODE', 'PRE', 'KBD', 'SAMP'
+    ]);
+
+    function isLeafTextBlock(el) {
+        if (!el || !document.contains(el)) return false;
+
+        const tag = el.tagName;
+        if (IGNORED_TAGS.has(tag)) return false;
+
+        // Respect standard web conventions for non-translatable blocks
+        if (el.closest('[translate="no"], .notranslate')) return false;
+
+        // Skip NekoTrans UI elements
+        if (el.closest('#nekotrans-translation-card, #nekotrans-page-hud, [data-nekotrans-ui]')) return false;
+        if (el.hasAttribute('data-nekotrans-translated') || el.classList.contains('nekotrans-bilingual-block')) return false;
+
+        // Skip code and navigation chrome
+        if (el.closest('pre, code, kbd, samp, noscript, nav, header, footer')) return false;
+
+        // If the element contains any block-level child elements, it is a CONTAINER, not a leaf block!
+        // E.g., if a <li> contains <div> or <p>, <li> is not a leaf; the inner <div> or <p> will be the leaf!
+        // E.g., if a <blockquote> contains <p>, <p> is the leaf!
+        for (let i = 0; i < el.children.length; i++) {
+            const childTag = el.children[i].tagName;
+            if (BLOCK_CONTAINER_TAGS.has(childTag) || childTag === 'P' || childTag === 'BLOCKQUOTE' || childTag === 'LI' || /^H[1-6]$/.test(childTag)) {
+                return false;
+            }
+        }
+
+        // Must have readable text of at least 2 characters
+        const text = el.innerText ? el.innerText.trim() : '';
+        if (text.length < 2) return false;
+        if (!/[a-zA-ZÀ-ỹ\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]/.test(text)) return false;
+
+        return true;
+    }
+
+    function getTranslatableBlocks() {
+        // Query text-bearing elements. (Notice: 'article' and container 'div' are excluded!)
+        const selectors = 'p, h1, h2, h3, h4, h5, h6, blockquote, li, dd, dt, figcaption, td, th';
+        const elements = Array.from(document.querySelectorAll(selectors));
+
+        return elements.filter(isLeafTextBlock);
+    }
+
+    function getElementTextNodes(root) {
+        const textNodes = [];
+        const walker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode(node) {
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    if (IGNORED_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                    if (node.nodeValue.trim().length === 0) return NodeFilter.FILTER_SKIP;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            }
+        );
+        while (walker.nextNode()) {
+            textNodes.push(walker.currentNode);
+        }
+        return textNodes;
+    }
+
+    function applyBlockTranslation(element, translatedText) {
+        if (!element || !element.parentNode || !document.contains(element)) return;
+
+        element.setAttribute('data-nekotrans-translated', 'true');
+
+        if (settings.displayMode === 'replace') {
+            // 1. Save original HTML for 100% perfect, non-destructive restoration
+            if (!element.hasAttribute('data-nekotrans-original-html')) {
+                element.setAttribute('data-nekotrans-original-html', element.innerHTML);
+            }
+
+            // 2. Case A: Element has NO child elements (85%+ of text elements)
+            // Keeps all element classes, styling, ID, attributes intact
+            if (element.children.length === 0) {
+                element.textContent = translatedText;
+                return;
+            }
+
+            // 3. Case B: Element has embedded icons/media (SVG, IMG) - NEVER destroy them!
+            const mediaChildren = Array.from(element.querySelectorAll('svg, img, canvas, video'));
+            if (mediaChildren.length > 0) {
+                const textNodes = getElementTextNodes(element);
+                if (textNodes.length === 1) {
+                    textNodes[0].nodeValue = ' ' + translatedText.trim() + ' ';
+                    return;
+                }
+            }
+
+            // 4. Case C: Element has a single inline wrapper (e.g. <h1><span class="gradient">Title</span></h1> or <li><a href="...">Link</a></li>)
+            if (element.children.length === 1 && mediaChildren.length === 0) {
+                const child = element.firstElementChild;
+                if (child.children.length === 0) {
+                    child.textContent = translatedText;
+                    return;
+                }
+            }
+
+            // 5. Case D: Mixed inline elements - update single primary text node if available, or textContent
+            const textNodes = getElementTextNodes(element);
+            if (textNodes.length === 1) {
+                textNodes[0].nodeValue = translatedText;
+                return;
+            }
+
+            element.textContent = translatedText;
+        } else {
+            // Bilingual mode: append translated block
+            const div = document.createElement('div');
+            div.className = 'nekotrans-bilingual-block';
+            div.innerText = translatedText;
+            div.setAttribute('data-nekotrans-bilingual', 'true');
+
+            // For list items (li) or table cells (td, th):
+            // Append INSIDE element to avoid breaking <ul> / <ol> or <tr> table grid
+            const tag = element.tagName;
+            if (tag === 'LI' || tag === 'TD' || tag === 'TH') {
+                element.appendChild(div);
+            } else {
+                if (element.nextSibling) {
+                    element.parentNode.insertBefore(div, element.nextSibling);
+                } else {
+                    element.parentNode.appendChild(div);
+                }
+            }
+        }
+    }
 
     async function startPageTranslation() {
         if (isTranslatingPage) return;
+
+        // Ensure latest user settings are applied
+        if (chrome && chrome.storage && chrome.storage.sync) {
+            await new Promise((resolve) => {
+                chrome.storage.sync.get(settings, (items) => {
+                    if (items) settings = { ...settings, ...items };
+                    resolve();
+                });
+            });
+        }
+
         isTranslatingPage = true;
         const sessionId = ++currentSessionId;
 
@@ -417,54 +580,6 @@
         });
     }
 
-    function getTranslatableBlocks() {
-        const selectors = 'p, h1, h2, h3, h4, h5, h6, blockquote, article, li, dd, dt';
-        const elements = Array.from(document.querySelectorAll(selectors));
-
-        return elements.filter((el) => {
-            // Skip existing translated elements or NekoTrans UI
-            if (el.closest('#nekotrans-translation-card') || el.closest('#nekotrans-page-hud')) return false;
-            if (el.classList.contains('nekotrans-bilingual-block')) return false;
-            if (el.getAttribute('data-nekotrans-translated')) return false;
-
-            // Skip code, script, style, inputs, headers, footers, navbars
-            if (el.closest('pre') || el.closest('code') || el.closest('noscript')) return false;
-            if (el.closest('nav') || el.closest('header') || el.closest('footer')) return false;
-
-            const text = el.innerText ? el.innerText.trim() : '';
-            // Must have at least 3 characters and contain readable text
-            if (text.length < 3) return false;
-            if (!/[a-zA-ZÀ-ỹ\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]/.test(text)) return false;
-
-            return true;
-        });
-    }
-
-    function applyBlockTranslation(element, translatedText) {
-        // Guard: ensure element is still connected to the DOM
-        if (!element || !element.parentNode || !document.contains(element)) return;
-
-        element.setAttribute('data-nekotrans-translated', 'true');
-
-        if (settings.displayMode === 'replace') {
-            element.setAttribute('data-nekotrans-original-text', element.innerText);
-            element.innerText = translatedText;
-        } else {
-            // Bilingual mode: append translated block immediately after
-            const div = document.createElement('div');
-            div.className = 'nekotrans-bilingual-block';
-            div.innerText = translatedText;
-            div.setAttribute('data-nekotrans-bilingual', 'true');
-
-            // Insert after element
-            if (element.nextSibling) {
-                element.parentNode.insertBefore(div, element.nextSibling);
-            } else {
-                element.parentNode.appendChild(div);
-            }
-        }
-    }
-
     function restorePage() {
         isTranslatingPage = false;
         currentSessionId++; // Invalidate active session immediately
@@ -476,16 +591,18 @@
         const bilingualBlocks = document.querySelectorAll('.nekotrans-bilingual-block');
         bilingualBlocks.forEach(b => b.remove());
 
-        // Restore replaced text
-        const replacedElements = document.querySelectorAll('[data-nekotrans-original-text]');
+        // Lossless restore: restore exact innerHTML of replaced elements
+        const replacedElements = document.querySelectorAll('[data-nekotrans-original-html]');
         replacedElements.forEach(el => {
-            const original = el.getAttribute('data-nekotrans-original-text');
-            if (original) el.innerText = original;
-            el.removeAttribute('data-nekotrans-original-text');
+            const originalHtml = el.getAttribute('data-nekotrans-original-html');
+            if (originalHtml !== null) {
+                el.innerHTML = originalHtml;
+                el.removeAttribute('data-nekotrans-original-html');
+            }
             el.removeAttribute('data-nekotrans-translated');
         });
 
-        // Clear translated flags
+        // Clear any remaining translated flags
         const translatedElements = document.querySelectorAll('[data-nekotrans-translated]');
         translatedElements.forEach(el => el.removeAttribute('data-nekotrans-translated'));
 
