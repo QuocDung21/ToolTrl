@@ -188,9 +188,13 @@ if [ -d "/Applications/$APP_NAME" ]; then
     fi
     touch "/Applications/$APP_NAME"
     "$LSREGISTER" -f -R -trusted "/Applications/$APP_NAME" >/dev/null 2>&1 || true
+    "$LSREGISTER" -u "$PWD/build.noindex/$APP_NAME/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/build.noindex/$APP_NAME" >/dev/null 2>&1 || true
+    "$LSREGISTER" -u "$PWD/build/$APP_NAME/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/build/$APP_NAME" >/dev/null 2>&1 || true
+    "$LSREGISTER" -u "$PWD/$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/$APP_DIR" >/dev/null 2>&1 || true
+    "$LSREGISTER" -u "$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$APP_DIR" >/dev/null 2>&1 || true
 else
     touch "$APP_DIR"
