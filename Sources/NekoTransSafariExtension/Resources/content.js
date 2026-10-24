@@ -148,11 +148,11 @@
         card.style.left = `${left}px`;
         card.style.top = `${top}px`;
 
-        const iconUrl16 = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
-            ? chrome.runtime.getURL('images/icon-16.png')
+        const iconUrl32 = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+            ? chrome.runtime.getURL('images/icon-32.png')
             : '';
-        const brandIconHtml = iconUrl16
-            ? `<img src="${iconUrl16}" class="nekotrans-brand-icon" alt="">`
+        const brandIconHtml = iconUrl32
+            ? `<img src="${iconUrl32}" class="nekotrans-brand-icon" alt="NekoTrans">`
             : '🐱';
 
         // Initial Loading State
@@ -160,14 +160,24 @@
             <div class="nekotrans-card-header">
                 <div class="nekotrans-card-brand">${brandIconHtml} <span>NekoTrans</span></div>
                 <div class="nekotrans-card-actions">
-                    <button class="nekotrans-btn-icon" id="nekotrans-close-card" title="Đóng">✕</button>
+                    <button class="nekotrans-btn-icon" id="nekotrans-close-card" title="Đóng">
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                            <line x1="2" y1="2" x2="10" y2="10"></line>
+                            <line x1="10" y1="2" x2="2" y2="10"></line>
+                        </svg>
+                    </button>
                 </div>
             </div>
             <div class="nekotrans-card-body">
                 <div class="nekotrans-source-box">
                     <div class="nekotrans-source-text">${escapeHtml(text.slice(0, 160))}${text.length > 160 ? '...' : ''}</div>
                 </div>
-                <div class="nekotrans-translated-text" style="color: #64748b; font-style: italic;">Đang dịch...</div>
+                <div class="nekotrans-translated-text">
+                    <div class="nekotrans-card-loading">
+                        <div class="nekotrans-shimmer-line" style="width: 85%;"></div>
+                        <div class="nekotrans-shimmer-line" style="width: 58%;"></div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -313,7 +323,7 @@
         pageTranslatedCount = 0;
 
         if (totalPageBlocks === 0) {
-            showPageHUD('Không tìm thấy nội dung để dịch', false);
+            showPageHUD('Không tìm thấy nội dung để dịch', '', false, 0);
             isTranslatingPage = false;
             return;
         }
@@ -321,7 +331,7 @@
         // Ưu tiên dịch các đoạn đang hiển thị trên màn hình trước để người dùng đọc ngay lập tức!
         const blocks = sortBlocksByViewport(rawBlocks);
 
-        showPageHUD(`Đang dịch ưu tiên màn hình... (0/${totalPageBlocks})`, true);
+        showPageHUD('Đang dịch trang', `0/${totalPageBlocks} đoạn`, true, 0);
 
         // Process in progressive chunks of 10
         const chunkSize = 10;
@@ -354,12 +364,14 @@
             }
 
             pageTranslatedCount = Math.min(i + chunkSize, totalPageBlocks);
-            updatePageHUD(`Đang dịch: ${pageTranslatedCount}/${totalPageBlocks} đoạn`, true);
+            const percent = Math.round((pageTranslatedCount / totalPageBlocks) * 100);
+            updatePageHUD('Đang dịch trang', `${pageTranslatedCount}/${totalPageBlocks} đoạn`, true, percent);
         }
 
         if (isTranslatingPage) {
             isTranslatingPage = false;
-            showPageHUD(`✅ Đã dịch song ngữ (${pageTranslatedCount}/${totalPageBlocks} đoạn)`, false);
+            const completedTitle = settings.displayMode === 'replace' ? 'Đã dịch toàn trang' : 'Đã dịch song ngữ';
+            updatePageHUD(completedTitle, `${totalPageBlocks}/${totalPageBlocks} đoạn`, false, 100);
         }
     }
 
@@ -449,24 +461,42 @@
 
     // MARK: - Page HUD UI
 
-    function showPageHUD(statusText, isLoading = false) {
+    function showPageHUD(title, countText = '', isLoading = false, percent = 0) {
+        if (typeof countText === 'boolean') {
+            isLoading = countText;
+            countText = '';
+        }
         removePageHUD();
 
-        const iconUrl16 = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
-            ? chrome.runtime.getURL('images/icon-16.png')
+        const iconUrl32 = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+            ? chrome.runtime.getURL('images/icon-32.png')
             : '';
-        const hudLogoHtml = iconUrl16
-            ? `<img src="${iconUrl16}" class="nekotrans-hud-logo" alt="">`
-            : '<span>🐱</span>';
+        const hudLogoHtml = iconUrl32
+            ? `<img src="${iconUrl32}" class="nekotrans-hud-logo" alt="NekoTrans">`
+            : '<span class="nekotrans-hud-logo-emoji">🐱</span>';
 
         const hud = document.createElement('div');
         hud.id = 'nekotrans-page-hud';
         hud.innerHTML = `
             ${hudLogoHtml}
-            <span id="nekotrans-hud-text">${escapeHtml(statusText)}</span>
-            <button id="nekotrans-hud-stop" style="display: ${isLoading ? 'inline-block' : 'none'};">Dừng</button>
-            <button id="nekotrans-hud-restore">Khôi phục</button>
-            <button id="nekotrans-hud-close">✕</button>
+            <div class="nekotrans-hud-status-icon" id="nekotrans-hud-status-icon"></div>
+            <div class="nekotrans-hud-text-area">
+                <span class="nekotrans-hud-title" id="nekotrans-hud-title">${escapeHtml(title)}</span>
+                <span class="nekotrans-hud-count" id="nekotrans-hud-count">${escapeHtml(countText)}</span>
+            </div>
+            <div class="nekotrans-hud-progress-wrap" id="nekotrans-hud-progress-wrap" style="display: none;">
+                <div class="nekotrans-hud-progress-bar" id="nekotrans-hud-progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="nekotrans-hud-actions">
+                <button class="nekotrans-hud-btn nekobtn-stop" id="nekotrans-hud-stop" style="display: none;">Dừng</button>
+                <button class="nekotrans-hud-btn nekobtn-restore" id="nekotrans-hud-restore" style="display: none;">Khôi phục</button>
+                <button class="nekotrans-hud-btn nekobtn-close" id="nekotrans-hud-close" title="Đóng">
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="2" y1="2" x2="10" y2="10"></line>
+                        <line x1="10" y1="2" x2="2" y2="10"></line>
+                    </svg>
+                </button>
+            </div>
         `;
 
         document.body.appendChild(hud);
@@ -476,23 +506,75 @@
         if (stopBtn) {
             stopBtn.addEventListener('click', () => {
                 isTranslatingPage = false;
-                stopBtn.style.display = 'none';
-                updatePageHUD(`Đã dừng dịch (${pageTranslatedCount}/${totalPageBlocks} đoạn)`, false);
+                updatePageHUD('Đã dừng dịch', `${pageTranslatedCount}/${totalPageBlocks} đoạn`, false, 0);
             });
         }
 
-        hud.querySelector('#nekotrans-hud-restore').addEventListener('click', restorePage);
-        hud.querySelector('#nekotrans-hud-close').addEventListener('click', removePageHUD);
+        const restoreBtn = hud.querySelector('#nekotrans-hud-restore');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', restorePage);
+        }
+
+        const closeBtn = hud.querySelector('#nekotrans-hud-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', removePageHUD);
+        }
+
+        updateHUDState(title, countText, isLoading, percent);
     }
 
-    function updatePageHUD(statusText, isLoading = true) {
+    function updatePageHUD(title, countText = '', isLoading = false, percent = 0) {
+        if (typeof countText === 'boolean') {
+            isLoading = countText;
+            countText = '';
+        }
         if (!pageHUD) return;
-        const textSpan = pageHUD.querySelector('#nekotrans-hud-text');
-        if (textSpan) textSpan.innerText = statusText;
+        updateHUDState(title, countText, isLoading, percent);
+    }
+
+    function updateHUDState(title, countText, isLoading, percent) {
+        if (!pageHUD) return;
+
+        const titleEl = pageHUD.querySelector('#nekotrans-hud-title');
+        if (titleEl) titleEl.innerText = title;
+
+        const countEl = pageHUD.querySelector('#nekotrans-hud-count');
+        if (countEl) countEl.innerText = countText;
+
+        const statusIconEl = pageHUD.querySelector('#nekotrans-hud-status-icon');
+        if (statusIconEl) {
+            if (isLoading) {
+                statusIconEl.innerHTML = '<div class="nekotrans-hud-spinner"></div>';
+            } else if (percent >= 100 || title.includes('Đã dịch')) {
+                statusIconEl.innerHTML = `
+                    <svg class="nekotrans-hud-check" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13.5 4.5L6.5 11.5L2.5 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            } else {
+                statusIconEl.innerHTML = '';
+            }
+        }
+
+        const progressWrap = pageHUD.querySelector('#nekotrans-hud-progress-wrap');
+        const progressBar = pageHUD.querySelector('#nekotrans-hud-progress-bar');
+        if (progressWrap && progressBar) {
+            if (isLoading && percent > 0) {
+                progressWrap.style.display = 'block';
+                progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+            } else {
+                progressWrap.style.display = 'none';
+            }
+        }
 
         const stopBtn = pageHUD.querySelector('#nekotrans-hud-stop');
         if (stopBtn) {
-            stopBtn.style.display = isLoading ? 'inline-block' : 'none';
+            stopBtn.style.display = isLoading ? 'inline-flex' : 'none';
+        }
+
+        const restoreBtn = pageHUD.querySelector('#nekotrans-hud-restore');
+        if (restoreBtn) {
+            restoreBtn.style.display = !isLoading ? 'inline-flex' : 'none';
         }
     }
 
