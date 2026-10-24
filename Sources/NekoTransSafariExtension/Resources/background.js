@@ -116,18 +116,75 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 });
 
-// Core Translation Engine
+// In-Memory Translation Cache
+const TRANSLATION_CACHE = new Map();
+const MAX_CACHE_SIZE = 1200;
+
+function getCachedTranslation(text, targetLang, sourceLang) {
+    const key = `${sourceLang}|${targetLang}|${text}`;
+    return TRANSLATION_CACHE.get(key);
+}
+
+function setCachedTranslation(text, targetLang, sourceLang, result) {
+    if (TRANSLATION_CACHE.size >= MAX_CACHE_SIZE) {
+        const firstKey = TRANSLATION_CACHE.keys().next().value;
+        TRANSLATION_CACHE.delete(firstKey);
+    }
+    const key = `${sourceLang}|${targetLang}|${text}`;
+    TRANSLATION_CACHE.set(key, result);
+}
+
+// Core Translation Engine with Multi-Tier Fallback
 async function fetchTranslation(text, targetLang = 'vi', sourceLang = 'auto') {
     if (!text || !text.trim()) {
         return { success: false, error: 'Empty text' };
     }
 
     const cleanText = text.trim();
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&dt=t&dt=bd&dt=rm&q=${encodeURIComponent(cleanText)}`;
+
+    // 1. Check in-memory cache first
+    const cached = getCachedTranslation(cleanText, targetLang, sourceLang);
+    if (cached) {
+        return cached;
+    }
+
+    // 2. Try Google Translate with Chrome Extension client (dict-chrome-ex)
+    try {
+        const res = await fetchGoogleTranslate(cleanText, targetLang, sourceLang, 'dict-chrome-ex');
+        setCachedTranslation(cleanText, targetLang, sourceLang, res);
+        return res;
+    } catch (err) {
+        // If 429 or other error, fallback to MyMemory
+    }
+
+    // 3. Fallback: MyMemory API
+    try {
+        const res = await fetchMyMemory(cleanText, targetLang, sourceLang);
+        setCachedTranslation(cleanText, targetLang, sourceLang, res);
+        return res;
+    } catch (err) {
+        // Fallback to Google GTX
+    }
+
+    // 4. Fallback: Google GTX client
+    try {
+        const res = await fetchGoogleTranslate(cleanText, targetLang, sourceLang, 'gtx');
+        setCachedTranslation(cleanText, targetLang, sourceLang, res);
+        return res;
+    } catch (err) {
+        throw new Error('Dịch vụ dịch tạm thời bị giới hạn tốc độ. Vui lòng thử lại sau vài giây.');
+    }
+}
+
+// Google Translate Endpoint
+async function fetchGoogleTranslate(cleanText, targetLang, sourceLang, client = 'dict-chrome-ex') {
+    const url = `https://translate.googleapis.com/translate_a/single?client=${encodeURIComponent(client)}&sl=${encodeURIComponent(sourceLang)}&tl=${encodeURIComponent(targetLang)}&dt=t&dt=bd&dt=rm&q=${encodeURIComponent(cleanText)}`;
 
     const response = await fetch(url);
     if (!response.ok) {
-        throw new Error(`Translation request failed with status: ${response.status}`);
+        const error = new Error(`Google Translate error ${response.status}`);
+        error.status = response.status;
+        throw error;
     }
 
     const data = await response.json();
@@ -152,8 +209,8 @@ async function fetchTranslation(text, targetLang = 'vi', sourceLang = 'auto') {
     let dictEntries = [];
     if (Array.isArray(data[1])) {
         for (const dict of data[1]) {
-            const pos = dict[0]; // e.g. "noun", "verb"
-            const terms = dict[1] || []; // alternate terms
+            const pos = dict[0];
+            const terms = dict[1] || [];
             dictEntries.push({ pos, terms: terms.slice(0, 5) });
         }
     }
@@ -169,10 +226,36 @@ async function fetchTranslation(text, targetLang = 'vi', sourceLang = 'auto') {
     };
 }
 
-// Batch Translation with Concurrency Control
+// MyMemory API Fallback
+async function fetchMyMemory(cleanText, targetLang, sourceLang) {
+    const sl = sourceLang === 'auto' ? 'en' : sourceLang;
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(cleanText)}&langpair=${encodeURIComponent(sl)}|${encodeURIComponent(targetLang)}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`MyMemory error ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.responseStatus !== 200 || !data.responseData || !data.responseData.translatedText) {
+        throw new Error(data.responseDetails || 'MyMemory translation rejected');
+    }
+
+    return {
+        success: true,
+        original: cleanText,
+        translated: data.responseData.translatedText.trim(),
+        phonetic: '',
+        dictEntries: [],
+        detectedSource: sl,
+        targetLang: targetLang
+    };
+}
+
+// Batch Translation with polite throttling & caching
 async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto') {
     const results = [];
-    const concurrency = 5;
+    const concurrency = 3;
 
     for (let i = 0; i < texts.length; i += concurrency) {
         const slice = texts.slice(i, i + concurrency);
@@ -184,8 +267,14 @@ async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto') {
                 return text;
             }
         });
+
         const batchResults = await Promise.all(promises);
         results.push(...batchResults);
+
+        // Polite delay between batches to respect rate limits
+        if (i + concurrency < texts.length) {
+            await new Promise(r => setTimeout(r, 120));
+        }
     }
 
     return results;
