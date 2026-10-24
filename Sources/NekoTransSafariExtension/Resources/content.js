@@ -308,8 +308,8 @@
         if (isTranslatingPage) return;
         isTranslatingPage = true;
 
-        const blocks = getTranslatableBlocks();
-        totalPageBlocks = blocks.length;
+        const rawBlocks = getTranslatableBlocks();
+        totalPageBlocks = rawBlocks.length;
         pageTranslatedCount = 0;
 
         if (totalPageBlocks === 0) {
@@ -318,18 +318,18 @@
             return;
         }
 
-        showPageHUD(`Đang chuẩn bị dịch ${totalPageBlocks} đoạn...`, true);
+        // Ưu tiên dịch các đoạn đang hiển thị trên màn hình trước để người dùng đọc ngay lập tức!
+        const blocks = sortBlocksByViewport(rawBlocks);
 
-        // Collect texts
-        const textList = blocks.map(b => b.innerText.trim());
+        showPageHUD(`Đang dịch ưu tiên màn hình... (0/${totalPageBlocks})`, true);
 
-        // Batch translation in slices of 15
-        const batchSize = 15;
-        for (let i = 0; i < blocks.length; i += batchSize) {
-            if (!isTranslatingPage) break; // cancelled
+        // Process in progressive chunks of 10
+        const chunkSize = 10;
+        for (let i = 0; i < blocks.length; i += chunkSize) {
+            if (!isTranslatingPage) break; // User stopped translation
 
-            const chunkBlocks = blocks.slice(i, i + batchSize);
-            const chunkTexts = textList.slice(i, i + batchSize);
+            const chunkBlocks = blocks.slice(i, i + chunkSize);
+            const chunkTexts = chunkBlocks.map(b => b.innerText.trim());
 
             try {
                 const res = await new Promise((resolve) => {
@@ -353,12 +353,30 @@
                 // Continue with next chunk
             }
 
-            pageTranslatedCount = Math.min(i + batchSize, totalPageBlocks);
-            updatePageHUD(`Đang dịch: ${pageTranslatedCount}/${totalPageBlocks} đoạn`);
+            pageTranslatedCount = Math.min(i + chunkSize, totalPageBlocks);
+            updatePageHUD(`Đang dịch: ${pageTranslatedCount}/${totalPageBlocks} đoạn`, true);
         }
 
-        isTranslatingPage = false;
-        showPageHUD(`✅ Đã dịch song ngữ (${pageTranslatedCount}/${totalPageBlocks} đoạn)`, false);
+        if (isTranslatingPage) {
+            isTranslatingPage = false;
+            showPageHUD(`✅ Đã dịch song ngữ (${pageTranslatedCount}/${totalPageBlocks} đoạn)`, false);
+        }
+    }
+
+    // Sort blocks so visible content is translated in the very first batch
+    function sortBlocksByViewport(blocks) {
+        return blocks.slice().sort((a, b) => {
+            const rectA = a.getBoundingClientRect();
+            const rectB = b.getBoundingClientRect();
+
+            const inViewportA = rectA.top < window.innerHeight + 300 && rectA.bottom > -100;
+            const inViewportB = rectB.top < window.innerHeight + 300 && rectB.bottom > -100;
+
+            if (inViewportA && !inViewportB) return -1;
+            if (!inViewportA && inViewportB) return 1;
+
+            return rectA.top - rectB.top;
+        });
     }
 
     function getTranslatableBlocks() {
@@ -371,11 +389,12 @@
             if (el.classList.contains('nekotrans-bilingual-block')) return false;
             if (el.getAttribute('data-nekotrans-translated')) return false;
 
-            // Skip code, script, style, inputs
+            // Skip code, script, style, inputs, headers, footers, navbars
             if (el.closest('pre') || el.closest('code') || el.closest('noscript')) return false;
+            if (el.closest('nav') || el.closest('header') || el.closest('footer')) return false;
 
             const text = el.innerText ? el.innerText.trim() : '';
-            // Must have at least 3 characters and not purely digits/punctuation
+            // Must have at least 3 characters and contain readable text
             if (text.length < 3) return false;
             if (!/[a-zA-ZÀ-ỹ\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff]/.test(text)) return false;
 
@@ -445,6 +464,7 @@
         hud.innerHTML = `
             ${hudLogoHtml}
             <span id="nekotrans-hud-text">${escapeHtml(statusText)}</span>
+            <button id="nekotrans-hud-stop" style="display: ${isLoading ? 'inline-block' : 'none'};">Dừng</button>
             <button id="nekotrans-hud-restore">Khôi phục</button>
             <button id="nekotrans-hud-close">✕</button>
         `;
@@ -452,14 +472,28 @@
         document.body.appendChild(hud);
         pageHUD = hud;
 
+        const stopBtn = hud.querySelector('#nekotrans-hud-stop');
+        if (stopBtn) {
+            stopBtn.addEventListener('click', () => {
+                isTranslatingPage = false;
+                stopBtn.style.display = 'none';
+                updatePageHUD(`Đã dừng dịch (${pageTranslatedCount}/${totalPageBlocks} đoạn)`, false);
+            });
+        }
+
         hud.querySelector('#nekotrans-hud-restore').addEventListener('click', restorePage);
         hud.querySelector('#nekotrans-hud-close').addEventListener('click', removePageHUD);
     }
 
-    function updatePageHUD(statusText) {
+    function updatePageHUD(statusText, isLoading = true) {
         if (!pageHUD) return;
         const textSpan = pageHUD.querySelector('#nekotrans-hud-text');
         if (textSpan) textSpan.innerText = statusText;
+
+        const stopBtn = pageHUD.querySelector('#nekotrans-hud-stop');
+        if (stopBtn) {
+            stopBtn.style.display = isLoading ? 'inline-block' : 'none';
+        }
     }
 
     function removePageHUD() {

@@ -252,29 +252,116 @@ async function fetchMyMemory(cleanText, targetLang, sourceLang) {
     };
 }
 
-// Batch Translation with polite throttling & caching
+// Smart High-Speed Packed Batch Translation
 async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto') {
-    const results = [];
-    const concurrency = 3;
+    if (!texts || texts.length === 0) return [];
 
-    for (let i = 0; i < texts.length; i += concurrency) {
-        const slice = texts.slice(i, i + concurrency);
-        const promises = slice.map(async (text) => {
+    const results = new Array(texts.length).fill(null);
+    const DELIMITER = '\n\n|||\n\n';
+    const MAX_PACK_CHARS = 1800;
+
+    // 1. Check in-memory cache first
+    const uncachedIndices = [];
+    texts.forEach((text, idx) => {
+        const clean = text.trim();
+        if (!clean) {
+            results[idx] = '';
+            return;
+        }
+        const cached = getCachedTranslation(clean, targetLang, sourceLang);
+        if (cached && cached.translated) {
+            results[idx] = cached.translated;
+        } else {
+            uncachedIndices.push(idx);
+        }
+    });
+
+    if (uncachedIndices.length === 0) {
+        return results;
+    }
+
+    // 2. Pack multiple paragraphs together to minimize HTTP round-trips
+    const packs = [];
+    let currentPack = { indices: [], texts: [], charLen: 0 };
+
+    for (const idx of uncachedIndices) {
+        const text = texts[idx].trim();
+        if (currentPack.texts.length > 0 && (currentPack.charLen + text.length > MAX_PACK_CHARS || currentPack.texts.length >= 8)) {
+            packs.push(currentPack);
+            currentPack = { indices: [], texts: [], charLen: 0 };
+        }
+        currentPack.indices.push(idx);
+        currentPack.texts.push(text);
+        currentPack.charLen += text.length;
+    }
+    if (currentPack.texts.length > 0) {
+        packs.push(currentPack);
+    }
+
+    // 3. Process packs concurrently
+    const concurrency = 3;
+    for (let i = 0; i < packs.length; i += concurrency) {
+        const chunkPacks = packs.slice(i, i + concurrency);
+        const promises = chunkPacks.map(async (pack) => {
+            if (pack.texts.length === 1) {
+                try {
+                    const res = await fetchTranslation(pack.texts[0], targetLang, sourceLang);
+                    results[pack.indices[0]] = res.success ? res.translated : pack.texts[0];
+                } catch {
+                    results[pack.indices[0]] = pack.texts[0];
+                }
+                return;
+            }
+
+            // Pack multiple texts with delimiter
+            const packedText = pack.texts.join(DELIMITER);
             try {
-                const res = await fetchTranslation(text, targetLang, sourceLang);
-                return res.success ? res.translated : text;
-            } catch (e) {
-                return text;
+                const res = await fetchTranslation(packedText, targetLang, sourceLang);
+                if (res && res.success && res.translated) {
+                    const parts = res.translated.split(/\|\|\|/).map(s => s.trim());
+                    if (parts.length === pack.texts.length) {
+                        pack.indices.forEach((origIdx, pIdx) => {
+                            const translatedPart = parts[pIdx] || pack.texts[pIdx];
+                            results[origIdx] = translatedPart;
+                            setCachedTranslation(pack.texts[pIdx], targetLang, sourceLang, {
+                                success: true,
+                                original: pack.texts[pIdx],
+                                translated: translatedPart,
+                                phonetic: '',
+                                dictEntries: [],
+                                detectedSource: res.detectedSource,
+                                targetLang: targetLang
+                            });
+                        });
+                        return;
+                    }
+                }
+            } catch {
+                // Fallback to translating individual items
+            }
+
+            // Fallback for this pack
+            for (let j = 0; j < pack.texts.length; j++) {
+                try {
+                    const r = await fetchTranslation(pack.texts[j], targetLang, sourceLang);
+                    results[pack.indices[j]] = r.success ? r.translated : pack.texts[j];
+                } catch {
+                    results[pack.indices[j]] = pack.texts[j];
+                }
             }
         });
 
-        const batchResults = await Promise.all(promises);
-        results.push(...batchResults);
+        await Promise.all(promises);
 
-        // Polite delay between batches to respect rate limits
-        if (i + concurrency < texts.length) {
-            await new Promise(r => setTimeout(r, 120));
+        // Very small pause between batches
+        if (i + concurrency < packs.length) {
+            await new Promise(r => setTimeout(r, 60));
         }
+    }
+
+    // Fill any missing results with original text
+    for (let i = 0; i < results.length; i++) {
+        if (results[i] === null) results[i] = texts[i];
     }
 
     return results;
