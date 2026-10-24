@@ -194,5 +194,5 @@ if [ -d "/Applications/$APP_NAME" ]; then
     "$LSREGISTER" -u "$APP_DIR" >/dev/null 2>&1 || true
 else
     touch "$APP_DIR"
-    "$LSREGISTER" -f "$APP_DIR" >/dev/null 2>&1 || true
+    "$LSREGISTER" -f -R -trusted "$APP_DIR" >/dev/null 2>&1 || true
 fi

@@ -42,6 +42,7 @@
     ],
     "permissions": [
         "activeTab",
+        "tabs",
         "storage",
         "contextMenus",
         "nativeMessaging"
