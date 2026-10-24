@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A4366F1C3089E12300BB3ACF /* logo-macos.png in Resources */ = {isa = PBXBuildFile; fileRef = A4366F1B3089E12300BB3ACF /* logo-macos.png */; };
 		AA000011 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = AA000201 /* Defaults */; };
 		AA000012 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = AA000202 /* KeyboardShortcuts */; };
 		AA000013 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = AA000203 /* LaunchAtLogin */; };
@@ -16,6 +17,9 @@
 		AA000017 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = AA000205 /* KeyboardShortcuts */; };
 		AA000018 /* SettingsAccess in Frameworks */ = {isa = PBXBuildFile; productRef = AA000206 /* SettingsAccess */; };
 		AA000019 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AA000207 /* Sparkle */; };
+		AA000034 /* NekoTransSafariExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA000033 /* NekoTransSafariExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		AA000035 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000025 /* SafariWebExtensionHandler.swift */; };
+		AA000036 /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = AA000026 /* Resources */; };
 		AA000041 /* NekoCore in Frameworks */ = {isa = PBXBuildFile; productRef = AA000231 /* NekoCore */; };
 		AA000042 /* NekoServices in Frameworks */ = {isa = PBXBuildFile; productRef = AA000232 /* NekoServices */; };
 		AA000043 /* NekoUI in Frameworks */ = {isa = PBXBuildFile; productRef = AA000233 /* NekoUI */; };
@@ -34,12 +38,32 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		AA000531 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA000034 /* NekoTransSafariExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		A4366F1B3089E12300BB3ACF /* logo-macos.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "logo-macos.png"; sourceTree = "<group>"; };
 		AA000021 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = AppIcon.icns; path = Resources/AppIcon.icns; sourceTree = "<group>"; };
 		AA000022 /* apexcharts.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = apexcharts.min.js; path = Resources/apexcharts.min.js; sourceTree = "<group>"; };
 		AA000023 /* NekoTrans.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = NekoTrans.entitlements; path = Resources/NekoTrans.entitlements; sourceTree = "<group>"; };
+		AA000024 /* NekoTransSafariExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = NekoTransSafariExtension.entitlements; path = Resources/NekoTransSafariExtension.entitlements; sourceTree = "<group>"; };
+		AA000025 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+		AA000026 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = "<group>"; };
+		AA000027 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA000031 /* NekoTrans.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NekoTrans.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000032 /* NekoTransTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NekoTransTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000033 /* NekoTransSafariExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NekoTransSafariExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -83,6 +107,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA000503 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,6 +121,7 @@
 			isa = PBXGroup;
 			children = (
 				AA000100 /* Sources/NekoTrans */,
+				AA000103 /* Sources/NekoTransSafariExtension */,
 				AA000101 /* Tests/NekoTransTests */,
 				AA000004 /* Resources */,
 				AA000003 /* Products */,
@@ -100,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				AA000031 /* NekoTrans.app */,
+				AA000033 /* NekoTransSafariExtension.appex */,
 				AA000032 /* NekoTransTests.xctest */,
 			);
 			name = Products;
@@ -108,11 +141,23 @@
 		AA000004 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				A4366F1B3089E12300BB3ACF /* logo-macos.png */,
 				AA000021 /* AppIcon.icns */,
 				AA000022 /* apexcharts.min.js */,
 				AA000023 /* NekoTrans.entitlements */,
+				AA000024 /* NekoTransSafariExtension.entitlements */,
 			);
 			name = Resources;
+			sourceTree = "<group>";
+		};
+		AA000103 /* Sources/NekoTransSafariExtension */ = {
+			isa = PBXGroup;
+			children = (
+				AA000026 /* Resources */,
+				AA000025 /* SafariWebExtensionHandler.swift */,
+				AA000027 /* Info.plist */,
+			);
+			path = Sources/NekoTransSafariExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -125,6 +170,7 @@
 				AA000511 /* Sources */,
 				AA000501 /* Frameworks */,
 				AA000521 /* Resources */,
+				AA000531 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -176,6 +222,23 @@
 			productReference = AA000032 /* NekoTransTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		AA000403 /* NekoTransSafariExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000704 /* Build configuration list for PBXNativeTarget "NekoTransSafariExtension" */;
+			buildPhases = (
+				AA000513 /* Sources */,
+				AA000503 /* Frameworks */,
+				AA000523 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NekoTransSafariExtension;
+			productName = NekoTransSafariExtension;
+			productReference = AA000033 /* NekoTransSafariExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -193,10 +256,13 @@
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = AA000401;
 					};
+					AA000403 = {
+						CreatedOnToolsVersion = 16.0;
+					};
 				};
 			};
 			buildConfigurationList = AA000701 /* Build configuration list for PBXProject "NekoTrans" */;
-			developmentRegion = vi;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
@@ -219,6 +285,7 @@
 			projectRoot = "";
 			targets = (
 				AA000401 /* NekoTrans */,
+				AA000403 /* NekoTransSafariExtension */,
 				AA000402 /* NekoTransTests */,
 			);
 		};
@@ -229,6 +296,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A4366F1C3089E12300BB3ACF /* logo-macos.png in Resources */,
 				AA000014 /* AppIcon.icns in Resources */,
 				AA000015 /* apexcharts.min.js in Resources */,
 			);
@@ -238,6 +306,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA000523 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000036 /* Resources in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -255,6 +331,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA000513 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000035 /* SafariWebExtensionHandler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -486,6 +570,76 @@
 			};
 			name = Release;
 		};
+		AA000631 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Resources/NekoTransSafariExtension.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sources/NekoTransSafariExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "NekoTrans - Trình dịch Web Safari";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 NekoTrans. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nekotrans.mac.SafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AA000632 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Resources/NekoTransSafariExtension.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Sources/NekoTransSafariExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "NekoTrans - Trình dịch Web Safari";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 NekoTrans. All rights reserved.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nekotrans.mac.SafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -515,6 +669,15 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
+		};
+		AA000704 /* Build configuration list for PBXNativeTarget "NekoTransSafariExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000631 /* Debug */,
+				AA000632 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 

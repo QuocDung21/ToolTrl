@@ -33,21 +33,35 @@ public final class AppExclusionService: ObservableObject {
         }
     }
 
+    private var cachedFrontmostBundleID: String?
+
     private init() {
         self.excludedBundleIDs = Defaults[.excludedAppBundleIdentifiers]
+        self.cachedFrontmostBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
+                return
+            }
+            self?.cachedFrontmostBundleID = app.bundleIdentifier
+        }
     }
 
-    /// Determines if the current frontmost application is on the exclusion list.
+    /// Determines if the current frontmost application is on the exclusion list with zero-IPC cached lookup.
     public func isCurrentAppExcluded() -> Bool {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication else { return false }
-        guard let bundleID = frontApp.bundleIdentifier else { return false }
+        let bundleID = cachedFrontmostBundleID ?? NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        guard let id = bundleID, !id.isEmpty else { return false }
 
         // Never exclude NekoTrans itself
-        if bundleID == Bundle.main.bundleIdentifier {
+        if id == Bundle.main.bundleIdentifier {
             return false
         }
 
-        return isAppExcluded(bundleIdentifier: bundleID)
+        return isAppExcluded(bundleIdentifier: id)
     }
 
     /// Checks if a specific bundle identifier is excluded.

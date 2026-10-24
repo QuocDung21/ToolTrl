@@ -28,8 +28,8 @@ public struct AdvancedFeaturesSettingsSection: View {
         !settings.geminiKey.isEmpty ||
         !settings.groqKey.isEmpty ||
         !settings.deepSeekKey.isEmpty ||
-        !settings.deepLKey.isEmpty ||
-        !settings.customAIModel.isEmpty
+        !settings.customAIModel.isEmpty ||
+        !settings.customGGUFModelPath.isEmpty
     }
     
     public init() {}
@@ -99,64 +99,66 @@ public struct AdvancedFeaturesSettingsSection: View {
                 
                 DisclosureGroup(isExpanded: $isExpandedAIConfig) {
                     VStack(alignment: .leading, spacing: 10) {
-                        if settings.aiProvider != .inProcessGGUF {
+                        if settings.aiProvider == .inProcessGGUF {
+                            ggufInProcessView
+                        } else {
                             TextField("Model AI tùy chỉnh (để trống để dùng mặc định):", text: $settings.customAIModel)
                                 .textFieldStyle(.roundedBorder)
-                        }
-                        
-                        switch settings.aiProvider {
-                        case .openAI:
-                            SecureField("OpenAI API Key (sk-...):", text: $settings.openAIKey)
-                                .textFieldStyle(.roundedBorder)
-                        case .anthropic:
-                            SecureField("Anthropic Claude API Key (sk-ant-...):", text: $settings.anthropicKey)
-                                .textFieldStyle(.roundedBorder)
-                        case .googleGemini:
-                            SecureField("Google Gemini API Key (AIza...):", text: $settings.geminiKey)
-                                .textFieldStyle(.roundedBorder)
-                        case .groq:
-                            SecureField("Groq API Key (gsk_...):", text: $settings.groqKey)
-                                .textFieldStyle(.roundedBorder)
-                        case .deepSeek:
-                            SecureField("DeepSeek API Key (sk-...):", text: $settings.deepSeekKey)
-                                .textFieldStyle(.roundedBorder)
-                        case .inProcessGGUF:
-                            ggufInProcessView
-                        }
-                        
-                        SecureField("DeepL API Key (Tùy chọn):", text: $settings.deepLKey)
-                            .textFieldStyle(.roundedBorder)
-                        
-                        HStack(spacing: 8) {
-                            Button(action: {
-                                testAIConnection()
-                            }) {
-                                if isTestingConnection {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                    Text("Đang kiểm tra kết nối...")
-                                } else {
-                                    Label("Xem trước / Thử kết nối AI", systemImage: "play.circle.fill")
+
+                            switch settings.aiProvider {
+                            case .openAI:
+                                SecureField("OpenAI API Key (sk-...):", text: $settings.openAIKey)
+                                    .textFieldStyle(.roundedBorder)
+                            case .anthropic:
+                                SecureField("Anthropic Claude API Key (sk-ant-...):", text: $settings.anthropicKey)
+                                    .textFieldStyle(.roundedBorder)
+                            case .googleGemini:
+                                SecureField("Google Gemini API Key (AIza...):", text: $settings.geminiKey)
+                                    .textFieldStyle(.roundedBorder)
+                            case .groq:
+                                SecureField("Groq API Key (gsk_...):", text: $settings.groqKey)
+                                    .textFieldStyle(.roundedBorder)
+                            case .deepSeek:
+                                SecureField("DeepSeek API Key (sk-...):", text: $settings.deepSeekKey)
+                                    .textFieldStyle(.roundedBorder)
+                            case .inProcessGGUF:
+                                EmptyView()
+                            }
+
+                            HStack(spacing: 8) {
+                                Button(action: {
+                                    testAIConnection()
+                                }) {
+                                    if isTestingConnection {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                        Text("Đang kiểm tra kết nối...")
+                                    } else {
+                                        Label("Thử kết nối API", systemImage: "play.circle.fill")
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .disabled(isTestingConnection)
+
+                                if let msg = testStatusMessage {
+                                    Text(msg)
+                                        .font(.system(size: 11))
+                                        .foregroundColor(testSuccess ? .green : .red)
+                                        .lineLimit(2)
                                 }
                             }
-                            .buttonStyle(.bordered)
-                            .disabled(isTestingConnection)
-                            
-                            if let msg = testStatusMessage {
-                                Text(msg)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(testSuccess ? .green : .red)
-                                    .lineLimit(2)
-                            }
+                            .padding(.top, 4)
                         }
-                        .padding(.top, 4)
                     }
                     .padding(.top, 4)
                 } label: {
                     HStack {
-                        Label("Cấu hình nâng cao (API Key & Model AI)", systemImage: "key.fill")
-                            .font(.system(size: 13, weight: .medium))
-                        
+                        Label(
+                            settings.aiProvider == .inProcessGGUF ? "Cấu hình mô hình GGUF (In-Process Metal)" : "Cấu hình nâng cao (API Key & Model AI)",
+                            systemImage: settings.aiProvider == .inProcessGGUF ? "cpu.fill" : "key.fill"
+                        )
+                        .font(.system(size: 13, weight: .medium))
+
                         Spacer()
                         
                         if hasCustomConfig {
@@ -485,6 +487,18 @@ public struct AdvancedFeaturesSettingsSection: View {
             } header: {
                 Text("HUD SO SÁNH ĐA CÔNG CỤ (MULTI-ENGINE STACK)")
             }
+
+            // ── DEEPL API KEY ──
+            Section {
+                SecureField("DeepL API Key (Tùy chọn):", text: $settings.deepLKey)
+                    .textFieldStyle(.roundedBorder)
+            } header: {
+                Text("DỊCH THUẬT DEEPL")
+            } footer: {
+                Text("Dùng khi bạn chọn động cơ dịch DeepL hoặc bật hiển thị so sánh đa công cụ.")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
         }
         .formStyle(.grouped)
         .onAppear {
@@ -580,234 +594,215 @@ public struct AdvancedFeaturesSettingsSection: View {
 
     @ViewBuilder
     private var ggufInProcessView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // 1. Apple Silicon Hardware Acceleration Badge
-            HStack(spacing: 6) {
-                Image(systemName: "cpu.fill")
-                    .foregroundColor(.cyan)
-                Text("Apple Silicon Metal In-Process (\(LocalGGUFService.shared.appleSiliconChipName))")
-                    .font(.system(size: 11, weight: .semibold))
-                Spacer()
-                Text("100% In-Process • Không cần Server")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.secondary)
-            }
-            .padding(8)
-            .background(Color.cyan.opacity(0.08))
-            .cornerRadius(6)
+        VStack(alignment: .leading, spacing: 12) {
+            // 1. Thẻ trạng thái phần cứng & RAM
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(LocalGGUFService.shared.isLoaded ? Color.green.opacity(0.15) : Color.accentColor.opacity(0.12))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: LocalGGUFService.shared.isLoaded ? "memorychip.fill" : "cpu.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(LocalGGUFService.shared.isLoaded ? .green : Color.accentColor)
+                }
 
-            // 2. RAM Load Status Banner
-            HStack(spacing: 8) {
-                if LocalGGUFService.shared.isLoaded {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    VStack(alignment: .leading, spacing: 1) {
-                        let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? settings.customGGUFModelPath)
-                        Text("Đã nạp trong RAM Metal: \(name)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.green)
-                        Text("Sẵn sàng dịch tức thì không qua mạng")
-                            .font(.system(size: 9.5))
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("Apple Silicon Metal In-Process")
+                            .font(.system(size: 12.5, weight: .semibold))
+                        Text("• \(LocalGGUFService.shared.appleSiliconChipName)")
+                            .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
-                    Spacer()
+
+                    if LocalGGUFService.shared.isLoaded {
+                        let name = LocalGGUFService.friendlyModelName(from: LocalGGUFService.shared.loadedModelName ?? settings.customGGUFModelPath)
+                        Text("Đã nạp vào RAM: \(name) • Dịch tức thì ngoại tuyến")
+                            .font(.system(size: 11))
+                            .foregroundColor(.green)
+                    } else {
+                        Text("Tự động nạp vào RAM khi bạn dịch câu đầu tiên")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if LocalGGUFService.shared.isLoaded {
                     Button("Giải phóng RAM") {
                         LocalGGUFService.shared.unloadModel()
                         ggufLoadStatus = "Đã giải phóng bộ nhớ RAM."
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                } else {
-                    Image(systemName: "circle.dashed")
-                        .foregroundColor(.secondary)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Chưa nạp vào RAM")
-                            .font(.system(size: 11, weight: .medium))
-                        Text("Mô hình sẽ tự động nạp khi bạn dịch câu đầu tiên")
-                            .font(.system(size: 9.5))
-                            .foregroundColor(.secondary)
+                } else if !settings.customGGUFModelPath.isEmpty && FileManager.default.fileExists(atPath: settings.customGGUFModelPath) {
+                    Button("Nạp vào RAM ngay") {
+                        loadGGUFIntoRAM(path: settings.customGGUFModelPath)
                     }
-                    Spacer()
-                    if !settings.customGGUFModelPath.isEmpty && FileManager.default.fileExists(atPath: settings.customGGUFModelPath) {
-                        Button("Nạp vào RAM ngay") {
-                            loadGGUFIntoRAM(path: settings.customGGUFModelPath)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                 }
             }
-            .padding(8)
+            .padding(10)
             .background(Color.primary.opacity(0.03))
-            .cornerRadius(6)
+            .cornerRadius(8)
 
             if let status = ggufLoadStatus {
                 Text(status)
-                    .font(.system(size: 10.5))
-                    .foregroundColor(.blue)
+                    .font(.system(size: 11))
+                    .foregroundColor(status.contains("Lỗi") ? .red : .blue)
+                    .padding(.horizontal, 4)
             }
 
-            // 3. Current Selected GGUF File
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Đường dẫn file .gguf:")
-                    .font(.system(size: 11, weight: .medium))
+            // 2. Danh sách mô hình trên máy
+            VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    TextField("Chọn file .gguf trên máy...", text: $settings.customGGUFModelPath)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 11))
+                    Text("MÔ HÌNH .GGUF TRÊN MÁY (\(localGGUFModels.count))")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.secondary)
 
-                    Button("Chọn file...") {
-                        selectGGUFFile()
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-
-            // 4. Engine status banner
-            HStack(spacing: 8) {
-                if settings.translationEngine == .directAI && settings.aiProvider == .inProcessGGUF {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Đang là Động cơ dịch chính (Direct AI • GGUF In-Process)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.green)
-                    }
-                } else {
-                    HStack(spacing: 6) {
-                        Text("Động cơ dịch hiện tại: \(settings.translationEngine.rawValue)")
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Button(action: {
-                            settings.translationEngine = .directAI
-                            settings.aiProvider = .inProcessGGUF
-                        }) {
-                            Label("Đặt làm bộ dịch chính", systemImage: "bolt.fill")
-                                .font(.system(size: 10.5, weight: .semibold))
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                    }
-                }
-            }
-            .padding(.vertical, 2)
-
-            // 5. Discovered GGUF Files on Disk
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Label("File GGUF tìm thấy trên máy (\(localGGUFModels.count)):", systemImage: "shippingbox.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.blue)
                     Spacer()
+
                     Button(action: {
                         localGGUFModels = LocalGGUFService.shared.scanLocalGGUFModels()
                     }) {
                         Label("Quét lại", systemImage: "arrow.clockwise")
-                            .font(.system(size: 10.5))
+                            .font(.system(size: 11))
                     }
                     .buttonStyle(.borderless)
                 }
 
                 if localGGUFModels.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(spacing: 8) {
+                        Image(systemName: "shippingbox")
+                            .font(.system(size: 22))
+                            .foregroundColor(.secondary.opacity(0.5))
                         Text("Chưa tìm thấy file .gguf nào trong Downloads hoặc thư mục Cache.")
-                            .font(.system(size: 10.5))
-                            .foregroundColor(.secondary)
-                        Text("💡 Bạn có thể tải file GGUF từ Hugging Face hoặc bấm nút 'Chọn file...' ở trên.")
-                            .font(.system(size: 10.5))
+                            .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
-                    .padding(6)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.primary.opacity(0.02))
+                    .cornerRadius(8)
                 } else {
-                    ForEach(localGGUFModels) { gguf in
-                        let isSelected = settings.customGGUFModelPath == gguf.path && settings.aiProvider == .inProcessGGUF
-                        HStack(spacing: 8) {
-                            Image(systemName: isSelected ? "checkmark.seal.fill" : "cube.fill")
-                                .foregroundColor(isSelected ? .green : .blue)
-                            VStack(alignment: .leading, spacing: 1) {
-                                HStack(spacing: 4) {
-                                    Text(gguf.name)
-                                        .font(.system(size: 11, weight: isSelected ? .bold : .medium))
-                                    if isSelected {
-                                        Text("ĐANG CHỌN")
-                                            .font(.system(size: 8.5, weight: .bold))
-                                            .padding(.horizontal, 4)
-                                            .padding(.vertical, 1)
-                                            .background(Color.green.opacity(0.18))
-                                            .foregroundColor(.green)
-                                            .cornerRadius(3)
+                    VStack(spacing: 6) {
+                        ForEach(localGGUFModels) { gguf in
+                            let isSelected = settings.customGGUFModelPath == gguf.path && settings.aiProvider == .inProcessGGUF
+
+                            HStack(spacing: 10) {
+                                Image(systemName: isSelected ? "checkmark.circle.fill" : "cube.fill")
+                                    .font(.system(size: 15))
+                                    .foregroundColor(isSelected ? .green : .secondary)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 6) {
+                                        Text(gguf.name)
+                                            .font(.system(size: 12.5, weight: isSelected ? .bold : .medium))
+
+                                        if isSelected {
+                                            Text("Đang chọn")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .padding(.horizontal, 5)
+                                                .padding(.vertical, 1.5)
+                                                .background(Color.green.opacity(0.18))
+                                                .foregroundColor(.green)
+                                                .clipShape(Capsule())
+                                        }
+                                    }
+
+                                    HStack(spacing: 6) {
+                                        Text(gguf.formattedSize)
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundColor(isSelected ? .green : .primary.opacity(0.8))
+
+                                        Text("•")
+                                            .font(.system(size: 9))
+                                            .foregroundColor(.secondary)
+
+                                        Text(URL(fileURLWithPath: gguf.path).lastPathComponent)
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary)
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
                                     }
                                 }
-                                Text("Dung lượng: \(gguf.formattedSize) • \(gguf.path)")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            }
 
-                            Spacer()
+                                Spacer()
 
-                            if isSelected {
-                                HStack(spacing: 3) {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 10, weight: .bold))
-                                    Text("Đang sử dụng")
-                                        .font(.system(size: 10.5, weight: .semibold))
+                                if !isSelected {
+                                    Button("Chọn") {
+                                        settings.customGGUFModelPath = gguf.path
+                                        settings.translationEngine = .directAI
+                                        settings.aiProvider = .inProcessGGUF
+                                        loadGGUFIntoRAM(path: gguf.path)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
                                 }
-                                .foregroundColor(.green)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                            } else {
-                                Button("Sử dụng") {
-                                    settings.customGGUFModelPath = gguf.path
-                                    settings.translationEngine = .directAI
-                                    settings.aiProvider = .inProcessGGUF
-                                    loadGGUFIntoRAM(path: gguf.path)
-                                }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
                             }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(isSelected ? Color.green.opacity(0.08) : Color.primary.opacity(0.02))
+                            .cornerRadius(7)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 7)
+                                    .stroke(isSelected ? Color.green.opacity(0.3) : Color.primary.opacity(0.06), lineWidth: 0.8)
+                            )
                         }
-                        .padding(6)
-                        .background(isSelected ? Color.green.opacity(0.08) : Color.blue.opacity(0.05))
-                        .cornerRadius(6)
                     }
                 }
+
+                HStack {
+                    Button(action: {
+                        selectGGUFFile()
+                    }) {
+                        Label("Chọn file .gguf khác từ máy...", systemImage: "folder")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Spacer()
+                }
+                .padding(.top, 2)
             }
 
-            // 6. Gợi ý tải model GGUF chuẩn & siêu tốc cho Apple Silicon
-            VStack(alignment: .leading, spacing: 4) {
-                Text("🌟 Gợi ý model GGUF tối ưu cho dịch thuật:")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.primary)
-                HStack(spacing: 8) {
-                    Button(action: {
-                        if let url = URL(string: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        Label("Qwen2.5-1.5B-Instruct-GGUF (~1.1 GB)", systemImage: "arrow.down.circle")
-                            .font(.system(size: 10.5))
-                    }
-                    .buttonStyle(.link)
+            Divider()
 
+            // 3. Gợi ý tải mô hình tối ưu
+            VStack(alignment: .leading, spacing: 6) {
+                Text("GỢI Ý TẢI MÔ HÌNH DỊCH THUẬT CHO MAC")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.secondary)
+
+                HStack(spacing: 8) {
                     Button(action: {
                         if let url = URL(string: "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF") {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        Label("Qwen2.5-0.5B-Instruct-GGUF (~390 MB)", systemImage: "arrow.down.circle")
+                        Label("Qwen 2.5 0.5B (~390 MB • Nhanh)", systemImage: "arrow.down.circle")
                             .font(.system(size: 10.5))
                     }
-                    .buttonStyle(.link)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+
+                    Button(action: {
+                        if let url = URL(string: "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        Label("Qwen 2.5 1.5B (~1.1 GB • Cân bằng)", systemImage: "arrow.down.circle")
+                            .font(.system(size: 10.5))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
             }
-            .padding(8)
-            .background(Color.primary.opacity(0.02))
-            .cornerRadius(6)
         }
-        .padding(.top, 4)
+        .padding(.vertical, 4)
     }
 }
 

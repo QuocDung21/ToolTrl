@@ -10,12 +10,11 @@ public struct LocalGGUFModelItem: Identifiable, Hashable, Sendable {
     public let fileSize: Int64
     
     public var formattedSize: String {
-        let gb = Double(fileSize) / 1_073_741_824.0
-        if gb >= 1.0 {
-            return String(format: "%.1f GB", gb)
-        }
-        let mb = Double(fileSize) / 1_048_576.0
-        return String(format: "%.0f MB", mb)
+        guard fileSize > 0 else { return "Không rõ kích thước" }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useGB, .useMB]
+        return formatter.string(fromByteCount: fileSize)
     }
     
     public init(name: String, path: String, fileSize: Int64) {
@@ -36,7 +35,27 @@ public final class LocalGGUFService: @unchecked Sendable {
     public private(set) var loadedModelPath: String?
     public private(set) var loadedModelName: String?
     
+    // Watchdog Timer for Idle Auto-Unload
+    private var idleTimer: DispatchSourceTimer?
+    private var _idleUnloadInterval: TimeInterval = 600 // 10 minutes default; <= 0 disables watchdog
+    
+    public var idleUnloadInterval: TimeInterval {
+        get { queue.sync { _idleUnloadInterval } }
+        set {
+            queue.sync {
+                _idleUnloadInterval = newValue
+                if isLoadedInternal {
+                    resetIdleTimerInternal()
+                }
+            }
+        }
+    }
+    
     public var isLoaded: Bool {
+        queue.sync { isLoadedInternal }
+    }
+    
+    private var isLoadedInternal: Bool {
         model != nil && context != nil
     }
     
@@ -49,19 +68,38 @@ public final class LocalGGUFService: @unchecked Sendable {
         return brand.isEmpty ? "Apple Silicon" : brand
     }
     
+    private var isBackendInitialized = false
+    
     private init() {
-        llama_backend_init()
+        // Do not eagerly call llama_backend_init() to prevent spawning background Metal rsets threads when unused.
     }
     
     deinit {
-        unloadModel()
-        llama_backend_free()
+        shutdown()
+    }
+    
+    private func ensureBackendInitialized() {
+        if !isBackendInitialized {
+            llama_backend_init()
+            isBackendInitialized = true
+        }
+    }
+    
+    public func shutdown() {
+        queue.sync {
+            unloadModelInternal()
+            if isBackendInitialized {
+                llama_backend_free()
+                isBackendInitialized = false
+            }
+        }
     }
     
     // MARK: - Model Management
     
     public func loadModel(at path: String, contextSize: UInt32 = 2048, nGpuLayers: Int32 = 99) throws {
         try queue.sync {
+            ensureBackendInitialized()
             unloadModelInternal()
             
             guard FileManager.default.fileExists(atPath: path) else {
@@ -80,6 +118,7 @@ public final class LocalGGUFService: @unchecked Sendable {
             var ctxParams = llama_context_default_params()
             ctxParams.n_ctx = contextSize
             ctxParams.n_batch = 512
+            ctxParams.type_k = GGML_TYPE_Q8_0 // Quantized KV Cache: -50% RAM consumption for Key cache
             
             guard let loadedContext = llama_init_from_model(loadedModel, ctxParams) else {
                 llama_model_free(loadedModel)
@@ -90,6 +129,7 @@ public final class LocalGGUFService: @unchecked Sendable {
             self.context = loadedContext
             self.loadedModelPath = path
             self.loadedModelName = Self.friendlyModelName(from: path)
+            self.resetIdleTimerInternal()
             
             AppLog.ai.info("Nạp mô hình GGUF thành công: \(self.loadedModelName ?? "", privacy: .public)")
         }
@@ -102,6 +142,7 @@ public final class LocalGGUFService: @unchecked Sendable {
     }
     
     private func unloadModelInternal() {
+        cancelIdleTimerInternal()
         if let ctx = context {
             llama_free(ctx)
             context = nil
@@ -112,6 +153,28 @@ public final class LocalGGUFService: @unchecked Sendable {
         }
         loadedModelPath = nil
         loadedModelName = nil
+    }
+    
+    private func resetIdleTimerInternal() {
+        idleTimer?.cancel()
+        idleTimer = nil
+        
+        guard _idleUnloadInterval > 0, isLoadedInternal else { return }
+        
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now() + _idleUnloadInterval)
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            AppLog.ai.info("LocalGGUFService: Model idle timeout reached (\(self._idleUnloadInterval, privacy: .public)s). Tự động giải phóng RAM.")
+            self.unloadModelInternal()
+        }
+        timer.resume()
+        self.idleTimer = timer
+    }
+    
+    private func cancelIdleTimerInternal() {
+        idleTimer?.cancel()
+        idleTimer = nil
     }
     
     // MARK: - Prompt Formatting
@@ -157,10 +220,15 @@ public final class LocalGGUFService: @unchecked Sendable {
     public func streamInference(
         prompt: String,
         maxTokens: Int = 1024,
+        isCancelled: (@Sendable () -> Bool)? = nil,
         onToken: @escaping @Sendable (String) -> Void
     ) async throws -> String {
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
+                self.cancelIdleTimerInternal()
+                defer {
+                    self.resetIdleTimerInternal()
+                }
                 do {
                     guard let model = self.model, let ctx = self.context else {
                         throw NSError(domain: "GGUF", code: 400, userInfo: [NSLocalizedDescriptionKey: "Chưa nạp mô hình GGUF nào vào bộ nhớ."])
@@ -203,6 +271,10 @@ public final class LocalGGUFService: @unchecked Sendable {
                     
                     // 4. Ingest Prompt Tokens
                     for (i, token) in tokens.enumerated() {
+                        if isCancelled?() == true {
+                            continuation.resume(returning: "")
+                            return
+                        }
                         let isLast = (i == tokens.count - 1)
                         self.addToken(to: &batch, token: token, pos: llama_pos(i), seqId: 0, logits: isLast)
                         if batch.n_tokens == 512 || isLast {
@@ -220,6 +292,11 @@ public final class LocalGGUFService: @unchecked Sendable {
                     var tokenBuffer = [CChar](repeating: 0, count: 256)
                     
                     for _ in 0..<maxTokens {
+                        // Early cancellation check: immediately exit generation loop
+                        if isCancelled?() == true {
+                            break
+                        }
+                        
                         let nextToken = llama_sampler_sample(smpl, ctx, -1)
                         
                         // Check End-of-Generation
@@ -250,10 +327,13 @@ public final class LocalGGUFService: @unchecked Sendable {
                         batch.n_tokens = 0
                     }
                     
-                    let cleaned = generatedText
+                    var cleaned = generatedText
                         .replacingOccurrences(of: "<|im_end|>", with: "")
                         .replacingOccurrences(of: "<|endoftext|>", with: "")
                         .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if cleaned.hasPrefix("\"") && cleaned.hasSuffix("\"") && cleaned.count >= 2 {
+                        cleaned = String(cleaned.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
                     continuation.resume(returning: cleaned)
                 } catch {
                     continuation.resume(throwing: error)
@@ -386,6 +466,35 @@ public final class LocalGGUFService: @unchecked Sendable {
     
     // MARK: - Scanning Local GGUF Files
     
+    /// Lấy kích thước tệp thực tế theo byte (tự động theo dõi symbolic link/Hugging Face cache blob)
+    public static func resolveActualFileSize(atPath path: String) -> Int64 {
+        let url = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+        
+        // 1. Thử lấy qua stat(2) hệ thống - luôn tự động follow symbolic link
+        var statBuf = stat()
+        if stat(path, &statBuf) == 0 && statBuf.st_size > 1024 {
+            return Int64(statBuf.st_size)
+        }
+        if stat(url.path, &statBuf) == 0 && statBuf.st_size > 1024 {
+            return Int64(statBuf.st_size)
+        }
+        
+        // 2. Thử lấy qua FileManager attributes trên resolved path
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let size = (attrs[.size] as? NSNumber)?.int64Value ?? (attrs[.size] as? Int64),
+           size > 1024 {
+            return size
+        }
+        
+        // 3. Thử lấy qua URL resource values
+        if let values = try? url.resourceValues(forKeys: [.fileSizeKey, .totalFileAllocatedSizeKey]),
+           let size = values.fileSize, size > 1024 {
+            return Int64(size)
+        }
+        
+        return max(0, Int64(statBuf.st_size))
+    }
+    
     public func scanLocalGGUFModels() -> [LocalGGUFModelItem] {
         var results: [LocalGGUFModelItem] = []
         let fileManager = FileManager.default
@@ -402,15 +511,13 @@ public final class LocalGGUFService: @unchecked Sendable {
         if !savedCustomPath.isEmpty {
             let customURL = URL(fileURLWithPath: savedCustomPath)
             if fileManager.fileExists(atPath: savedCustomPath) {
-                if customURL.pathExtension.lowercased() == "gguf" || fileManager.fileExists(atPath: savedCustomPath) {
-                    if let attrs = try? fileManager.attributesOfItem(atPath: savedCustomPath),
-                       let size = attrs[.size] as? Int64 {
-                        results.append(LocalGGUFModelItem(
-                            name: Self.friendlyModelName(from: savedCustomPath),
-                            path: savedCustomPath,
-                            fileSize: size
-                        ))
-                    }
+                if customURL.pathExtension.lowercased() == "gguf" {
+                    let size = Self.resolveActualFileSize(atPath: savedCustomPath)
+                    results.append(LocalGGUFModelItem(
+                        name: Self.friendlyModelName(from: savedCustomPath),
+                        path: savedCustomPath,
+                        fileSize: size
+                    ))
                 } else {
                     searchDirs.append(customURL)
                 }
@@ -422,19 +529,22 @@ public final class LocalGGUFService: @unchecked Sendable {
             guard let enumerator = fileManager.enumerator(
                 at: dir,
                 includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey],
-                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+                options: [.skipsPackageDescendants]
             ) else { continue }
             
             for case let fileURL as URL in enumerator {
                 if fileURL.pathExtension.lowercased() == "gguf" {
                     let resolved = fileURL.resolvingSymlinksInPath()
-                    if let attrs = try? fileManager.attributesOfItem(atPath: resolved.path),
-                       let size = attrs[.size] as? Int64 {
-                        let name = Self.friendlyModelName(from: fileURL.path)
-                        let pathToStore = fileURL.path
-                        if !results.contains(where: { $0.path == pathToStore || $0.path == resolved.path }) {
-                            results.append(LocalGGUFModelItem(name: name, path: pathToStore, fileSize: size))
+                    let size = Self.resolveActualFileSize(atPath: fileURL.path)
+                    let name = Self.friendlyModelName(from: fileURL.path)
+                    let pathToStore = fileURL.path
+                    
+                    if let existingIndex = results.firstIndex(where: { $0.path == pathToStore || $0.path == resolved.path }) {
+                        if results[existingIndex].fileSize <= 1024 && size > 1024 {
+                            results[existingIndex] = LocalGGUFModelItem(name: name, path: pathToStore, fileSize: size)
                         }
+                    } else {
+                        results.append(LocalGGUFModelItem(name: name, path: pathToStore, fileSize: size))
                     }
                 }
             }

@@ -91,6 +91,7 @@ public final class DirectAIService: Sendable {
         to targetLang: String = "vi",
         domain: TranslationDomain = .general,
         provider: DirectAIProvider = Defaults[.aiProvider],
+        isCancelled: (@Sendable () -> Bool)? = nil,
         onToken: @escaping @Sendable (String) -> Void
     ) async throws -> String {
         switch provider {
@@ -112,6 +113,7 @@ public final class DirectAIService: Sendable {
                 apiKey: apiKey,
                 model: model,
                 prompt: prompt,
+                isCancelled: isCancelled,
                 onToken: onToken
             )
         case .inProcessGGUF:
@@ -127,6 +129,7 @@ public final class DirectAIService: Sendable {
             let formattedPrompt = LocalGGUFService.shared.formatPrompt(system: sys, user: userPrompt)
             return try await LocalGGUFService.shared.streamInference(
                 prompt: formattedPrompt,
+                isCancelled: isCancelled,
                 onToken: onToken
             )
         default:
@@ -345,6 +348,7 @@ public final class DirectAIService: Sendable {
         apiKey: String,
         model: String,
         prompt: String,
+        isCancelled: (@Sendable () -> Bool)? = nil,
         onToken: @escaping @Sendable (String) -> Void
     ) async throws -> String {
         guard let url = URL(string: endpoint) else { throw URLError(.badURL) }
@@ -372,6 +376,7 @@ public final class DirectAIService: Sendable {
         var accumulatedText = ""
         
         for try await line in bytes.lines {
+            if isCancelled?() == true { break }
             let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard trimmedLine.hasPrefix("data: ") else { continue }
             let payload = String(trimmedLine.dropFirst(6)).trimmingCharacters(in: .whitespacesAndNewlines)

@@ -132,34 +132,68 @@ public enum BrowserScriptHelper {
         return result == "true"
     }
 
-    // MARK: - AppleScript Execution
+    // MARK: - AppleScript Execution & Compiled Cache
 
-    /// Runs an AppleScript string with a timeout on a background queue
+    private static let scriptQueue = DispatchQueue(label: "com.nekotrans.applescript.worker", qos: .userInitiated)
+    private nonisolated(unsafe) static var compiledScriptCache: [String: NSAppleScript] = [:]
+
+    /// Runs an AppleScript string with a timeout on a background queue using pre-compiled script cache
     public static func runAppleScript(_ source: String, timeout: TimeInterval = 1.0) async -> String? {
         await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let task = Task { () -> String? in
-                    guard let appleScript = NSAppleScript(source: source) else { return nil }
-                    var errorInfo: NSDictionary?
-                    let output = appleScript.executeAndReturnError(&errorInfo)
-                    if errorInfo != nil {
-                        return nil
+            var hasResumed = false
+            let lock = NSLock()
+
+            let workItem = DispatchWorkItem {
+                let appleScript: NSAppleScript?
+                if let cached = compiledScriptCache[source] {
+                    appleScript = cached
+                } else if let newScript = NSAppleScript(source: source) {
+                    var compileError: NSDictionary?
+                    _ = newScript.compileAndReturnError(&compileError)
+                    compiledScriptCache[source] = newScript
+                    appleScript = newScript
+                } else {
+                    appleScript = nil
+                }
+
+                guard let script = appleScript else {
+                    lock.lock()
+                    if !hasResumed {
+                        hasResumed = true
+                        lock.unlock()
+                        continuation.resume(returning: nil)
+                    } else {
+                        lock.unlock()
                     }
-                    return output.stringValue
+                    return
                 }
 
-                // Timeout watchdog
-                let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global())
-                timer.schedule(deadline: .now() + timeout)
-                timer.setEventHandler {
-                    task.cancel()
-                }
-                timer.resume()
+                var errorInfo: NSDictionary?
+                let output = script.executeAndReturnError(&errorInfo)
+                let str = (errorInfo == nil) ? output.stringValue : nil
 
-                Task {
-                    let result = await task.value
-                    timer.cancel()
-                    continuation.resume(returning: result)
+                lock.lock()
+                if !hasResumed {
+                    hasResumed = true
+                    lock.unlock()
+                    continuation.resume(returning: str)
+                } else {
+                    lock.unlock()
+                }
+            }
+
+            scriptQueue.async(execute: workItem)
+
+            // Timeout watchdog
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
+                lock.lock()
+                if !hasResumed {
+                    hasResumed = true
+                    lock.unlock()
+                    workItem.cancel()
+                    continuation.resume(returning: nil)
+                } else {
+                    lock.unlock()
                 }
             }
         }

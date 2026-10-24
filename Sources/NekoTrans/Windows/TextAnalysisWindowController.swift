@@ -63,5 +63,12 @@ public final class TextAnalysisWindowController: NSObject, ObservableObject, NSW
     
     public func closeWindow() {
         window?.orderOut(nil)
+        window?.contentView = nil
+        window = nil
+    }
+    
+    public func windowWillClose(_ notification: Notification) {
+        window?.contentView = nil
+        window = nil
     }
 }

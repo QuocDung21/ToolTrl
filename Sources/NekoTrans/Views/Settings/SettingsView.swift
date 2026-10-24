@@ -4,6 +4,7 @@ import SwiftUI
 
 public enum SettingsSidebarSection: String, CaseIterable, Identifiable, Sendable {
     case general    = "general"
+    case safari     = "safari"
     case advanced   = "advanced"
     case shortcuts  = "shortcuts"
     case speech     = "speech"
@@ -18,6 +19,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable, Sendable
     public var localizedTitle: LocalizedStringResource {
         switch self {
         case .general:    return .sidebarGeneral
+        case .safari:     return LocalizedStringResource("Tiện ích Safari")
         case .advanced:   return .sidebarAdvanced
         case .shortcuts:  return .sidebarShortcuts
         case .speech:     return .sidebarSpeech
@@ -32,6 +34,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable, Sendable
     public var icon: String {
         switch self {
         case .general:    return "gearshape.fill"
+        case .safari:     return "safari.fill"
         case .advanced:   return "sparkles.rectangle.stack.fill"
         case .shortcuts:  return "command"
         case .speech:     return "speaker.wave.2.fill"
@@ -46,6 +49,7 @@ public enum SettingsSidebarSection: String, CaseIterable, Identifiable, Sendable
     public var iconBgColor: Color {
         switch self {
         case .general:    return .gray
+        case .safari:     return .blue
         case .advanced:   return .indigo
         case .shortcuts:  return .orange
         case .speech:     return .blue
@@ -85,9 +89,18 @@ public struct SettingsView: View {
 
     // MARK: - Sidebar
 
+    private var visibleSections: [SettingsSidebarSection] {
+        SettingsSidebarSection.allCases.filter { sec in
+            if sec == .labs {
+                return flags.isDeveloperModeUnlocked
+            }
+            return true
+        }
+    }
+
     private var sidebar: some View {
         List(selection: $selectedSection) {
-            ForEach(SettingsSidebarSection.allCases) { sec in
+            ForEach(visibleSections) { sec in
                 NavigationLink(value: sec) {
                     SidebarRow(section: sec)
                 }
@@ -104,6 +117,7 @@ public struct SettingsView: View {
         Group {
             switch selectedSection {
             case .general:    GeneralSettingsSection()
+            case .safari:     SafariExtensionSettingsSection()
             case .advanced:   AdvancedFeaturesSettingsSection()
             case .shortcuts:  ShortcutsSettingsSection()
             case .speech:     SpeechSettingsSection()

@@ -1,5 +1,6 @@
 import SwiftUI
 import SettingsAccess
+import Defaults
 #if canImport(Translation)
 import Translation
 #endif
@@ -29,21 +30,36 @@ public struct TranslationHUDView: View {
     var settings = AppSettings.shared
     var onClose: () -> Void
     var onTogglePin: (() -> Void)?
-    var onHeightChanged: ((CGFloat) -> Void)?
+    var onDimensionsChanged: ((CGFloat, CGFloat, Bool) -> Void)?
+    var onHeightChanged: ((CGFloat, Bool) -> Void)?
 
     @State private var isPinned: Bool = false
     @State private var manualInput: String = ""
     @State private var measuredContentHeight: CGFloat = 80
     @State private var measuredTotalHeight: CGFloat = 160
 
+    private var targetWidth: CGFloat {
+        (viewModel.isComparisonMode || Defaults[.enableHUDMultiEngine]) ? 640 : 515
+    }
+
+    private func notifySizeChanged(height: CGFloat, animate: Bool) {
+        if let onDimensionsChanged = onDimensionsChanged {
+            onDimensionsChanged(targetWidth, height, animate)
+        } else {
+            onHeightChanged?(height, animate)
+        }
+    }
+
     public init(
         viewModel: TranslationViewModel,
         onTogglePin: (() -> Void)? = nil,
-        onHeightChanged: ((CGFloat) -> Void)? = nil,
+        onDimensionsChanged: ((CGFloat, CGFloat, Bool) -> Void)? = nil,
+        onHeightChanged: ((CGFloat, Bool) -> Void)? = nil,
         onClose: @escaping () -> Void
     ) {
         self.viewModel = viewModel
         self.onTogglePin = onTogglePin
+        self.onDimensionsChanged = onDimensionsChanged
         self.onHeightChanged = onHeightChanged
         self.onClose = onClose
     }
@@ -54,13 +70,42 @@ public struct TranslationHUDView: View {
         } else if viewModel.isWordLookup {
             return 320
         } else {
-            return 360
+            return 380
+        }
+    }
+
+    private var predictedScrollHeight: CGFloat {
+        let trimmed = viewModel.originalText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            return 75
+        }
+        let count = trimmed.count
+        let hasSpaces = trimmed.contains(" ") || trimmed.contains("\n")
+        if !hasSpaces && count < 35 {
+            return 175
+        }
+        if count < 60 {
+            return 105
+        } else if count < 150 {
+            return 165
+        } else if count < 300 {
+            return 235
+        } else {
+            return 295
         }
     }
 
     private var currentScrollHeight: CGFloat {
-        let raw = measuredContentHeight > 0 ? measuredContentHeight : 80
-        return min(raw, maxScrollHeight)
+        if viewModel.originalText.isEmpty {
+            return 75
+        }
+        let baseHeight: CGFloat
+        if viewModel.isStreaming || viewModel.isLoading {
+            baseHeight = max(measuredContentHeight, predictedScrollHeight)
+        } else {
+            baseHeight = measuredContentHeight > 0 ? measuredContentHeight : predictedScrollHeight
+        }
+        return min(baseHeight, maxScrollHeight)
     }
 
     public var body: some View {
@@ -97,12 +142,13 @@ public struct TranslationHUDView: View {
                 .animation(.easeInOut(duration: 0.18), value: viewModel.richEntry != nil)
             }
             .frame(height: currentScrollHeight)
-            .animation(viewModel.isStreaming ? nil : .spring(response: 0.28, dampingFraction: 0.82), value: currentScrollHeight)
-            .animation(.spring(response: 0.28, dampingFraction: 0.82), value: viewModel.originalText.isEmpty)
-            .animation(.spring(response: 0.28, dampingFraction: 0.82), value: viewModel.isWordLookup)
+            .animation(viewModel.isStreaming ? nil : .spring(response: 0.24, dampingFraction: 0.85), value: currentScrollHeight)
+            .animation(.spring(response: 0.24, dampingFraction: 0.85), value: viewModel.originalText.isEmpty)
+            .animation(.spring(response: 0.24, dampingFraction: 0.85), value: viewModel.isWordLookup)
             .onPreferenceChange(HUDContentHeightKey.self) { newHeight in
                 guard newHeight > 0 else { return }
-                if abs(measuredContentHeight - newHeight) > 1 {
+                let threshold: CGFloat = viewModel.isStreaming ? 6.0 : 1.0
+                if abs(measuredContentHeight - newHeight) >= threshold {
                     measuredContentHeight = newHeight
                 }
             }
@@ -113,7 +159,8 @@ public struct TranslationHUDView: View {
             // Bottom Quick Search Bar & Action Bar (Raycast Style)
             bottomInputBar
         }
-        .frame(width: 515)
+        .frame(width: targetWidth)
+        .animation(.spring(response: 0.24, dampingFraction: 0.85), value: targetWidth)
         .background(
             GeometryReader { totalGeo in
                 Color.clear.preference(key: HUDTotalHeightKey.self, value: totalGeo.size.height)
@@ -122,27 +169,52 @@ public struct TranslationHUDView: View {
         .onPreferenceChange(HUDTotalHeightKey.self) { exactTotalHeight in
             guard exactTotalHeight > 0 else { return }
             measuredTotalHeight = exactTotalHeight
-            onHeightChanged?(exactTotalHeight)
+            // Predictive Sizing: Freeze window position completely during streaming!
+            if !viewModel.isStreaming {
+                notifySizeChanged(height: exactTotalHeight, animate: true)
+            }
         }
-        .onChange(of: viewModel.originalText) { _, _ in
-            if measuredTotalHeight > 0 {
-                onHeightChanged?(measuredTotalHeight)
+        .onChange(of: viewModel.isStreaming) { _, isStreaming in
+            if !isStreaming && measuredTotalHeight > 0 {
+                // Settle final height smoothly with 1 single easeOut animation
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
+            }
+        }
+        .onChange(of: viewModel.originalText) { _, newText in
+            let trimmed = newText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                let predicted = FloatingPanel.predictInitialHeight(for: trimmed)
+                notifySizeChanged(height: predicted, animate: true)
+            } else if measuredTotalHeight > 0 {
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
             }
         }
         .onChange(of: viewModel.isWordLookup) { _, _ in
             if measuredTotalHeight > 0 {
-                onHeightChanged?(measuredTotalHeight)
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
             }
         }
         .onChange(of: settings.wordLookupMode) { _, _ in
             if measuredTotalHeight > 0 {
-                onHeightChanged?(measuredTotalHeight)
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
+            }
+        }
+        .onChange(of: viewModel.isComparisonMode) { _, _ in
+            if measuredTotalHeight > 0 {
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
+            }
+        }
+        .onChange(of: Defaults[.enableHUDMultiEngine]) { _, _ in
+            if measuredTotalHeight > 0 {
+                notifySizeChanged(height: measuredTotalHeight, animate: true)
             }
         }
         .background(
             ZStack {
                 VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow, cornerRadius: 16)
                 Color(nsColor: .windowBackgroundColor).opacity(0.68)
+                    .allowsHitTesting(false)
+                WindowDragArea()
             }
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         )
@@ -177,6 +249,7 @@ public struct TranslationHUDView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
+        .background(WindowDragArea())
     }
 
     // MARK: - Bottom Input Bar & Action Hints
@@ -189,6 +262,7 @@ public struct TranslationHUDView: View {
             TextField("Nhập từ, cụm từ hoặc câu cần tra cứu...", text: $manualInput)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12.5))
+                .accessibilityLabel("Ô nhập từ hoặc câu cần tra cứu")
                 .onSubmit {
                     let trimmed = manualInput.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmed.isEmpty {
@@ -210,6 +284,9 @@ public struct TranslationHUDView: View {
                         .foregroundColor(AppColors.accent)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Bắt đầu tra cứu")
+                .accessibilityHint("Nhấn để tra cứu từ hoặc câu đã nhập")
+                .accessibilityAddTraits(.isButton)
             }
 
             Spacer(minLength: 4)
@@ -234,6 +311,9 @@ public struct TranslationHUDView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Sao chép bản dịch (⌘C)")
+                    .accessibilityLabel("Sao chép bản dịch")
+                    .accessibilityHint("Phím tắt Command C")
+                    .accessibilityAddTraits(.isButton)
                     
                     Button(action: {
                         viewModel.toggleBookmark()
@@ -252,6 +332,9 @@ public struct TranslationHUDView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Lưu vào Sổ tay từ vựng (⌘S / ⌘B)")
+                    .accessibilityLabel(viewModel.isBookmarked ? "Bỏ lưu từ khỏi sổ tay" : "Lưu từ vào sổ tay")
+                    .accessibilityHint("Phím tắt Command S")
+                    .accessibilityAddTraits(.isButton)
                 }
 
                 Text("ESC")

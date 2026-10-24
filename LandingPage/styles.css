@@ -15,7 +15,7 @@
     --line: #e7e0d4;
     --line-soft: #f0ebe2;
 
-    --accent: #2f6fe4;
+    --accent: #2563eb;
     --accent-soft: #eff4fd;
     --accent-line: #d3e1fb;
     --orange: #ef7a18;
@@ -77,14 +77,19 @@ a {
 
 /* Inline icon sizing: every <svg> that pulls from the sprite. */
 .icon,
-.card-icon svg,
-.brand-mark {
+.card-icon svg {
     width: 1em;
     height: 1em;
 }
 .brand-mark {
     width: 26px;
     height: 26px;
+    border-radius: 6px;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 kbd,
@@ -140,7 +145,7 @@ code {
 .wrap,
 .section,
 .hero,
-.stats,
+.steps-section,
 .footer-inner,
 .cta-inner {
     width: 100%;
@@ -378,30 +383,100 @@ code {
     color: var(--muted-2);
 }
 
-/* --- Stats ---------------------------------------------------------------- */
-.stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-    padding-top: 34px;
-    padding-bottom: 58px;
+/* --- Quick 3-Step Workflow ------------------------------------------------ */
+.steps-section {
+    padding-top: 24px;
+    padding-bottom: 54px;
     border-top: 1px solid var(--line);
 }
-.stat {
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+.step-card {
+    position: relative;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.3, 1.2),
+                border-color 0.24s ease,
+                box-shadow 0.24s ease;
     display: flex;
     flex-direction: column;
-    gap: 6px;
 }
-.stat-num {
-    font-family: var(--font-display);
-    font-size: 42px;
-    line-height: 1;
+.step-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-line);
+    box-shadow: var(--shadow-md);
+}
+.step-card-featured {
+    border-color: var(--accent-line);
+    background: linear-gradient(180deg, var(--accent-soft) 0%, var(--surface) 60%);
+}
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.step-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 2px 8px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    border-radius: var(--r-pill);
+    letter-spacing: 0.04em;
+}
+.step-card-featured .step-num {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+.step-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--line-soft);
+    color: var(--ink-2);
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.step-card:hover .step-icon {
+    background: var(--accent);
+    color: #ffffff;
+}
+.step-icon svg {
+    width: 17px;
+    height: 17px;
+}
+.step-title {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: 650;
     color: var(--ink);
+    letter-spacing: -0.01em;
 }
-.stat-label {
+.step-title kbd {
+    font-size: 0.85em;
+    padding: 0.12em 0.45em;
+    border-color: var(--accent-line);
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 700;
+}
+.step-desc {
+    margin: 0;
     font-size: 14px;
     color: var(--muted);
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 /* --- Sections ------------------------------------------------------------- */
@@ -624,6 +699,58 @@ code {
     color: var(--ink-2);
 }
 
+/* --- FAQ ------------------------------------------------------------------ */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 32px;
+}
+.faq-item {
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.faq-item[open] {
+    border-color: var(--accent-line);
+    box-shadow: var(--shadow-sm);
+}
+.faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    font-size: 16.5px;
+    font-weight: 620;
+    color: var(--ink);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+.faq-question::-webkit-details-marker {
+    display: none;
+}
+.faq-question::after {
+    content: "+";
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--muted);
+    transition: transform 0.2s ease, color 0.2s ease;
+    line-height: 1;
+}
+.faq-item[open] .faq-question::after {
+    content: "−";
+    color: var(--accent);
+}
+.faq-answer {
+    padding: 0 24px 22px;
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.65;
+}
+
 /* --- Final CTA ------------------------------------------------------------ */
 .cta {
     margin-top: 40px;
@@ -733,19 +860,9 @@ code {
     .chip {
         display: none;
     }
-    .stats {
+    .steps-grid {
         grid-template-columns: 1fr;
-        gap: 22px;
-        padding-bottom: 44px;
-    }
-    .stat {
-        flex-direction: row;
-        align-items: baseline;
         gap: 14px;
-    }
-    .stat-num {
-        font-size: 32px;
-        min-width: 2.6ch;
     }
     .section {
         padding-block: 56px;
@@ -811,6 +928,9 @@ code {
     }
     .nav-wrap {
         background: color-mix(in srgb, var(--bg) 80%, transparent);
+    }
+    .step-card-featured {
+        background: linear-gradient(180deg, #1c2434 0%, var(--surface) 60%);
     }
 }
 

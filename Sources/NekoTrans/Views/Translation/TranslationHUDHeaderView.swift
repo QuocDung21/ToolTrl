@@ -42,23 +42,90 @@ public struct TranslationHUDHeaderView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Quay lại từ vừa tra (⌘[)")
+                    .accessibilityLabel("Quay lại từ vừa tra")
+                    .accessibilityHint("Nhấn để xem lại kết quả tra cứu trước đó (Phím tắt Command [)")
+                    .accessibilityAddTraits(.isButton)
                 } else {
-                    iconService.currentImage
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                        .foregroundColor(iconService.selectedType.accentColor)
-                    
-                    Text("NekoTrans")
-                        .font(.system(size: 11.5, weight: .bold))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
+                    HStack(spacing: 5) {
+                        iconService.currentImage
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 16, height: 16)
+                            .foregroundColor(iconService.selectedType.accentColor)
+                        
+                        Text("NekoTrans")
+                            .font(.system(size: 11.5, weight: .bold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                    }
+                    .allowsHitTesting(false)
                 }
             }
             .fixedSize()
             
             // Unified Language & Engine Selector Pill
-            ZStack {
+            Menu {
+                Button(action: {
+                    viewModel.swapLanguages()
+                }) {
+                    let src = viewModel.detectedLanguage.isEmpty ? "EN" : viewModel.detectedLanguage.uppercased()
+                    let dst = viewModel.activeTargetLanguage.rawValue.uppercased()
+                    Text("⇄  Đảo chiều ngôn ngữ (\(src) ⇄ \(dst))")
+                }
+                
+                Divider()
+                
+                Section("Ngôn ngữ đích") {
+                    ForEach(TargetLanguage.allCases) { lang in
+                        let isSelected = (viewModel.activeTargetLanguage == lang)
+                        Button(action: {
+                            viewModel.targetLanguage = lang
+                        }) {
+                            if isSelected {
+                                Text("✓  \(lang.flag)  \(lang.displayName)")
+                            } else {
+                                Text("      \(lang.flag)  \(lang.displayName)")
+                            }
+                        }
+                    }
+                }
+                
+                Divider()
+                
+                Section("Động cơ dịch") {
+                    ForEach(TranslationEngine.allCases) { engine in
+                        let isSelected = (viewModel.selectedEngine == engine)
+                        Button(action: {
+                            viewModel.selectedEngine = engine
+                        }) {
+                            if isSelected {
+                                Text("✓  \(engine.emojiIcon)  \(engine.displayName)")
+                            } else {
+                                Text("      \(engine.emojiIcon)  \(engine.displayName)")
+                            }
+                        }
+                    }
+                }
+
+                Divider()
+
+                Section("Khi tra từ đơn") {
+                    ForEach(WordLookupMode.allCases) { mode in
+                        let isSelected = (settings.wordLookupMode == mode)
+                        Button(action: {
+                            withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
+                                settings.wordLookupMode = mode
+                            }
+                        }) {
+                            if isSelected {
+                                Text("✓  \(mode.emojiIcon)  \(mode.title)")
+                            } else {
+                                Text("      \(mode.emojiIcon)  \(mode.title)")
+                            }
+                        }
+                    }
+                }
+            } label: {
                 HStack(spacing: 4.5) {
                     Text(viewModel.detectedLanguage.isEmpty ? "EN" : viewModel.detectedLanguage.uppercased())
                         .font(.system(size: 9.5, weight: .bold, design: .monospaced))
@@ -103,7 +170,7 @@ public struct TranslationHUDHeaderView: View {
                                     Text(shortName)
                                 }
                             } else {
-                                Text(viewModel.selectedEngine.rawValue)
+                                Text(viewModel.selectedEngine.shortName)
                             }
                         }
                         .font(.system(size: 9.5, weight: .medium))
@@ -123,70 +190,16 @@ public struct TranslationHUDHeaderView: View {
                     RoundedRectangle(cornerRadius: 7)
                         .stroke(Color.primary.opacity(0.10), lineWidth: 0.8)
                 )
-
-                Menu {
-                    Section("Đổi chiều dịch") {
-                        Button(action: {
-                            viewModel.swapLanguages()
-                        }) {
-                            Label("Đảo chiều (\(viewModel.detectedLanguage.uppercased()) ⇄ \(viewModel.activeTargetLanguage.rawValue.uppercased()))", systemImage: "arrow.left.arrow.right")
-                        }
-                    }
-                    
-                    Section("Ngôn ngữ đích") {
-                        ForEach(TargetLanguage.allCases) { lang in
-                            Button(action: {
-                                viewModel.targetLanguage = lang
-                            }) {
-                                if viewModel.activeTargetLanguage == lang {
-                                    Label("\(lang.displayName) (Đang dịch)", systemImage: "checkmark")
-                                } else {
-                                    Text(lang.displayName)
-                                }
-                            }
-                        }
-                    }
-                    
-                    Section("Động cơ dịch") {
-                        ForEach(TranslationEngine.allCases) { engine in
-                            Button(action: {
-                                viewModel.selectedEngine = engine
-                            }) {
-                                if viewModel.selectedEngine == engine {
-                                    Label("\(engine.rawValue) (Đang chọn)", systemImage: "checkmark")
-                                } else {
-                                    Label(engine.rawValue, systemImage: engine.icon)
-                                }
-                            }
-                        }
-                    }
-
-                    Section("Chế độ tra từ đơn") {
-                        ForEach(WordLookupMode.allCases) { mode in
-                            Button(action: {
-                                withAnimation(.spring(response: 0.25, dampingFraction: 0.82)) {
-                                    settings.wordLookupMode = mode
-                                }
-                            }) {
-                                if settings.wordLookupMode == mode {
-                                    Label("\(mode.title) (Đang chọn)", systemImage: "checkmark")
-                                } else {
-                                    Label(mode.title, systemImage: mode.icon)
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    Color.white.opacity(0.0001)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                .contentShape(Rectangle())
             }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
             .fixedSize()
             .help("Chọn ngôn ngữ và động cơ dịch thuật")
+            .accessibilityLabel("Tùy chọn ngôn ngữ và động cơ dịch thuật")
+            .accessibilityHint("Nhấn để đảo chiều ngôn ngữ, đổi ngôn ngữ đích hoặc đổi động cơ dịch")
             
-            Spacer(minLength: 4)
+            Spacer(minLength: 8)
             
             // Right: Essential Controls + Advanced Features Menu
             HStack(spacing: 5) {
@@ -213,17 +226,20 @@ public struct TranslationHUDHeaderView: View {
                         .background(
                             settings.wordLookupMode == .quickTranslate
                                 ? AppColors.accent.opacity(0.14)
-                                : Color.primary.opacity(0.05)
+                                : Color.blue.opacity(0.14)
                         )
                         .foregroundColor(
                             settings.wordLookupMode == .quickTranslate
                                 ? AppColors.accent
-                                : .secondary
+                                : .blue
                         )
                         .cornerRadius(5)
                     }
                     .buttonStyle(.plain)
                     .help(settings.wordLookupMode == .quickTranslate ? "Đang bật chế độ Dịch nhanh gọn • Bấm để chuyển sang Từ điển chi tiết" : "Đang bật chế độ Từ điển • Bấm để chuyển sang Dịch nhanh gọn")
+                    .accessibilityLabel(settings.wordLookupMode == .quickTranslate ? "Chuyển sang chế độ Từ điển chi tiết" : "Chuyển sang chế độ Dịch nhanh gọn")
+                    .accessibilityHint("Nhấn để chuyển đổi giữa giao diện dịch gọn và từ điển đầy đủ")
+                    .accessibilityAddTraits(.isButton)
                 }
 
                 // Pin / Auto-Translate Toggle
@@ -249,16 +265,19 @@ public struct TranslationHUDHeaderView: View {
                 }
                 .buttonStyle(.plain)
                 .help(isPinned ? "Đang ghim • Tự động dịch khi bôi đen" : "Ghim cửa sổ trên cùng")
+                .accessibilityLabel(isPinned ? "Bỏ ghim cửa sổ tra cứu" : "Ghim cửa sổ tra cứu trên cùng")
+                .accessibilityHint("Khi ghim, cửa sổ luôn nổi trên cùng và tự động dịch văn bản được bôi đen")
+                .accessibilityAddTraits(.isButton)
                 
                 // Advanced / Special Features Menu ("...")
                 Menu {
                     if settings.showAIAssistantInMenu || settings.showAIVocabGrammarInMenu {
-                        Section("Công Cụ Phân Tích") {
+                        Section("Phân tích") {
                             if settings.showAIAssistantInMenu {
                                 Button(action: {
                                     QuickAIWindowController.shared.showAI(prompt: viewModel.originalText)
                                 }) {
-                                    Label("Trợ lý phân tích sâu (\(HotKeyManager.shared.aiDisplayString))", systemImage: "text.magnifyingglass")
+                                    Label("Trợ lý AI (\(HotKeyManager.shared.aiDisplayString))", systemImage: "sparkles")
                                 }
                             }
                             
@@ -266,14 +285,14 @@ public struct TranslationHUDHeaderView: View {
                                 Button(action: {
                                     TextAnalysisWindowController.shared.showAnalysis(text: viewModel.originalText)
                                 }) {
-                                    Label("Bóc tách từ vựng & ngữ pháp", systemImage: "list.bullet.rectangle.portrait")
+                                    Label("Phân tích từ vựng & ngữ pháp", systemImage: "text.book.closed")
                                 }
                             }
                         }
                     }
                     
                     if settings.showOCRInMenu {
-                        Section("📷 Công Cụ Màn Hình") {
+                        Section("Chụp màn hình") {
                             Button(action: {
                                 onClose()
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -283,13 +302,13 @@ public struct TranslationHUDHeaderView: View {
                                     }
                                 }
                             }) {
-                                Label("Chụp quét chữ màn hình (OCR) (\(HotKeyManager.shared.ocrDisplayString))", systemImage: "camera.viewfinder")
+                                Label("Chụp quét chữ (\(HotKeyManager.shared.ocrDisplayString))", systemImage: "camera.viewfinder")
                             }
                         }
                     }
                     
                     if settings.showDomainSelectorInMenu {
-                        Section("🌐 Ngữ Cảnh Chuyên Ngành: \(settings.translationDomain.rawValue)") {
+                        Menu {
                             ForEach(TranslationDomain.allCases) { domain in
                                 Button(action: {
                                     settings.translationDomain = domain
@@ -298,16 +317,18 @@ public struct TranslationHUDHeaderView: View {
                                     }
                                 }) {
                                     if settings.translationDomain == domain {
-                                        Label("\(domain.rawValue) (Đang chọn)", systemImage: "checkmark")
+                                        Text("✓  \(domain.emojiIcon)  \(domain.rawValue)")
                                     } else {
-                                        Label(domain.rawValue, systemImage: domain.icon)
+                                        Text("      \(domain.emojiIcon)  \(domain.rawValue)")
                                     }
                                 }
                             }
+                        } label: {
+                            Label("Ngữ cảnh: \(settings.translationDomain.rawValue)", systemImage: "text.book.closed")
                         }
                     }
                     
-                    Section("📚 Sổ Tay & Cài Đặt") {
+                    Section {
                         if settings.showNotebookInMenu {
                             Button(action: {
                                 VocabularyWindowController.shared.showNotebook()
@@ -319,7 +340,7 @@ public struct TranslationHUDHeaderView: View {
                         Button(action: {
                             SettingsWindowController.shared.showSettings()
                         }) {
-                            Label("Tùy chỉnh tính năng & Cài đặt (⌘,)", systemImage: "slider.horizontal.3")
+                            Label("Cài đặt... (⌘,)", systemImage: "gearshape")
                         }
                     }
                 } label: {
@@ -334,6 +355,8 @@ public struct TranslationHUDHeaderView: View {
                 .menuIndicator(.hidden)
                 .fixedSize()
                 .help("Tính năng nâng cao (Bấm để mở)")
+                .accessibilityLabel("Tính năng nâng cao và cài đặt")
+                .accessibilityHint("Mở trợ lý AI, bóc tách ngữ pháp, quét OCR hoặc mở cài đặt ứng dụng")
                 
                 // Close Button
                 Button(action: onClose) {
@@ -346,10 +369,15 @@ public struct TranslationHUDHeaderView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Đóng (ESC)")
+                .accessibilityLabel("Đóng cửa sổ tra cứu")
+                .accessibilityHint("Nhấn để đóng cửa sổ tra cứu (Phím tắt Escape)")
+                .accessibilityAddTraits(.isButton)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        .background(WindowDragArea())
+        .help("Kéo để di chuyển khung popup")
     }
 }
 

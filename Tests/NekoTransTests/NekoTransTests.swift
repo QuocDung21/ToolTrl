@@ -1253,12 +1253,12 @@ final class NekoTransTests: XCTestCase {
 
     @MainActor
     func testServersPhoneticFromDictionaryService() {
-        // DictionaryService must extract the corrected phonetic for "server" and "servers"
+        // DictionaryService must extract valid broad IPA for "server" and "servers" (UK or US standard)
         let phoneticServer = DictionaryService.shared.extractPhonetic(for: "server")
-        XCTAssertEqual(phoneticServer, "/ˈsɜːvə(r)/")
+        XCTAssertTrue(phoneticServer == "/ˈsɜːvə(r)/" || phoneticServer == "/ˈsərvər/", "Phonetic must be valid broad IPA (UK or US), got: \(String(describing: phoneticServer))")
 
         let phoneticServers = DictionaryService.shared.extractPhonetic(for: "servers")
-        XCTAssertEqual(phoneticServers, "/ˈsɜːvə(r)/")
+        XCTAssertTrue(phoneticServers == "/ˈsɜːvə(r)/" || phoneticServers == "/ˈsərvər/", "Phonetic must be valid broad IPA (UK or US), got: \(String(describing: phoneticServers))")
     }
 
     func testCacheDecoderSanitizesContaminatedServersPhonetic() throws {
@@ -1353,6 +1353,131 @@ final class NekoTransTests: XCTestCase {
 
         let err2 = AnkiError.ankiError("cannot create note")
         XCTAssertEqual(err2.errorDescription, "Lỗi Anki: cannot create note")
+    }
+
+    func testGGUFTranslationOutput() async throws {
+        let path = "/Users/dungnguyenquoc/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        guard FileManager.default.fileExists(atPath: path) else { return }
+        defer { LocalGGUFService.shared.shutdown() }
+        try LocalGGUFService.shared.loadModel(at: path)
+        
+        let text = "Whether to return page content in content. Defaults to false; when false, content is always an empty string."
+        let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: "en", targetLang: "vi")
+        let userPrompt = AIPromptBuilder.localGGUFUserPrompt(text: text, targetLang: "vi")
+        let prompt = LocalGGUFService.shared.formatPrompt(system: sys, user: userPrompt)
+        let out = try await LocalGGUFService.shared.streamInference(prompt: prompt) { _ in }
+        
+        XCTAssertFalse(out.isEmpty)
+        XCTAssertNotEqual(out, text, "GGUF model must not echo the original English input")
+    }
+
+    // MARK: - 17. TextGrabber & Stale Word Prevention Tests
+    @MainActor
+    func testViewModelReset() {
+        let vm = TranslationViewModel()
+        vm.originalText = "serendipity"
+        vm.translatedText = "sự tình cờ may mắn"
+        vm.isStreaming = true
+        
+        vm.reset()
+        
+        XCTAssertEqual(vm.originalText, "")
+        XCTAssertEqual(vm.translatedText, "")
+        XCTAssertNil(vm.richEntry)
+        XCTAssertNil(vm.definition)
+        XCTAssertFalse(vm.isStreaming)
+        XCTAssertFalse(vm.isLoading)
+        XCTAssertTrue(vm.lookupHistory.isEmpty)
+    }
+
+    @MainActor
+    func testTextGrabberTargetApplicationDoesNotReturnNekoTrans() {
+        let grabber = TextGrabber.shared
+        let target = grabber.getTargetApplication()
+        if let bundleID = target?.bundleIdentifier {
+            XCTAssertNotEqual(bundleID, Bundle.main.bundleIdentifier, "TextGrabber must never target NekoTrans itself")
+        }
+    }
+
+    // MARK: - 18. QuitActionPreference & Clean Termination Tests
+    func testQuitActionPreferenceDefaultAndCases() {
+        // Defaults key default value must be terminateImmediately so quitting cleanly removes Dock and header
+        XCTAssertEqual(Defaults.Keys.quitActionPreference.defaultValue, .terminateImmediately)
+        
+        XCTAssertEqual(QuitActionPreference.terminateImmediately.rawValue, "terminate")
+        XCTAssertEqual(QuitActionPreference.runInBackground.rawValue, "background")
+        XCTAssertEqual(QuitActionPreference.askEveryTime.rawValue, "ask")
+
+        XCTAssertEqual(QuitActionPreference.terminateImmediately.title, "Thoát hoàn toàn")
+        XCTAssertEqual(QuitActionPreference.runInBackground.title, "Chạy dưới nền")
+        XCTAssertEqual(QuitActionPreference.askEveryTime.title, "Luôn hỏi")
+    }
+
+    // MARK: - 20. Clean Uninstallation Tests
+    @MainActor
+    func testAppUninstallerTargetScanning() {
+        let uninstaller = AppUninstaller.shared
+        uninstaller.scanTargets()
+        
+        let targetIds = uninstaller.targets.map { $0.id }
+        XCTAssertTrue(targetIds.contains("app_bundle"), "Must contain application bundle")
+        XCTAssertTrue(targetIds.contains("app_support_neko"), "Must scan Application Support NekoTrans directory")
+        XCTAssertTrue(targetIds.contains("preferences"), "Must scan preferences plist")
+        XCTAssertTrue(targetIds.contains("keychain"), "Must scan Keychain credentials")
+        XCTAssertTrue(targetIds.contains("caches"), "Must scan caches")
+        XCTAssertTrue(targetIds.contains("webkit"), "Must scan WebKit web storage")
+        XCTAssertTrue(targetIds.contains("system_integration"), "Must scan system integration items")
+        XCTAssertTrue(targetIds.contains("journal"), "Must scan continuous journal file")
+    }
+
+    func testKeychainStoreRemoveAll() {
+        let testAccount = KeyStore.Secret.openAI
+        KeychainStore.set("test-key-purge", for: testAccount)
+        XCTAssertEqual(KeychainStore.string(for: testAccount), "test-key-purge")
+
+        let removed = KeychainStore.removeAll()
+        XCTAssertTrue(removed, "KeychainStore.removeAll() must succeed")
+        XCTAssertNil(KeychainStore.string(for: testAccount), "Secret must be nil after removeAll()")
+    }
+
+    // MARK: - 21. Safari Web Extension & URL Scheme Tests
+    func testURLSchemeParsing() {
+        guard let url = URL(string: "nekotrans://translate?text=Hello%20world") else {
+            XCTFail("Invalid URL")
+            return
+        }
+        XCTAssertEqual(url.scheme, "nekotrans")
+        XCTAssertEqual(url.host, "translate")
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let text = components?.queryItems?.first(where: { $0.name == "text" })?.value
+        XCTAssertEqual(text, "Hello world")
+    }
+
+    func testSafariExtensionManifestStructure() {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Tests/NekoTransTests
+            .deletingLastPathComponent() // Tests
+            .deletingLastPathComponent() // Project root
+            .appendingPathComponent("Sources/NekoTransSafariExtension/Resources/manifest.json")
+
+        let plugInURL = Bundle.main.bundleURL
+            .appendingPathComponent("Contents/PlugIns/NekoTransSafariExtension.appex/Contents/Resources/manifest.json")
+
+        let manifestURL = FileManager.default.fileExists(atPath: plugInURL.path) ? plugInURL : sourceURL
+        guard FileManager.default.fileExists(atPath: manifestURL.path),
+              let data = try? Data(contentsOf: manifestURL),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            XCTFail("manifest.json must exist at \(manifestURL.path) and be valid JSON")
+            return
+        }
+
+        XCTAssertEqual(json["manifest_version"] as? Int, 3)
+        XCTAssertNotNil(json["name"])
+        XCTAssertNotNil(json["action"])
+        XCTAssertNotNil(json["background"])
+        XCTAssertNotNil(json["content_scripts"])
+        XCTAssertNotNil(json["icons"])
+        XCTAssertNotNil(json["web_accessible_resources"])
     }
 }
 

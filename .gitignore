@@ -1,6 +1,11 @@
 # Xcode and SPM
 .build/
+build
 build/
+build.noindex
+build.noindex/
+*.noindex
+*.noindex/
 Package.resolved
 .swiftpm/
 xcuserdata/

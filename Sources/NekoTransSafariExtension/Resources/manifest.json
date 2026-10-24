@@ -1,0 +1,61 @@
+{
+    "manifest_version": 3,
+    "name": "NekoTrans - Trình dịch Web Safari",
+    "description": "Tiện ích dịch trang web song ngữ, tra cứu từ vựng và dịch văn bản bôi đen thông minh.",
+    "version": "1.0.0",
+    "icons": {
+        "16": "images/icon-16.png",
+        "32": "images/icon-32.png",
+        "48": "images/icon-48.png",
+        "128": "images/icon-128.png",
+        "256": "images/icon-256.png",
+        "512": "images/icon-512.png"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "images/icon-16.png",
+            "32": "images/icon-32.png",
+            "48": "images/icon-48.png",
+            "128": "images/icon-128.png",
+            "256": "images/icon-256.png",
+            "512": "images/icon-512.png"
+        },
+        "default_title": "NekoTrans - Dịch web"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content.js"],
+            "css": ["content.css"],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["images/*"],
+            "matches": ["<all_urls>"]
+        }
+    ],
+    "permissions": [
+        "activeTab",
+        "storage",
+        "contextMenus",
+        "nativeMessaging"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "commands": {
+        "toggle-page-translation": {
+            "suggested_key": {
+                "default": "Alt+T",
+                "mac": "Alt+T"
+            },
+            "description": "Bật/Tắt dịch song ngữ trang web"
+        }
+    }
+}

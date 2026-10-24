@@ -6,6 +6,42 @@ import Observation
 #if canImport(Translation)
 import Translation
 #endif
+import QuartzCore
+
+private final class StreamThrottleState: @unchecked Sendable {
+    private var accumulated = ""
+    private var lastFlush = CACurrentMediaTime()
+    private let lock = NSLock()
+
+    func appendAndThrottle(token: String, interval: Double = 0.045) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        accumulated += token
+        let now = CACurrentMediaTime()
+        if now - lastFlush >= interval {
+            lastFlush = now
+            return accumulated
+        }
+        return nil
+    }
+}
+
+private final class CancellationBox: @unchecked Sendable {
+    private var cancelled = false
+    private let lock = NSLock()
+
+    var isCancelled: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancelled
+    }
+
+    func cancel() {
+        lock.lock()
+        cancelled = true
+        lock.unlock()
+    }
+}
 
 public struct WordGloss: Identifiable, Sendable, Hashable {
     public var id = UUID()
@@ -85,6 +121,8 @@ public final class TranslationViewModel {
     
     @ObservationIgnored
     private var translationTaskID: UUID = UUID()
+    @ObservationIgnored
+    private var activeCancellationBox: CancellationBox?
     
     public init() {
         let savedLang = Defaults[.targetLanguage]
@@ -92,6 +130,25 @@ public final class TranslationViewModel {
         self.targetLanguage = initialTarget
         self.activeTargetLanguage = initialTarget
         self.selectedEngine = AppSettings.shared.translationEngine
+    }
+    
+    public func reset() {
+        self.activeCancellationBox?.cancel()
+        self.activeCancellationBox = nil
+        SpeechService.shared.stop()
+        self.originalText = ""
+        self.translatedText = ""
+        self.definition = nil
+        self.richEntry = nil
+        self.wordGlosses = []
+        self.grammarRewriteResult = nil
+        self.inspectedWordToken = nil
+        self.isLoading = false
+        self.isStreaming = false
+        self.isDictionaryLoading = false
+        self.isComparing = false
+        self.comparisonResults = []
+        self.lookupHistory.removeAll()
     }
     
     public func goBack() {
@@ -134,6 +191,7 @@ public final class TranslationViewModel {
         self.grammarRewriteResult = nil
         self.inspectedWordToken = nil
         self.isLoading = true
+        self.isStreaming = false
         self.isBookmarked = VocabularyService.shared.isWordSaved(effectiveQuery)
         
         // 1. Detect source language
@@ -198,6 +256,9 @@ public final class TranslationViewModel {
         self.isStreaming = false
         let currentID = UUID()
         self.translationTaskID = currentID
+        self.activeCancellationBox?.cancel()
+        let cancellationBox = CancellationBox()
+        self.activeCancellationBox = cancellationBox
         
         #if canImport(Translation)
         if #available(macOS 15.0, *) {
@@ -220,22 +281,19 @@ public final class TranslationViewModel {
                 self.isStreaming = true
                 self.translatedText = ""
                 do {
-                    var accumulated = ""
-                    var lastFlush = CACurrentMediaTime()
+                    let throttleState = StreamThrottleState()
 
                     let fullText = try await DirectAIService.shared.translateStreaming(
                         text: self.originalText,
                         from: self.detectedLanguage,
                         to: target.rawValue,
                         domain: AppSettings.shared.translationDomain,
-                        provider: AppSettings.shared.aiProvider
+                        provider: AppSettings.shared.aiProvider,
+                        isCancelled: {
+                            cancellationBox.isCancelled
+                        }
                     ) { [weak self] token in
-                        accumulated += token
-                        let now = CACurrentMediaTime()
-                        // Throttle to ~32ms (30 FPS) to eliminate main thread flooding and UI stutter
-                        if now - lastFlush >= 0.032 {
-                            let textToDisplay = accumulated
-                            lastFlush = now
+                        if let textToDisplay = throttleState.appendAndThrottle(token: token) {
                             Task { @MainActor [weak self] in
                                 guard let self = self, self.translationTaskID == currentID else { return }
                                 self.translatedText = textToDisplay
@@ -259,7 +317,6 @@ public final class TranslationViewModel {
                     }
                     self.recordHistory(translated: fullText)
                 } catch {
-                    // Graceful fallback to regular translation if AI streaming fails
                     self.isStreaming = false
                     if let result = await TranslationService.shared.translate(
                         text: self.originalText,

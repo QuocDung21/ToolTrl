@@ -91,9 +91,7 @@
 
   var statNums = document.querySelectorAll(".stat-num");
 
-  if (reduceMotion || !("IntersectionObserver" in window)) {
-    // Để nguyên số gốc trong HTML
-  } else {
+  if (statNums.length > 0 && !reduceMotion && "IntersectionObserver" in window) {
     var statObserver = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {

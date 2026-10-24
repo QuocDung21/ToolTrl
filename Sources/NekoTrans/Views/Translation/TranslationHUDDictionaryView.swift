@@ -16,16 +16,14 @@ public struct TranslationHUDDictionaryView: View {
     }
 
     public var body: some View {
-        Group {
-            if settings.wordLookupMode == .quickTranslate {
-                compactQuickTranslateView
-            } else if let rich = viewModel.richEntry, rich.hasValidDefinitions {
-                richDictionaryContent(entry: rich)
-            } else if viewModel.isDictionaryLoading || viewModel.isLoading {
-                dictionaryLoadingSkeleton
-            } else {
-                dictionaryFallbackView
-            }
+        if settings.wordLookupMode == .quickTranslate {
+            compactQuickTranslateView
+        } else if let rich = viewModel.richEntry, rich.hasValidDefinitions {
+            richDictionaryContent(entry: rich)
+        } else if viewModel.isDictionaryLoading || viewModel.isLoading {
+            dictionaryLoadingSkeleton
+        } else {
+            dictionaryFallbackView
         }
     }
 
@@ -119,7 +117,7 @@ public struct TranslationHUDDictionaryView: View {
                     .fill(AppColors.accent)
                     .frame(width: 3, height: 18)
 
-                if viewModel.isLoading && viewModel.translatedText.isEmpty && entry == nil {
+                if (viewModel.isLoading || viewModel.isStreaming) && viewModel.translatedText.isEmpty && entry == nil {
                     RoundedRectangle(cornerRadius: 3)
                         .fill(Color.primary.opacity(0.08))
                         .frame(width: 140, height: 15)
@@ -128,6 +126,7 @@ public struct TranslationHUDDictionaryView: View {
                     LiveSpokenTextView(
                         text: resolvedTranslation,
                         speakerID: "translated",
+                        isStreaming: viewModel.isStreaming,
                         font: .system(size: 14.5, weight: .semibold),
                         defaultColor: .primary
                     )
@@ -231,6 +230,9 @@ public struct TranslationHUDDictionaryView: View {
                     }
                     .buttonStyle(.plain)
                     .help(l10n[.dictLookupLemma(lemma)])
+                    .accessibilityLabel("Tra cứu từ gốc \(lemma)")
+                    .accessibilityHint("Nhấn để xem nghĩa của từ nguyên mẫu")
+                    .accessibilityAddTraits(.isButton)
                 }
 
                 Spacer(minLength: 4)
@@ -367,6 +369,9 @@ public struct TranslationHUDDictionaryView: View {
                     .padding(.vertical, 2)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(showAdvancedWordDetails ? "Thu gọn định nghĩa chi tiết" : "Xem định nghĩa học thuật và ví dụ (\(entry.totalDefinitionsCount))")
+                .accessibilityHint("Nhấn để ẩn hoặc hiện danh sách định nghĩa và ví dụ chi tiết")
+                .accessibilityAddTraits(.isButton)
 
                 if showAdvancedWordDetails {
                     // Part of Speech Filter Tabs (When multiple parts of speech exist)
@@ -386,6 +391,8 @@ public struct TranslationHUDDictionaryView: View {
                                     .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Tất cả từ loại")
+                            .accessibilityAddTraits(selectedPOS == "all" ? [.isButton, .isSelected] : .isButton)
 
                             ForEach(validMeaningGroups) { group in
                                 Button(action: {
@@ -400,6 +407,8 @@ public struct TranslationHUDDictionaryView: View {
                                         .clipShape(Capsule())
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Lọc từ loại: \(group.partOfSpeechDisplay)")
+                                .accessibilityAddTraits(selectedPOS == group.partOfSpeech ? [.isButton, .isSelected] : .isButton)
                             }
 
                             Spacer()
@@ -545,6 +554,9 @@ public struct TranslationHUDDictionaryView: View {
                     .padding(.vertical, 2)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(showSynonymsAndNeighbors ? "Thu gọn từ đồng nghĩa và từ liên quan" : "Xem từ đồng nghĩa và từ liên quan")
+                .accessibilityHint("Nhấn để ẩn hoặc hiện danh sách từ đồng nghĩa và mạng lưới ngữ nghĩa")
+                .accessibilityAddTraits(.isButton)
 
                 if showSynonymsAndNeighbors {
                     VStack(alignment: .leading, spacing: 6) {

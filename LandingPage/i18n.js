@@ -28,6 +28,7 @@ window.I18N = {
     "nav.notebook": "Sổ tay",
     "nav.privacy": "Riêng tư",
     "nav.requirements": "Yêu cầu",
+    "nav.faq": "Hỏi đáp",
     "nav.langLabel": "Ngôn ngữ",
 
     /* --- Hero ------------------------------------------------------------- */
@@ -36,11 +37,14 @@ window.I18N = {
     "hero.metaHtml": "Không cần tài khoản <span aria-hidden=\"true\">·</span> Dữ liệu ở lại máy <span aria-hidden=\"true\">·</span> Bảo mật bằng Keychain <span aria-hidden=\"true\">·</span> macOS {{minimumMacOS}} trở lên <span aria-hidden=\"true\">·</span> Cập nhật miễn phí",
     "hero.note": "Bản dựng ký sẵn, mở là chạy. Gỡ bằng cách kéo vào Thùng rác.",
 
-    /* --- Số liệu ---------------------------------------------------------- */
-    "stats.ariaLabel": "Số liệu nổi bật",
-    "stats.aiLabelHtml": "nhà cung cấp AI trực tiếp<br>{{aiProviderNames}}",
-    "stats.analysisLabelHtml": "phần phân tích cho mỗi từ<br>{{analysisNames}}",
-    "stats.dataLabelHtml": "dữ liệu học ở lại máy<br>không tài khoản, không telemetry",
+    /* --- Quy trình 3 bước siêu tốc --------------------------------------- */
+    "steps.ariaLabel": "Quy trình sử dụng trong 3 bước",
+    "steps.s1Title": "Bôi đen văn bản",
+    "steps.s1Desc": "Chọn bất kỳ từ hay câu nào trong Safari, Chrome, PDF, Mail, Xcode hay Slack.",
+    "steps.s2Title": "Nhấn phím <kbd>{{shortcuts.translate}}</kbd>",
+    "steps.s2Desc": "Bảng dịch nổi ngay sát con trỏ chuột trong 0.2s — không cần chuyển ứng dụng.",
+    "steps.s3Title": "Xem nghĩa & Lưu từ",
+    "steps.s3Desc": "Xem phiên âm IPA, nghe phát âm và bấm lưu vào sổ tay để ôn lại bằng flashcard.",
 
     /* --- 00 · Xem qua ----------------------------------------------------- */
     "s00.labelHtml": "00 <span aria-hidden=\"true\">·</span> Xem qua",
@@ -65,7 +69,7 @@ window.I18N = {
     "f5.bodyHtml": "Mọi mục trong sổ tay được đánh chỉ mục vào Spotlight, nên <kbd>⌘Space</kbd> rồi gõ từ là ra ngay nghĩa đã lưu.",
     "f6.title": "Sao lưu lên GitHub Gist",
     "f6.body": "Đồng bộ hai chiều sổ tay và thống kê vào một Gist riêng tư, dữ liệu nén LZFSE trước khi gửi. Đổi máy thì khôi phục lại trong một lần bấm.",
-    "s01.also": "Kèm theo: chạy ở menu bar không chiếm Dock, phím tắt tuỳ biến, 4 chế độ hiển thị bản dịch (từng từ · chỉ dịch · tiêu chuẩn · tô màu cú pháp), thống kê mục tiêu theo ngày, và iPad Studio để viết tay bằng Apple Pencil.",
+    "s01.also": "Kèm theo: chạy ở menu bar không chiếm Dock, phím tắt tuỳ biến, hiển thị song ngữ hoặc chỉ dịch, thống kê mục tiêu học tập, và tích hợp sâu Spotlight & Phím tắt (Shortcuts) trên macOS.",
 
     /* --- 02 · Sổ tay ------------------------------------------------------ */
     "s02.labelHtml": "02 <span aria-hidden=\"true\">·</span> Sổ tay",
@@ -105,14 +109,29 @@ window.I18N = {
     "s05.h2": "Trước khi tải",
     "spec.os.dt": "Hệ điều hành",
     "spec.os.ddHtml": "macOS {{minimumMacOS}} trở lên (Sequoia). Bản dịch on-device dùng framework Translation của Apple, chỉ có từ macOS {{minimumMacOS}}.",
+    "spec.arch.dt": "Kiến trúc",
+    "spec.arch.dd": "Universal Binary (chạy mượt trên cả Apple Silicon M1–M4 và Intel).",
     "spec.size.dt": "Dung lượng",
     "spec.size.dd": "Khoảng {{releaseSize}}. Không kèm model AI nào — engine on-device do macOS cung cấp.",
     "spec.perm.dt": "Quyền cần cấp",
-    "spec.perm.ddHtml": "<strong>Trợ năng</strong> để lấy đoạn văn bản đang chọn · <strong>Ghi màn hình</strong> cho tính năng chụp chữ · <strong>Mạng cục bộ</strong> nếu bạn dùng iPad Studio.",
+    "spec.perm.ddHtml": "<strong>Trợ năng</strong> để lấy đoạn văn bản đang chọn · <strong>Ghi màn hình</strong> cho tính năng chụp chữ màn hình (OCR).",
     "spec.account.dt": "Tài khoản",
     "spec.account.dd": "Không cần. Chỉ khi bạn muốn dùng engine AI trả phí thì nhập khoá API của riêng bạn — khoá được lưu trong Keychain.",
     "spec.uninstall.dt": "Gỡ cài đặt",
     "spec.uninstall.ddHtml": "Kéo ứng dụng vào Thùng rác. Dữ liệu học nằm trong <code>~/Library/Application Support/NekoTrans</code> nếu bạn muốn xoá sạch.",
+
+    /* --- 06 · FAQ --------------------------------------------------------- */
+    "s06.labelHtml": "06 <span aria-hidden=\"true\">·</span> Hỏi đáp",
+    "s06.h2": "Câu hỏi thường gặp",
+    "s06.lead": "Những điều người dùng Mac thường quan tâm trước khi cài đặt.",
+    "faq.q1": "NekoTrans có cần kết nối Internet để hoạt động không?",
+    "faq.a1": "Không bắt buộc. NekoTrans tích hợp Apple Translation framework và mô hình GGUF Metal để dịch hoàn toàn offline trên máy. Các engine đám mây (Google, DeepL, OpenAI, Claude...) chỉ gửi yêu cầu khi bạn chủ động lựa chọn.",
+    "faq.q2": "Khóa API và dữ liệu của tôi có an toàn không?",
+    "faq.a2": "Tuyệt đối an toàn. Mọi API key và token GitHub đều nằm trong macOS Keychain — bảo mật phần cứng qua Secure Enclave. Dữ liệu học tập và lịch sử dịch lưu hoàn toàn trong Application Support trên máy của bạn, không có bất kỳ máy chủ trung gian nào.",
+    "faq.q3": "Ứng dụng hỗ trợ dòng máy Mac nào?",
+    "faq.a3": "NekoTrans hỗ trợ cả chip Apple Silicon (M1/M2/M3/M4) và chip Intel (Universal Binary). Yêu cầu hệ điều hành macOS 15.0 Sequoia trở lên để sử dụng Apple Translation framework.",
+    "faq.q4": "Tôi có thể đồng bộ sang máy Mac khác không?",
+    "faq.a4": "Hoàn toàn được. Bạn có thể đồng bộ hai chiều sổ tay từ vựng và thống kê học tập qua GitHub Gist riêng tư (dữ liệu được nén LZFSE trước khi gửi). Đổi máy chỉ cần nhập token là khôi phục toàn bộ trong một click.",
 
     /* --- CTA cuối --------------------------------------------------------- */
     "cta.h2": "Cài xong là dịch được ngay",
@@ -145,6 +164,7 @@ window.I18N = {
     "nav.notebook": "Notebook",
     "nav.privacy": "Privacy",
     "nav.requirements": "Requirements",
+    "nav.faq": "FAQ",
     "nav.langLabel": "Language",
 
     /* --- Hero ------------------------------------------------------------- */
@@ -153,11 +173,14 @@ window.I18N = {
     "hero.metaHtml": "No account needed <span aria-hidden=\"true\">·</span> Data stays on your Mac <span aria-hidden=\"true\">·</span> Secured with Keychain <span aria-hidden=\"true\">·</span> macOS {{minimumMacOS}} or later <span aria-hidden=\"true\">·</span> Free updates",
     "hero.note": "Signed build — just open it. Uninstall by dragging it to the Trash.",
 
-    /* --- Stats ------------------------------------------------------------ */
-    "stats.ariaLabel": "Key numbers",
-    "stats.aiLabelHtml": "direct AI providers<br>{{aiProviderNames}}",
-    "stats.analysisLabelHtml": "analysis sections per word<br>{{analysisNames}}",
-    "stats.dataLabelHtml": "of your study data stays local<br>no account, no telemetry",
+    /* --- 3 quick steps ---------------------------------------------------- */
+    "steps.ariaLabel": "How it works in 3 steps",
+    "steps.s1Title": "Select text anywhere",
+    "steps.s1Desc": "Highlight any word or sentence in Safari, Chrome, PDF, Mail, Xcode, or Slack.",
+    "steps.s2Title": "Press <kbd>{{shortcuts.translate}}</kbd>",
+    "steps.s2Desc": "The translation panel appears right beside your cursor in 0.2s — no app switching.",
+    "steps.s3Title": "Learn & Save in 1 click",
+    "steps.s3Desc": "View IPA phonetics, listen to native audio, and save to notebook for flashcard review.",
 
     /* --- 00 · See it ------------------------------------------------------ */
     "s00.labelHtml": "00 <span aria-hidden=\"true\">·</span> See it",
@@ -182,7 +205,7 @@ window.I18N = {
     "f5.bodyHtml": "Every notebook entry is indexed into Spotlight, so <kbd>⌘Space</kbd> and the word brings up the meaning you saved.",
     "f6.title": "Back up to a GitHub Gist",
     "f6.body": "Two-way sync of your notebook and statistics into a private Gist, LZFSE-compressed before anything leaves your Mac. Change machines and restore in one click.",
-    "s01.also": "Also included: runs in the menu bar without taking Dock space, remappable shortcuts, 4 translation display modes (word by word · target only · standard · syntax highlighting), daily goal statistics, and an iPad Studio for handwriting with Apple Pencil.",
+    "s01.also": "Also included: runs quietly in the menu bar, remappable shortcuts, bilingual or translation-only display modes, daily streak statistics, and deep integration with Spotlight & Shortcuts on macOS.",
 
     /* --- 02 · Notebook ---------------------------------------------------- */
     "s02.labelHtml": "02 <span aria-hidden=\"true\">·</span> Notebook",
@@ -222,14 +245,29 @@ window.I18N = {
     "s05.h2": "Before you download",
     "spec.os.dt": "Operating system",
     "spec.os.ddHtml": "macOS {{minimumMacOS}} or later (Sequoia). On-device translation uses Apple's Translation framework, which is only available from macOS {{minimumMacOS}}.",
+    "spec.arch.dt": "Architecture",
+    "spec.arch.dd": "Universal Binary (runs natively on both Apple Silicon M-series and Intel Macs).",
     "spec.size.dt": "Size",
     "spec.size.dd": "About {{releaseSize}}. It ships no AI models of its own — the on-device engine comes with macOS.",
     "spec.perm.dt": "Permissions",
-    "spec.perm.ddHtml": "<strong>Accessibility</strong> to read the text you select · <strong>Screen Recording</strong> for text capture · <strong>Local Network</strong> if you use iPad Studio.",
+    "spec.perm.ddHtml": "<strong>Accessibility</strong> to read the text you select · <strong>Screen Recording</strong> for screen OCR text capture.",
     "spec.account.dt": "Account",
     "spec.account.dd": "Not required. Only if you want a paid AI engine do you enter your own API key — and it is stored in the Keychain.",
     "spec.uninstall.dt": "Uninstall",
     "spec.uninstall.ddHtml": "Drag the app to the Trash. Study data lives in <code>~/Library/Application Support/NekoTrans</code> if you want to wipe it too.",
+
+    /* --- 06 · FAQ --------------------------------------------------------- */
+    "s06.labelHtml": "06 <span aria-hidden=\"true\">·</span> FAQ",
+    "s06.h2": "Frequently Asked Questions",
+    "s06.lead": "Everything you might want to know before downloading.",
+    "faq.q1": "Does NekoTrans require an Internet connection to work?",
+    "faq.a1": "Not required. NekoTrans integrates Apple's on-device Translation framework and local GGUF Metal models to translate completely offline. Cloud engines (Google, DeepL, OpenAI, Claude...) only connect when explicitly selected.",
+    "faq.q2": "Are my API keys and study data secure?",
+    "faq.a2": "Completely safe. All API keys and GitHub tokens are stored directly in the macOS Keychain — hardware-secured via Secure Enclave. Your study notebook and translation history stay exclusively in your Mac's Application Support folder, with zero intermediary servers.",
+    "faq.q3": "Which Mac models are supported?",
+    "faq.a3": "NekoTrans runs natively on both Apple Silicon (M1/M2/M3/M4) and Intel Macs (Universal Binary). Requires macOS 15.0 Sequoia or later to leverage Apple's Translation framework.",
+    "faq.q4": "Can I sync my data to another Mac?",
+    "faq.a4": "Yes, absolutely. You can perform two-way sync of your vocabulary notebook and statistics via a private GitHub Gist (LZFSE-compressed). Switching Macs only takes one click to restore everything.",
 
     /* --- Final CTA -------------------------------------------------------- */
     "cta.h2": "Install it and translate something",

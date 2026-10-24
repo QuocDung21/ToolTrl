@@ -267,7 +267,7 @@ struct ServiceIntegrationsTests {
 }
 
 // MARK: - 5. LocalGGUFService Tests
-@Suite("NekoServices - LocalGGUFService Tests")
+@Suite("NekoServices - LocalGGUFService Tests", .serialized)
 struct LocalGGUFServiceTests {
     @Test("appleSiliconChipName returns non-empty string on macOS")
     func chipNameNonEmpty() {
@@ -299,6 +299,7 @@ struct LocalGGUFServiceTests {
         guard FileManager.default.fileExists(atPath: path) else { return }
         
         try LocalGGUFService.shared.loadModel(at: path)
+        defer { LocalGGUFService.shared.shutdown() }
         let sampleText = "Number of Parameters (Non-Embedding): 1.31B"
 
         let sys = AIPromptBuilder.localGGUFSystemPrompt(sourceLang: "en", targetLang: "vi", domain: "Tổng hợp")
@@ -309,6 +310,131 @@ struct LocalGGUFServiceTests {
         #expect(!res.isEmpty)
         // Ensure it did not output Indonesian 'Jumlah'
         #expect(!res.lowercased().contains("jumlah"))
+    }
+
+    @Test("Early cancellation halts stream inference quickly")
+    func testEarlyCancellation() async throws {
+        let path = "/Users/dungnguyenquoc/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        guard FileManager.default.fileExists(atPath: path) else { return }
+
+        try LocalGGUFService.shared.loadModel(at: path)
+        defer { LocalGGUFService.shared.shutdown() }
+
+        var tokenCount = 0
+        let prompt = LocalGGUFService.shared.formatPrompt(system: "Translate to Vietnamese", user: "Write a long essay about the history of mathematics.")
+        let res = try await LocalGGUFService.shared.streamInference(
+            prompt: prompt,
+            maxTokens: 500,
+            isCancelled: {
+                tokenCount >= 3
+            },
+            onToken: { _ in
+                tokenCount += 1
+            }
+        )
+
+        #expect(tokenCount <= 5)
+        #expect(res.count < 100)
+    }
+
+    @Test("Idle watchdog unloads model after timeout")
+    func testIdleWatchdog() async throws {
+        let path = "/Users/dungnguyenquoc/.cache/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct-GGUF/snapshots/9217f5db79a29953eb74d5343926648285ec7e67/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+        guard FileManager.default.fileExists(atPath: path) else { return }
+
+        LocalGGUFService.shared.idleUnloadInterval = 0.6
+        try LocalGGUFService.shared.loadModel(at: path)
+        #expect(LocalGGUFService.shared.isLoaded == true)
+
+        try await Task.sleep(nanoseconds: 900_000_000)
+        #expect(LocalGGUFService.shared.isLoaded == false)
+
+        LocalGGUFService.shared.idleUnloadInterval = 600
+    }
+}
+
+// MARK: - 7. Phase 1 Optimization Suites
+@Suite("NekoServices - Phase 1 Optimization Tests")
+struct Phase1OptimizationTests {
+    @Test("AppExclusionService never excludes NekoTrans itself")
+    @MainActor
+    func appExclusionNekoTransSafety() {
+        let isSelfExcluded = AppExclusionService.shared.isAppExcluded(bundleIdentifier: Bundle.main.bundleIdentifier)
+        #expect(!isSelfExcluded)
+    }
+
+    @Test("BrowserScriptHelper detects supported browser bundles")
+    func browserDetection() {
+        #expect(BrowserScriptHelper.isSupportedBrowser("com.apple.Safari"))
+        #expect(BrowserScriptHelper.isSupportedBrowser("com.google.Chrome"))
+        #expect(BrowserScriptHelper.isSupportedBrowser("company.thebrowser.Browser"))
+        #expect(!BrowserScriptHelper.isSupportedBrowser("com.apple.finder"))
+    }
+}
+
+// MARK: - 8. Phase 2 & 3 Optimization Suites
+@Suite("NekoServices - Phase 2 & 3 Optimization Tests")
+struct Phase2And3OptimizationTests {
+    @Test("VocabularyService persists and loads using compressed file store")
+    @MainActor
+    func vocabularyServiceFilePersistence() {
+        let testWord = SavedWordItem(
+            word: "optimization_test",
+            phonetic: "/ˌɑːptɪməˈzeɪʃn/",
+            translation: "sự tối ưu hóa",
+            exampleEn: "We test LZFSE persistence.",
+            exampleVi: "Chúng tôi kiểm tra việc lưu trữ LZFSE.",
+            itemType: .vocabulary
+        )
+        VocabularyService.shared.savedWords.append(testWord)
+        VocabularyService.shared.flush()
+        
+        guard let url = VocabularyService.storeFileURL else {
+            Issue.record("storeFileURL should not be nil")
+            return
+        }
+        #expect(FileManager.default.fileExists(atPath: url.path))
+        
+        // Read raw data and ensure it can be decompressed with LZFSE
+        let rawData = try? Data(contentsOf: url)
+        #expect(rawData != nil)
+        let decompressed = DataCompression.decompress(data: rawData!) ?? rawData!
+        let decoded = try? JSONDecoder().decode([SavedWordItem].self, from: decompressed)
+        #expect(decoded?.contains(where: { $0.word == "optimization_test" }) == true)
+        
+        // Clean up test word
+        VocabularyService.shared.savedWords.removeAll(where: { $0.word == "optimization_test" })
+        VocabularyService.shared.flush()
+    }
+
+    @Test("AIProviderEngineRegistry resolves correct engines for providers")
+    func aiProviderEngineRegistryResolution() {
+        let ggufEngine = AIProviderEngineRegistry.engine(for: .inProcessGGUF)
+        #expect(ggufEngine.provider == .inProcessGGUF)
+        #expect(ggufEngine is InProcessGGUFEngine)
+
+        let openAIEngine = AIProviderEngineRegistry.engine(for: .openAI)
+        #expect(openAIEngine.provider == .openAI)
+    }
+
+    @Test("AudioPlayerService enforces bounded cache and eviction at 100 entries")
+    @MainActor
+    func audioCacheBoundedEviction() {
+        let service = AudioPlayerService.shared
+        service.clearCache()
+        #expect(service.cachedEntryCount == 0)
+
+        let dummyData = Data([0x49, 0x44, 0x33]) // "ID3" dummy MP3 header
+        for i in 1...110 {
+            service.storeAudioForTesting(key: "https://example.com/audio_\(i).mp3", data: dummyData)
+        }
+
+        // Cache must not exceed maxAudioCacheEntries (100)
+        #expect(service.cachedEntryCount == 100)
+
+        // Clear cache frees all memory
+        service.clearCache()
+        #expect(service.cachedEntryCount == 0)
     }
 }
 

@@ -66,6 +66,23 @@ public enum KeychainStore {
         return status == errSecSuccess || status == errSecItemNotFound
     }
 
+    /// Removes all secrets associated with NekoTrans from the Keychain.
+    @discardableResult
+    public static func removeAll() -> Bool {
+        var success = true
+        for account in KeyStore.Secret.allAccounts {
+            if !remove(account: account) {
+                success = false
+            }
+        }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        return success && (status == errSecSuccess || status == errSecItemNotFound)
+    }
+
     /// One-shot migration for installs that still hold a secret in `UserDefaults`.
     ///
     /// The legacy value is only dropped once the Keychain actually holds it, so a

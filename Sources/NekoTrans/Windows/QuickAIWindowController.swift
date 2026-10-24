@@ -113,5 +113,7 @@ public final class QuickAIWindowController: NSObject, ObservableObject, NSWindow
     
     public func windowWillClose(_ notification: Notification) {
         removeKeyMonitor()
+        window?.contentView = nil
+        window = nil
     }
 }

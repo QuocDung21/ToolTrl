@@ -59,6 +59,9 @@
         path.split(".").forEach(function (part) {
           current = current == null ? undefined : current[part];
         });
+        if (current && typeof current === "object" && current[lang] != null) {
+          current = current[lang];
+        }
         return current == null ? "" : current;
       });
     }
@@ -73,6 +76,23 @@
       var suffix = el.getAttribute("data-site-suffix") || "";
       el.textContent = prefix + current + suffix;
     });
+
+    // Tự động cập nhật liên kết từ siteData.links cho các thẻ có data-placeholder
+    if (siteData.links) {
+      var linkMap = {
+        "download-url": siteData.links.download,
+        "source-url": siteData.links.source,
+        "changelog-url": siteData.links.changelog,
+        "support-url": siteData.links.support,
+        "privacy-url": siteData.links.privacy
+      };
+      document.querySelectorAll("[data-placeholder]").forEach(function (el) {
+        var placeholderKey = el.getAttribute("data-placeholder");
+        if (linkMap[placeholderKey]) {
+          el.setAttribute("href", linkMap[placeholderKey]);
+        }
+      });
+    }
 
     document.documentElement.lang = lang;
 

@@ -42,19 +42,15 @@ public extension DirectAIProvider {
 public extension TranslationDisplayMode {
     var localizedTitle: LocalizedStringResource {
         switch self {
-        case .wordByWord: return .displayWordByWord
-        case .onlyTarget: return .displayOnlyTarget
         case .standard: return .displayStandard
-        case .syntax: return .displaySyntax
+        case .onlyTarget: return .displayOnlyTarget
         }
     }
 
     var shortLocalizedTitle: LocalizedStringResource {
         switch self {
-        case .wordByWord: return .displayWordByWordShort
-        case .onlyTarget: return .displayOnlyTargetShort
         case .standard: return .displayStandardShort
-        case .syntax: return .displaySyntaxShort
+        case .onlyTarget: return .displayOnlyTargetShort
         }
     }
 }

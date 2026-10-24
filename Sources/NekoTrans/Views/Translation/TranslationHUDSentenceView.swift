@@ -19,38 +19,7 @@ public struct TranslationHUDSentenceView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Mode Switcher & Tools Header
             HStack(spacing: 5) {
-                // Display Mode Segmented Capsule (Prevents horizontal overflow)
-                HStack(spacing: 1.5) {
-                    ForEach(TranslationDisplayMode.allCases) { mode in
-                        let isSelected = settings.translationDisplayMode == mode
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                settings.translationDisplayMode = mode
-                            }
-                        }) {
-                            HStack(spacing: 2.5) {
-                                Image(systemName: mode.icon)
-                                    .font(.system(size: 8))
-                                Text(mode.shortName)
-                                    .font(.system(size: 9.5, weight: isSelected ? .bold : .medium))
-                                    .lineLimit(1)
-                            }
-                            .padding(.horizontal, 5.5)
-                            .padding(.vertical, 3)
-                            .foregroundColor(isSelected ? .white : .secondary)
-                            .background(
-                                isSelected ? AppColors.accent : Color.clear
-                            )
-                            .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .fixedSize()
-                        .help(mode.rawValue)
-                    }
-                }
-                .padding(2)
-                .background(Color.primary.opacity(0.04))
-                .clipShape(Capsule())
+                modeSwitcherCapsule
 
                 Spacer(minLength: 4)
 
@@ -79,6 +48,9 @@ public struct TranslationHUDSentenceView: View {
                 .buttonStyle(.plain)
                 .fixedSize()
                 .help("So sánh song song kết quả từ Google Translate, DeepL và AI")
+                .accessibilityLabel((viewModel.isComparisonMode || Defaults[.enableHUDMultiEngine]) ? "Tắt so sánh đa động cơ" : "So sánh kết quả đa động cơ")
+                .accessibilityHint("Nhấn để so sánh song song bản dịch giữa Google Translate, DeepL và AI")
+                .accessibilityAddTraits((viewModel.isComparisonMode || Defaults[.enableHUDMultiEngine]) ? [.isButton, .isSelected] : .isButton)
 
                 // Grammar & Polish Toggle Button
                 Button(action: {
@@ -111,6 +83,9 @@ public struct TranslationHUDSentenceView: View {
                 .buttonStyle(.plain)
                 .fixedSize()
                 .help("Kiểm tra ngữ pháp & gợi ý 3 cách diễn đạt chuẩn bản xứ")
+                .accessibilityLabel(showGrammarPanel ? "Đóng bảng kiểm tra ngữ pháp và viết lại" : "Kiểm tra ngữ pháp và gợi ý viết lại")
+                .accessibilityHint("Nhấn để AI phân tích cấu trúc ngữ pháp và gợi ý các cách diễn đạt tự nhiên hơn")
+                .accessibilityAddTraits(showGrammarPanel ? [.isButton, .isSelected] : .isButton)
             }
             .padding(.bottom, 2)
 
@@ -128,16 +103,52 @@ public struct TranslationHUDSentenceView: View {
 
             // Main Translation View Modes
             switch settings.translationDisplayMode {
-            case .wordByWord:
-                wordByWordView
-            case .onlyTarget:
-                onlyTargetView
             case .standard:
                 standardView
-            case .syntax:
-                syntaxHighlightingView
+            case .onlyTarget:
+                onlyTargetView
             }
         }
+    }
+
+    // MARK: - Mode Switcher Controls
+    private var modeSwitcherCapsule: some View {
+        HStack(spacing: 1.5) {
+            ForEach(TranslationDisplayMode.allCases) { mode in
+                modeButton(for: mode)
+            }
+        }
+        .padding(2)
+        .background(Color.primary.opacity(0.04))
+        .clipShape(Capsule())
+    }
+
+    private func modeButton(for mode: TranslationDisplayMode) -> some View {
+        let isSelected = settings.translationDisplayMode == mode
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                settings.translationDisplayMode = mode
+            }
+        }) {
+            HStack(spacing: 2.5) {
+                Image(systemName: mode.icon)
+                    .font(.system(size: 8))
+                Text(mode.shortName)
+                    .font(.system(size: 9.5, weight: isSelected ? .bold : .medium))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 5.5)
+            .padding(.vertical, 3)
+            .foregroundColor(isSelected ? .white : .secondary)
+            .background(isSelected ? AppColors.accent : Color.clear)
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .help(mode.rawValue)
+        .accessibilityLabel("Chế độ hiển thị: \(mode.shortName)")
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityHint("Nhấn để chuyển sang chế độ hiển thị \(mode.rawValue)")
     }
 
     // MARK: - In-Sentence Inspected Word Popover Card
@@ -366,170 +377,21 @@ public struct TranslationHUDSentenceView: View {
         .padding(.vertical, 1.5)
     }
 
-    // MARK: - Mode 1: Dịch từng từ tương ứng
-    private var wordByWordView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "character.bubble.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(AppColors.accent)
-                    Text("DỊCH TỪNG TỪ TƯƠNG ỨNG")
-                        .font(.appSubcaptionBold)
-                        .foregroundColor(AppColors.accent)
-                }
-
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 10, height: 10)
-                }
-
-                Spacer()
-
-                Button(action: { viewModel.speakOriginal() }) {
-                    HStack(spacing: 3) {
-                        EqualizerWaveView(
-                            isActive: speechService.isSpeaking && speechService.currentSpeakerID == "original",
-                            barColor: .secondary,
-                            height: 9
-                        )
-                        Text("Đọc TA")
-                            .font(.appSubcaption)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2.5)
-                    .background(AppColors.tagBackground)
-                    .foregroundColor(.secondary)
-                    .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
-
-                Button(action: { viewModel.speakTranslated() }) {
-                    HStack(spacing: 3) {
-                        EqualizerWaveView(
-                            isActive: speechService.isSpeaking && speechService.currentSpeakerID == "translated",
-                            barColor: AppColors.accent,
-                            height: 9
-                        )
-                        Text("Đọc TV")
-                            .font(.appSubcaption)
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2.5)
-                    .background(AppColors.accentSubtle)
-                    .foregroundColor(AppColors.accent)
-                    .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
-
-                Button(action: {
-                    viewModel.copyTranslation()
-                    copied = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { copied = false }
-                }) {
-                    HStack(spacing: 3) {
-                        Image(systemName: copied ? "checkmark" : "doc.on.doc")
-                            .font(.system(size: 9))
-                        Text(copied ? "Đã chép" : "Sao chép")
-                            .font(.appSubcaption)
-                    }
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2.5)
-                    .background(AppColors.accentSubtle)
-                    .foregroundColor(AppColors.accent)
-                    .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
-            }
-
-            if !viewModel.wordGlosses.isEmpty {
-                WrappingHStack(models: viewModel.wordGlosses) { item in
-                    Button(action: {
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                            viewModel.inspectWordInSentence(word: item.cleanWord)
-                        }
-                    }) {
-                        VStack(alignment: .center, spacing: 2) {
-                            Text(item.original)
-                                .font(.appBodyBold)
-                                .foregroundColor(.primary)
-                                .lineLimit(1)
-
-                            Text(item.gloss.isEmpty ? " " : item.gloss)
-                                .font(.appSubcaption)
-                                .foregroundColor(AppColors.accent)
-                                .lineLimit(1)
-                        }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2.5)
-                        .background(AppColors.accent.opacity(0.06))
-                        .cornerRadius(4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(AppColors.accent.opacity(0.15), lineWidth: 0.8)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .help("Bấm để tra cứu chi tiết từ '\(item.cleanWord)'")
-                }
-            } else {
-                LiveSpokenTextView(
-                    text: viewModel.originalText,
-                    speakerID: "original",
-                    font: .appBody,
-                    defaultColor: .primary,
-                    lineSpacing: 3.5
-                )
-            }
-
-            Divider().opacity(0.2)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: "text.alignleft")
-                        .font(.system(size: 9))
-                        .foregroundColor(AppColors.accent)
-                    Text("Bản dịch trọn vẹn:")
-                        .font(.appSubcaptionBold)
-                        .foregroundColor(.secondary)
-                }
-
-                if viewModel.translatedText.isEmpty && viewModel.isLoading {
-                    Text("Đang dịch thuật...")
-                        .font(.appCaption)
-                        .foregroundColor(.secondary)
-                        .italic()
-                } else {
-                    LiveSpokenTextView(
-                        text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
-                        speakerID: "translated",
-                        font: .appBodyMedium,
-                        defaultColor: .primary,
-                        lineSpacing: 3.5
-                    )
-                }
-
-                if !viewModel.translatedText.isEmpty {
-                    engineAttributionBadge
-                }
-            }
-        }
-        .padding(12)
-        .background(AppColors.cardBackground)
-        .cornerRadius(9)
-        .overlay(
-            RoundedRectangle(cornerRadius: 9)
-                .stroke(AppColors.accent.opacity(0.15), lineWidth: 1)
-        )
-    }
-
     private var engineAttributionBadge: some View {
         HStack(spacing: 4) {
-            Image(systemName: viewModel.selectedEngine == .directAI ? "cpu.fill" : "globe")
-                .font(.system(size: 8))
-            Text("Dịch bởi: \(viewModel.activeEngineLabel.isEmpty ? (viewModel.selectedEngine == .directAI ? "AI Engine" : viewModel.selectedEngine.rawValue) : viewModel.activeEngineLabel)")
-                .font(.system(size: 9.5, weight: .medium))
+            if viewModel.isStreaming {
+                Image(systemName: "cpu.fill")
+                    .font(.system(size: 8))
+                    .foregroundColor(AppColors.accent)
+                Text("AI đang tạo câu trả lời...")
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundColor(AppColors.accent)
+            } else {
+                Image(systemName: viewModel.selectedEngine == .directAI ? "cpu.fill" : "globe")
+                    .font(.system(size: 8))
+                Text("Dịch bởi: \(viewModel.activeEngineLabel.isEmpty ? (viewModel.selectedEngine == .directAI ? "AI Engine" : viewModel.selectedEngine.rawValue) : viewModel.activeEngineLabel)")
+                    .font(.system(size: 9.5, weight: .medium))
+            }
             Spacer()
         }
         .foregroundColor(.secondary.opacity(0.8))
@@ -635,20 +497,21 @@ public struct TranslationHUDSentenceView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                if viewModel.translatedText.isEmpty && viewModel.isLoading {
-                    Text("Đang dịch thuật...")
-                        .font(.appCaption)
-                        .foregroundColor(.secondary)
-                        .italic()
-                        .padding(.vertical, 4)
+                if viewModel.translatedText.isEmpty && (viewModel.isLoading || viewModel.isStreaming) {
+                    TranslationShimmerPlaceholder(message: "Đang dịch thuật...")
+                        .frame(minHeight: viewModel.originalText.count > 100 ? 55 : 24, alignment: .leading)
                 } else {
                     LiveSpokenTextView(
                         text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
                         speakerID: "translated",
+                        isStreaming: viewModel.isStreaming,
                         font: .appHeadline,
                         defaultColor: .primary,
                         lineSpacing: 4.5
                     )
+                }
+
+                if !viewModel.translatedText.isEmpty || viewModel.isStreaming {
                     engineAttributionBadge
                 }
             }
@@ -657,7 +520,10 @@ public struct TranslationHUDSentenceView: View {
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.accent.opacity(0.15), lineWidth: 1)
+                    .stroke(
+                        viewModel.isStreaming ? AppColors.accent.opacity(0.3) : AppColors.accent.opacity(0.15),
+                        lineWidth: viewModel.isStreaming ? 1.2 : 1
+                    )
             )
         }
     }
@@ -743,16 +609,14 @@ public struct TranslationHUDSentenceView: View {
                     .help(viewModel.isBookmarked ? "Bỏ lưu câu này" : "Lưu câu vào sổ từ vựng")
                 }
 
-                if viewModel.translatedText.isEmpty && viewModel.isLoading {
-                    Text("Đang dịch thuật...")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .italic()
-                        .padding(.vertical, 4)
+                if viewModel.translatedText.isEmpty && (viewModel.isLoading || viewModel.isStreaming) {
+                    TranslationShimmerPlaceholder(message: "Đang dịch thuật...")
+                        .frame(minHeight: viewModel.originalText.count > 100 ? 55 : 24, alignment: .leading)
                 } else {
                     LiveSpokenTextView(
                         text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
                         speakerID: "translated",
+                        isStreaming: viewModel.isStreaming,
                         font: .system(size: 13.5, weight: .semibold),
                         defaultColor: .primary,
                         lineSpacing: 4
@@ -782,7 +646,10 @@ public struct TranslationHUDSentenceView: View {
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.accent.opacity(0.2), lineWidth: 0.9)
+                    .stroke(
+                        viewModel.isStreaming ? AppColors.accent.opacity(0.3) : AppColors.accent.opacity(0.2),
+                        lineWidth: viewModel.isStreaming ? 1.2 : 0.9
+                    )
             )
 
             // 3. Multi-Engine Comparison Stack (Easydict Signature Feature)
@@ -825,6 +692,9 @@ public struct TranslationHUDSentenceView: View {
                     .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
+                .help("Tải lại kết quả so sánh")
+                .accessibilityLabel("Tải lại kết quả so sánh các động cơ")
+                .accessibilityAddTraits(.isButton)
             }
 
             if viewModel.comparisonResults.isEmpty && viewModel.isComparing {
@@ -866,6 +736,8 @@ public struct TranslationHUDSentenceView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .help("Nghe phát âm bản dịch này")
+                                .accessibilityLabel("Phát âm bản dịch của \(res.providerName)")
+                                .accessibilityAddTraits([.isButton, .startsMediaSession])
 
                                 NekoCopyButton(textToCopy: res.text, iconOnly: true)
 
@@ -886,6 +758,9 @@ public struct TranslationHUDSentenceView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .help("Chọn bản dịch này làm kết quả chính")
+                                .accessibilityLabel("Sử dụng bản dịch từ \(res.providerName)")
+                                .accessibilityHint("Nhấn để áp dụng bản dịch này vào kết quả hiển thị chính")
+                                .accessibilityAddTraits(.isButton)
                             }
                         }
 
@@ -921,153 +796,5 @@ public struct TranslationHUDSentenceView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.blue.opacity(0.18), lineWidth: 0.8)
         )
-    }
-
-    // MARK: - Mode 4: 🌈 Tô màu cú pháp ngữ pháp trực quan (Apple NLP Syntax Highlighting)
-    private var syntaxHighlightingView: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Header Bar
-            HStack {
-                HStack(spacing: 4) {
-                    Image(systemName: "paintpalette.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(AppColors.accent)
-                    Text("PHÂN TÍCH CÚ PHÁP NGỮ PHÁP (APPLE NLP)")
-                        .font(.appSubcaptionBold)
-                        .foregroundColor(AppColors.accent)
-                }
-
-                Spacer()
-
-                Button(action: { viewModel.speakOriginal() }) {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Syntax Colorized Words Flow
-            let taggedTokens = analyzeSyntax(text: viewModel.originalText)
-            WrappingHStack(models: taggedTokens) { item in
-                Button(action: {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                        viewModel.inspectWordInSentence(word: item.word)
-                    }
-                }) {
-                    VStack(alignment: .center, spacing: 2) {
-                        Text(item.word)
-                            .font(.appBodyBold)
-                            .foregroundColor(item.color)
-                        Text(item.tagLabel)
-                            .font(.appSubcaptionBold)
-                            .foregroundColor(item.color.opacity(0.85))
-                    }
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 2)
-                    .background(item.color.opacity(0.08))
-                    .cornerRadius(4)
-                }
-                .buttonStyle(.plain)
-                .help("Bấm để xem giải thích từ '\(item.word)' trong ngữ cảnh")
-            }
-
-            // Legend Footer
-            HStack(spacing: 8) {
-                syntaxLegendItem(label: "Danh từ", color: AppColors.accent)
-                syntaxLegendItem(label: "Động từ", color: AppColors.destructive)
-                syntaxLegendItem(label: "Tính từ", color: AppColors.success)
-                syntaxLegendItem(label: "Trạng từ", color: AppColors.warning)
-                syntaxLegendItem(label: "Giới từ/Liên từ", color: .purple)
-            }
-            .padding(.top, 4)
-
-            Divider().opacity(0.2)
-
-            // Natural Translation at bottom
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Bản dịch:")
-                    .font(.appSubcaptionBold)
-                    .foregroundColor(.secondary)
-                LiveSpokenTextView(
-                    text: viewModel.translatedText.isEmpty ? "—" : viewModel.translatedText,
-                    speakerID: "translated",
-                    font: .appBody,
-                    defaultColor: .primary
-                )
-            }
-        }
-        .padding(12)
-        .background(AppColors.cardBackground)
-        .cornerRadius(9)
-        .overlay(
-            RoundedRectangle(cornerRadius: 9)
-                .stroke(Color.purple.opacity(0.18), lineWidth: 1)
-        )
-    }
-
-    private func syntaxLegendItem(label: String, color: Color) -> some View {
-        HStack(spacing: 2.5) {
-            Circle()
-                .fill(color)
-                .frame(width: 5.5, height: 5.5)
-            Text(label)
-                .font(.appSubcaption)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private struct TaggedToken: Hashable, Identifiable {
-        let id = UUID()
-        let word: String
-        let tagLabel: String
-        let color: Color
-    }
-
-    private func analyzeSyntax(text: String) -> [TaggedToken] {
-        var results: [TaggedToken] = []
-        let tagger = NLTagger(tagSchemes: [.lexicalClass])
-        tagger.string = text
-
-        let options: NLTagger.Options = [.omitWhitespace, .omitPunctuation]
-        tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .lexicalClass, options: options) { tag, range in
-            let word = String(text[range])
-            let (label, color) = mapNLTag(tag)
-            results.append(TaggedToken(word: word, tagLabel: label, color: color))
-            return true
-        }
-
-        if results.isEmpty {
-            return text.split(separator: " ").map {
-                TaggedToken(word: String($0), tagLabel: "WORD", color: .primary)
-            }
-        }
-        return results
-    }
-
-    private func mapNLTag(_ tag: NLTag?) -> (String, Color) {
-        guard let tag = tag else { return ("OTHER", .secondary) }
-        switch tag {
-        case .noun:
-            return ("NOUN", AppColors.accent)
-        case .verb:
-            return ("VERB", AppColors.destructive)
-        case .adjective:
-            return ("ADJ", AppColors.success)
-        case .adverb:
-            return ("ADV", AppColors.warning)
-        case .pronoun:
-            return ("PRON", AppColors.accent)
-        case .preposition:
-            return ("PREP", .purple)
-        case .conjunction:
-            return ("CONJ", .purple)
-        case .particle:
-            return ("PART", .indigo)
-        case .determiner:
-            return ("DET", .teal)
-        default:
-            return (tag.rawValue.uppercased(), .secondary)
-        }
     }
 }

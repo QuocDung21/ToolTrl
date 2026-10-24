@@ -137,14 +137,14 @@ public enum AIPromptBuilder {
     // MARK: 5b. Local GGUF System Prompt for Chat Templates
     public static func languageDisplayName(for code: String) -> String {
         switch code.lowercased() {
-        case "vi": return "Vietnamese (tiếng Việt)"
+        case "vi": return "Vietnamese"
         case "en": return "English"
-        case "ja": return "Japanese (日本語)"
-        case "zh": return "Chinese (中文)"
-        case "ko": return "Korean (한국어)"
-        case "fr": return "French (Français)"
-        case "de": return "German (Deutsch)"
-        case "es": return "Spanish (Español)"
+        case "ja": return "Japanese"
+        case "zh": return "Chinese"
+        case "ko": return "Korean"
+        case "fr": return "French"
+        case "de": return "German"
+        case "es": return "Spanish"
         case "auto": return "the source language"
         default: return code
         }
@@ -157,23 +157,11 @@ public enum AIPromptBuilder {
     ) -> String {
         let sourceName = languageDisplayName(for: sourceLang)
         let targetName = languageDisplayName(for: targetLang)
-        return """
-        You are an expert, professional translator.
-        Your task is to accurately translate text from \(sourceName) into \(targetName).
-        Strict Guidelines:
-        1. Output ONLY the final translated text in \(targetName).
-        2. Do NOT add conversational responses, greetings, explanations, notes, or quotation marks.
-        3. Never repeat the original text or output in another language.
-        4. Preserve all numbers, variables, technical terms, and code blocks verbatim.
-        """
+        return "You are a professional \(sourceName) to \(targetName) translator. Translate the following text into natural \(targetName). Output ONLY the \(targetName) translation, never the original \(sourceName) or any explanations."
     }
 
     public static func localGGUFUserPrompt(text: String, targetLang: String = "vi") -> String {
-        let targetName = languageDisplayName(for: targetLang)
-        return """
-        Translate the following text into \(targetName):
-        \(text)
-        """
+        return text
     }
     
     // MARK: 6. Grammar Checking & 3-Tone Polishing Prompt

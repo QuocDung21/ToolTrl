@@ -22,6 +22,17 @@ public enum TranslationDomain: String, CaseIterable, Identifiable, Sendable {
         case .daily: return "cup.and.saucer"
         }
     }
+
+    public var emojiIcon: String {
+        switch self {
+        case .general: return "🌐"
+        case .technology: return "💻"
+        case .business: return "📈"
+        case .academic: return "🎓"
+        case .medical: return "🏥"
+        case .daily: return "☕"
+        }
+    }
 }
 
 public enum TranslationEngine: String, CaseIterable, Identifiable, Sendable {
@@ -33,6 +44,26 @@ public enum TranslationEngine: String, CaseIterable, Identifiable, Sendable {
 
     public var id: String { rawValue }
 
+    public var displayName: String {
+        switch self {
+        case .auto: return "Tự động (Nhanh nhất)"
+        case .directAI: return "Trí tuệ nhân tạo (AI)"
+        case .deepL: return "DeepL"
+        case .googleWeb: return "Google Dịch"
+        case .appleOffline: return "Apple Dịch (Offline)"
+        }
+    }
+
+    public var shortName: String {
+        switch self {
+        case .auto: return "Tự động"
+        case .directAI: return "AI"
+        case .deepL: return "DeepL"
+        case .googleWeb: return "Google"
+        case .appleOffline: return "Apple Dịch"
+        }
+    }
+
     public var icon: String {
         switch self {
         case .auto: return "bolt.horizontal.fill"
@@ -40,6 +71,16 @@ public enum TranslationEngine: String, CaseIterable, Identifiable, Sendable {
         case .deepL: return "d.circle.fill"
         case .googleWeb: return "g.circle.fill"
         case .appleOffline: return "apple.logo"
+        }
+    }
+
+    public var emojiIcon: String {
+        switch self {
+        case .auto: return "⚡"
+        case .directAI: return "✨"
+        case .deepL: return "🅓"
+        case .googleWeb: return "🅖"
+        case .appleOffline: return ""
         }
     }
 }
@@ -67,28 +108,22 @@ public enum DirectAIProvider: String, CaseIterable, Identifiable, Sendable {
 }
 
 public enum TranslationDisplayMode: String, CaseIterable, Identifiable, Sendable {
-    case wordByWord = "Từng từ tương ứng (Interlinear Ruby)"
-    case onlyTarget = "Chỉ hiển thị tiếng Việt"
-    case standard = "Tiêu chuẩn (2 thẻ riêng biệt)"
-    case syntax = "Tô màu ngữ pháp trực quan (Syntax)"
+    case standard = "Song ngữ (Bản gốc & Bản dịch)"
+    case onlyTarget = "Chỉ hiển thị bản dịch"
 
     public var id: String { rawValue }
 
     public var shortName: String {
         switch self {
-        case .wordByWord: return "Từng từ"
+        case .standard: return "Song ngữ"
         case .onlyTarget: return "Chỉ dịch"
-        case .standard: return "Tiêu chuẩn"
-        case .syntax: return "Cú pháp"
         }
     }
 
     public var icon: String {
         switch self {
-        case .wordByWord: return "character.bubble.fill"
-        case .onlyTarget: return "text.alignleft"
         case .standard: return "rectangle.split.2x1"
-        case .syntax: return "paintpalette.fill"
+        case .onlyTarget: return "text.alignleft"
         }
     }
 }
@@ -106,10 +141,17 @@ public enum WordLookupMode: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    public var emojiIcon: String {
+        switch self {
+        case .quickTranslate: return "⚡"
+        case .dictionary: return "📖"
+        }
+    }
+
     public var title: String {
         switch self {
-        case .quickTranslate: return "Dịch nhanh (Gọn)"
-        case .dictionary: return "Tra từ điển (Chi tiết)"
+        case .quickTranslate: return "Dịch nhanh gọn"
+        case .dictionary: return "Từ điển chi tiết"
         }
     }
 
@@ -300,15 +342,32 @@ public enum TargetLanguage: String, CaseIterable, Identifiable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .vietnamese: return "Tiếng Việt (vi)"
-        case .english: return "Tiếng Anh (en)"
-        case .japanese: return "Tiếng Nhật (ja)"
-        case .chinese: return "Tiếng Trung (zh)"
-        case .korean: return "Tiếng Hàn (ko)"
-        case .french: return "Tiếng Pháp (fr)"
-        case .german: return "Tiếng Đức (de)"
-        case .spanish: return "Tiếng Tây Ban Nha (es)"
+        case .vietnamese: return "Tiếng Việt"
+        case .english: return "Tiếng Anh"
+        case .japanese: return "Tiếng Nhật"
+        case .chinese: return "Tiếng Trung"
+        case .korean: return "Tiếng Hàn"
+        case .french: return "Tiếng Pháp"
+        case .german: return "Tiếng Đức"
+        case .spanish: return "Tiếng Tây Ban Nha"
         }
+    }
+
+    public var flag: String {
+        switch self {
+        case .vietnamese: return "🇻🇳"
+        case .english: return "🇬🇧"
+        case .japanese: return "🇯🇵"
+        case .chinese: return "🇨🇳"
+        case .korean: return "🇰🇷"
+        case .french: return "🇫🇷"
+        case .german: return "🇩🇪"
+        case .spanish: return "🇪🇸"
+        }
+    }
+
+    public var displayNameWithFlag: String {
+        "\(flag)  \(displayName)"
     }
 }
 

@@ -1,0 +1,379 @@
+/* NekoTrans Safari Extension - Content Styles */
+
+/* Selection Floating Button */
+#nekotrans-selection-bubble {
+    position: absolute;
+    z-index: 2147483640;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 9px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+    animation: nekotrans-pop-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-sizing: border-box;
+    padding: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nekotrans-selection-bubble {
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.nekotrans-bubble-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    object-fit: contain;
+    pointer-events: none;
+    display: block;
+}
+
+#nekotrans-selection-bubble:hover {
+    transform: scale(1.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+#nekotrans-selection-bubble:active {
+    transform: scale(0.95);
+}
+
+/* Floating Translation Card */
+#nekotrans-translation-card {
+    position: absolute;
+    z-index: 2147483645;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.5;
+    animation: nekotrans-card-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+    #nekotrans-translation-card {
+        background: rgba(30, 41, 59, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.3);
+        color: #f1f5f9;
+    }
+}
+
+.nekotrans-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-card-header {
+        background: rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+
+.nekotrans-card-brand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #4f46e5;
+}
+
+.nekotrans-brand-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    object-fit: contain;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-card-brand {
+        color: #818cf8;
+    }
+}
+
+.nekotrans-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.nekotrans-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.nekotrans-btn-icon:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #1e293b;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-btn-icon {
+        color: #94a3b8;
+    }
+    .nekotrans-btn-icon:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #f8fafc;
+    }
+}
+
+.nekotrans-card-body {
+    padding: 14px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.nekotrans-source-box {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-source-box {
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+    }
+}
+
+.nekotrans-source-text {
+    font-size: 13px;
+    color: #64748b;
+    word-break: break-word;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-source-text {
+        color: #94a3b8;
+    }
+}
+
+.nekotrans-phonetic {
+    display: inline-block;
+    margin-top: 4px;
+    font-family: "SF Pro Text", -apple-system, sans-serif;
+    font-size: 12px;
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.1);
+    padding: 1px 7px;
+    border-radius: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-phonetic {
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.15);
+    }
+}
+
+.nekotrans-translated-text {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #0f172a;
+    line-height: 1.55;
+    word-break: break-word;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-translated-text {
+        color: #f8fafc;
+    }
+}
+
+.nekotrans-dict-section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-dict-section {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+
+.nekotrans-pos-tag {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #7c3aed;
+    margin-right: 6px;
+}
+
+.nekotrans-terms-list {
+    color: #64748b;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-pos-tag {
+        color: #a78bfa;
+    }
+    .nekotrans-terms-list {
+        color: #94a3b8;
+    }
+}
+
+.nekotrans-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.02);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-card-footer {
+        background: rgba(255, 255, 255, 0.02);
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+}
+
+.nekotrans-link-app {
+    color: #4f46e5;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.nekotrans-link-app:hover {
+    text-decoration: underline;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-link-app {
+        color: #818cf8;
+    }
+}
+
+/* Bilingual Web Page Translation Blocks */
+.nekotrans-bilingual-block {
+    display: block !important;
+    margin-top: 6px !important;
+    margin-bottom: 10px !important;
+    padding: 4px 10px !important;
+    background: rgba(79, 70, 229, 0.05) !important;
+    border-left: 3px solid #6366f1 !important;
+    border-radius: 0 6px 6px 0 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important;
+    font-size: 0.94em !important;
+    line-height: 1.55 !important;
+    color: #4338ca !important;
+    animation: nekotrans-fade-in 0.3s ease-out !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .nekotrans-bilingual-block {
+        background: rgba(99, 102, 241, 0.12) !important;
+        border-left: 3px solid #818cf8 !important;
+        color: #c7d2fe !important;
+    }
+}
+
+/* Floating Status HUD */
+#nekotrans-page-hud {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2147483646;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    user-select: none;
+    animation: nekotrans-slide-up 0.25s ease-out;
+}
+
+#nekotrans-page-hud button {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #ffffff;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+#nekotrans-page-hud button:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.nekotrans-hud-logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    object-fit: contain;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Animations */
+@keyframes nekotrans-pop-in {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes nekotrans-card-in {
+    0% { transform: translateY(8px) scale(0.97); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes nekotrans-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes nekotrans-slide-up {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}

@@ -2,6 +2,7 @@ import Foundation
 import NaturalLanguage
 import Defaults
 import Observation
+import NekoCore
 
 @Observable
 @MainActor
@@ -9,6 +10,15 @@ public final class VocabularyService {
     public static let shared = VocabularyService()
     
     public var savedWords: [SavedWordItem] = []
+    
+    public static var storeFileURL: URL? {
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let folder = appSupport.appendingPathComponent("NekoTrans", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder.appendingPathComponent("vocabulary_store.dat")
+    }
     
     private init() {
         loadWords()
@@ -51,20 +61,43 @@ public final class VocabularyService {
     
     public func loadWords() {
         var items: [SavedWordItem] = []
-        if let data = Defaults[.savedVocabularyItemsData],
-           let decoded = try? JSONDecoder().decode([SavedWordItem].self, from: data) {
-            items = decoded
-        } else if let legacyData = Defaults[.legacySavedVocabularyItemsData],
-                  let legacyItems = try? JSONDecoder().decode([SavedWordItem].self, from: legacyData) {
-            items = legacyItems
+        var loadedFromFile = false
+        
+        // 1. Try loading from compressed LZFSE file store
+        if let url = Self.storeFileURL,
+           FileManager.default.fileExists(atPath: url.path),
+           let rawData = try? Data(contentsOf: url) {
+            let payload = DataCompression.decompress(data: rawData) ?? rawData
+            if let decoded = try? JSONDecoder().decode([SavedWordItem].self, from: payload) {
+                items = decoded
+                loadedFromFile = true
+            }
+        }
+        
+        // 2. Migration fallback: load from UserDefaults if file doesn't exist yet
+        if !loadedFromFile {
+            if let data = Defaults[.savedVocabularyItemsData],
+               let decoded = try? JSONDecoder().decode([SavedWordItem].self, from: data) {
+                items = decoded
+            } else if let legacyData = Defaults[.legacySavedVocabularyItemsData],
+                      let legacyItems = try? JSONDecoder().decode([SavedWordItem].self, from: legacyData) {
+                items = legacyItems
+            }
         }
         
         // Auto-Deduplicate & Normalize legacy items (e.g. "Leadership" -> "leadership")
         // and backfill `itemType` for rows saved before that field existed.
         let migrated = VocabularyService.migrateLegacyItems(items)
         self.savedWords = migrated.items
-        if migrated.didMigrate {
+        
+        // If loaded from UserDefaults or migrated, persist to file store and purge UserDefaults
+        if !loadedFromFile || migrated.didMigrate {
             saveWords()
+            if Defaults[.savedVocabularyItemsData] != nil || Defaults[.legacySavedVocabularyItemsData] != nil {
+                Defaults[.savedVocabularyItemsData] = nil
+                Defaults[.legacySavedVocabularyItemsData] = nil
+                AppLog.vocabulary.info("Sổ từ vựng đã được di chuyển thành công từ UserDefaults sang file LZFSE độc lập.")
+            }
         }
     }
     
@@ -117,10 +150,10 @@ public final class VocabularyService {
         
         let workItem = DispatchWorkItem {
             guard let data = try? JSONEncoder().encode(snapshot) else { return }
-            Defaults[.savedVocabularyItemsData] = data
-            
-            // Auto Index to macOS CoreSpotlight (Cmd + Space Search)
-            SpotlightService.shared.indexAllItems(snapshot)
+            let compressed = DataCompression.compress(data: data) ?? data
+            if let url = Self.storeFileURL {
+                try? compressed.write(to: url, options: .atomic)
+            }
             
             // Auto Sync to GitHub Cloud if enabled
             Task { @MainActor in
@@ -131,21 +164,25 @@ public final class VocabularyService {
         }
         
         saveWorkItem = workItem
-        saveQueue.asyncAfter(deadline: .now() + 0.15, execute: workItem)
+        saveQueue.asyncAfter(deadline: .now() + 0.2, execute: workItem)
     }
     
     /// Synchronous flush when needed
     public func flush() {
         saveWorkItem?.cancel()
-        if let data = try? JSONEncoder().encode(savedWords) {
-            Defaults[.savedVocabularyItemsData] = data
-        }
+        guard let data = try? JSONEncoder().encode(savedWords),
+              let url = Self.storeFileURL else { return }
+        let compressed = DataCompression.compress(data: data) ?? data
+        try? compressed.write(to: url, options: .atomic)
     }
     
     /// Xóa toàn bộ dữ liệu từ vựng và ngữ pháp trên máy (dùng khi đăng xuất tài khoản)
     public func clearAllWords() {
         saveWorkItem?.cancel()
         self.savedWords = []
+        if let url = Self.storeFileURL {
+            try? FileManager.default.removeItem(at: url)
+        }
         Defaults[.savedVocabularyItemsData] = nil
         Defaults[.legacySavedVocabularyItemsData] = nil
         SpotlightService.shared.clearAllIndex()

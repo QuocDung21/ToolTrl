@@ -1,5 +1,5 @@
 {
-  "sourceLanguage" : "vi",
+  "sourceLanguage" : "en",
   "strings" : {
     "" : {
       "localizations" : {
@@ -13,6 +13,32 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : ""
+          }
+        }
+      }
+    },
+    "      %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "      %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "      %@"
+          }
+        }
+      }
+    },
+    "      %@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "      %@  %@"
           }
         }
       }
@@ -34,7 +60,20 @@
       }
     },
     "(%@)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(%@)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(%@)"
+          }
+        }
+      }
     },
     "(Tự động nhận diện)" : {
       "localizations" : {
@@ -52,7 +91,34 @@
         }
       }
     },
+    "%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
+    },
+    "%@ — %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — %@"
+          }
+        }
+      }
+    },
     "%@ (Đang chọn)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -68,10 +134,8 @@
         }
       }
     },
-    "%@ (Đang dịch)" : {
-
-    },
     "%@ • %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -248,7 +312,20 @@
       }
     },
     "%lldms" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldms"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldms"
+          }
+        }
+      }
     },
     "•" : {
       "localizations" : {
@@ -310,6 +387,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "• Finding this library was pure serendipity."
+          }
+        }
+      }
+    },
+    "⇄  Đảo chiều ngôn ngữ (%@ ⇄ %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⇄  Swap Languages (%@ ⇄ %@)"
           }
         }
       }
@@ -474,6 +561,32 @@
         }
       }
     },
+    "✓  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✓  %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✓  %@"
+          }
+        }
+      }
+    },
+    "✓  %@  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "✓  %@  %@"
+          }
+        }
+      }
+    },
     "➔ %@" : {
       "localizations" : {
         "en" : {
@@ -507,6 +620,7 @@
       }
     },
     "🌐 Ngữ Cảnh Chuyên Ngành: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -518,6 +632,41 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🌐 Ngữ Cảnh Chuyên Ngành: %@"
+          }
+        }
+      }
+    },
+    "🌟 Gợi ý model GGUF tối ưu cho dịch thuật:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌟 Recommended GGUF models for translation:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🌟 Gợi ý model GGUF tối ưu cho dịch thuật:"
+          }
+        }
+      }
+    },
+    "🐱" : {
+
+    },
+    "💡 Bạn có thể tải file GGUF từ Hugging Face hoặc bấm nút 'Chọn file...' ở trên." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "💡 You can download GGUF models from Hugging Face or click 'Choose File...' above."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "💡 Bạn có thể tải file GGUF từ Hugging Face hoặc bấm nút 'Chọn file...' ở trên."
           }
         }
       }
@@ -539,6 +688,7 @@
       }
     },
     "📚 Sổ Tay & Cài Đặt" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -582,6 +732,25 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "3 Cột"
+          }
+        }
+      }
+    },
+    "14:30" : {
+
+    },
+    "100% In-Process • Không cần Server" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100% In-Process • No Server Required"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "100% In-Process • Không cần Server"
           }
         }
       }
@@ -756,6 +925,9 @@
         }
       }
     },
+    "AI" : {
+
+    },
     "AI Bóc tách từ vựng & Ngữ pháp" : {
       "localizations" : {
         "en" : {
@@ -784,6 +956,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI đang bóc tách cấu trúc ngữ pháp và từ vựng..."
+          }
+        }
+      }
+    },
+    "AI đang tạo câu trả lời..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI is generating a response..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI đang tạo câu trả lời..."
           }
         }
       }
@@ -837,10 +1025,36 @@
       }
     },
     "Âm thanh phản hồi" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sound Feedback"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Âm thanh phản hồi"
+          }
+        }
+      }
     },
     "ANKI FLASHCARD (ANKICONNECT)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ANKI FLASHCARD (ANKICONNECT)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ANKI FLASHCARD (ANKICONNECT)"
+          }
+        }
+      }
     },
     "Anthropic Claude API Key (sk-ant-...):" : {
       "localizations" : {
@@ -903,6 +1117,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neko"
+          }
+        }
+      }
+    },
+    "Apple Silicon Metal In-Process (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Silicon Metal In-Process (%@)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Silicon Metal In-Process (%@)"
           }
         }
       }
@@ -1195,10 +1425,40 @@
         }
       }
     },
+    "Bắt đầu sử dụng NekoTrans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Using NekoTrans"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bắt đầu sử dụng NekoTrans"
+          }
+        }
+      }
+    },
     "Bật/tắt so sánh bản dịch song song giữa nhiều động cơ" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toggle side-by-side comparison across multiple engines"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật/tắt so sánh bản dịch song song giữa nhiều động cơ"
+          }
+        }
+      }
     },
     "Biến thể Kính lỏng (Liquid Glass):" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1310,6 +1570,22 @@
         }
       }
     },
+    "Bỏ qua" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bỏ qua"
+          }
+        }
+      }
+    },
     "BỘ SƯU TẬP" : {
       "localizations" : {
         "en" : {
@@ -1327,7 +1603,20 @@
       }
     },
     "Bộ thẻ (Deck):" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deck:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bộ thẻ (Deck):"
+          }
+        }
+      }
     },
     "Bỏ yêu thích" : {
       "localizations" : {
@@ -1395,10 +1684,10 @@
     },
     "Bôi đen chữ trong bất kỳ ứng dụng nào và nhấn %@ để dịch đè, hoặc %@ để sửa lỗi AI trực tiếp." : {
       "localizations" : {
-        "vi" : {
+        "en" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Bôi đen chữ trong bất kỳ ứng dụng nào và nhấn %1$@ để dịch đè, hoặc %2$@ để sửa lỗi AI trực tiếp."
+            "state" : "translated",
+            "value" : "Highlight text in any application and press %@ to replace-translate, or %@ to fix grammar with AI."
           }
         }
       }
@@ -1415,6 +1704,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bôi đen văn bản hoặc nhập từ để bắt đầu"
+          }
+        }
+      }
+    },
+    "Bước %lld / %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %lld of %lld"
           }
         }
       }
@@ -1467,6 +1766,38 @@
         }
       }
     },
+    "Cài đặt hệ thống ▸ Quyền riêng tư & Bảo mật ▸ Trợ năng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Settings ▸ Privacy & Security ▸ Accessibility"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt hệ thống ▸ Quyền riêng tư & Bảo mật ▸ Trợ năng"
+          }
+        }
+      }
+    },
+    "Cài Đặt Hoàn Tất!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setup Complete!"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài Đặt Hoàn Tất!"
+          }
+        }
+      }
+    },
     "Cài đặt ứng dụng (⌘,)" : {
       "localizations" : {
         "en" : {
@@ -1483,11 +1814,69 @@
         }
       }
     },
+    "Cài đặt... (⌘,)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings... (⌘,)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cài đặt... (⌘,)"
+          }
+        }
+      }
+    },
+    "Cam kết quyền riêng tư: NekoTrans chỉ đọc chữ khi bạn bấm phím tắt, không ghi nhận phím gõ hay gửi dữ liệu ra ngoài." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacy commitment: NekoTrans only reads selected text when you press a shortcut. It never records keystrokes or sends your text out."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cam kết quyền riêng tư: NekoTrans chỉ đọc chữ khi bạn bấm phím tắt, không ghi nhận phím gõ hay gửi dữ liệu ra ngoài."
+          }
+        }
+      }
+    },
     "Cần thiết để chụp vùng màn hình khi dịch OCR (Option + S)." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Required to capture screen regions for OCR translation (Option + S)."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cần thiết để chụp vùng màn hình khi dịch OCR (Option + S)."
+          }
+        }
+      }
     },
     "Cần thiết để tự động trích xuất văn bản đang chọn khi bấm phím tắt dịch." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Required to automatically extract selected text when pressing translation shortcuts."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cần thiết để tự động trích xuất văn bản đang chọn khi bấm phím tắt dịch."
+          }
+        }
+      }
     },
     "Cao độ giọng đọc:" : {
       "localizations" : {
@@ -1522,7 +1911,52 @@
       }
     },
     "Cấp quyền" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grant Permission"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cấp quyền"
+          }
+        }
+      }
+    },
+    "Cấp quyền sau" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grant Later"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cấp quyền sau"
+          }
+        }
+      }
+    },
+    "Cấp Quyền Trợ Năng (Accessibility)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grant Accessibility Permission"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cấp Quyền Trợ Năng (Accessibility)"
+          }
+        }
+      }
     },
     "CẤU HÌNH AI DIRECT API & LOCAL LLM" : {
       "localizations" : {
@@ -1552,6 +1986,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cấu hình nâng cao (API Key & Model AI)"
+          }
+        }
+      }
+    },
+    "Câu hỏi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Question"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Câu hỏi"
           }
         }
       }
@@ -1716,6 +2166,22 @@
         }
       }
     },
+    "Chào mừng đến với NekoTrans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to NekoTrans"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chào mừng đến với NekoTrans"
+          }
+        }
+      }
+    },
     "CHẾ ĐỘ HIỂN THỊ" : {
       "localizations" : {
         "en" : {
@@ -1728,6 +2194,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CHẾ ĐỘ HIỂN THỊ"
+          }
+        }
+      }
+    },
+    "Chế độ tra từ đơn (HUD):" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Single-word lookup mode (HUD):"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chế độ tra từ đơn (HUD):"
           }
         }
       }
@@ -1909,7 +2392,20 @@
       }
     },
     "Chọn bản dịch này làm kết quả chính" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select this translation as primary result"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn bản dịch này làm kết quả chính"
+          }
+        }
+      }
     },
     "CHỌN BỘ THẺ ĐỂ BẮT ĐẦU ÔN TẬP" : {
       "localizations" : {
@@ -1923,6 +2419,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CHỌN BỘ THẺ ĐỂ BẮT ĐẦU ÔN TẬP"
+          }
+        }
+      }
+    },
+    "Chọn file .gguf trên máy..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose .gguf file on your Mac..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn file .gguf trên máy..."
+          }
+        }
+      }
+    },
+    "Chọn file..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose File..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn file..."
           }
         }
       }
@@ -2105,9 +2633,23 @@
       }
     },
     "Chưa có kết quả so sánh. Nhập văn bản hoặc bấm 'Làm mới' để bắt đầu so sánh." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No comparison results yet. Enter text or click 'Reload' to start comparing."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa có kết quả so sánh. Nhập văn bản hoặc bấm 'Làm mới' để bắt đầu so sánh."
+          }
+        }
+      }
     },
     "Chưa có lịch sử dịch" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2204,6 +2746,22 @@
         }
       }
     },
+    "Chưa nạp vào RAM" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not loaded in RAM"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa nạp vào RAM"
+          }
+        }
+      }
+    },
     "Chưa thuộc" : {
       "localizations" : {
         "en" : {
@@ -2216,6 +2774,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Chưa thuộc"
+          }
+        }
+      }
+    },
+    "Chưa tìm thấy file .gguf nào trong Downloads hoặc thư mục Cache." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No .gguf models found in Downloads or Cache directory."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chưa tìm thấy file .gguf nào trong Downloads hoặc thư mục Cache."
           }
         }
       }
@@ -2301,7 +2875,20 @@
       }
     },
     "Cỡ chữ :" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font Size:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cỡ chữ :"
+          }
+        }
+      }
     },
     "Cỡ chữ hiển thị:" : {
       "extractionState" : "stale",
@@ -2417,7 +3004,20 @@
       }
     },
     "Đã cấp" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Granted"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã cấp"
+          }
+        }
+      }
     },
     "Đã chép" : {
       "localizations" : {
@@ -2447,6 +3047,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đã lưu"
+          }
+        }
+      }
+    },
+    "Đã lưu \"%@\": %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved \"%@\": %@"
           }
         }
       }
@@ -2483,7 +3093,24 @@
         }
       }
     },
+    "Đã nạp trong RAM Metal: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loaded in Metal RAM: %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã nạp trong RAM Metal: %@"
+          }
+        }
+      }
+    },
     "Đã sao chép vào bộ nhớ tạm" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2675,6 +3302,38 @@
         }
       }
     },
+    "Đang bật chế độ Dịch nhanh gọn • Bấm để chuyển sang Từ điển chi tiết" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Translate active • Click to switch to Detailed Dictionary"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang bật chế độ Dịch nhanh gọn • Bấm để chuyển sang Từ điển chi tiết"
+          }
+        }
+      }
+    },
+    "Đang bật chế độ Từ điển • Bấm để chuyển sang Dịch nhanh gọn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary active • Click to switch to Quick Translate"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang bật chế độ Từ điển • Bấm để chuyển sang Dịch nhanh gọn"
+          }
+        }
+      }
+    },
     "Đang bóc tách..." : {
       "localizations" : {
         "en" : {
@@ -2692,12 +3351,55 @@
       }
     },
     "Đang chạy đồng thời..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Running concurrently..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang chạy đồng thời..."
+          }
+        }
+      }
     },
     "Đang chọn" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selected"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang chọn"
+          }
+        }
+      }
+    },
+    "ĐANG CHỌN" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SELECTED"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ĐANG CHỌN"
+          }
+        }
+      }
     },
     "Đang dịch thuật..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2714,6 +3416,7 @@
       }
     },
     "Đang dịch: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2730,7 +3433,20 @@
       }
     },
     "Đang đối chiếu kết quả giữa Google, DeepL và AI..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparing results across Google, DeepL, and AI..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang đối chiếu kết quả giữa Google, DeepL và AI..."
+          }
+        }
+      }
     },
     "Đang ghim • Tự động dịch khi bôi đen" : {
       "localizations" : {
@@ -2808,6 +3524,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đang kiểm tra kết nối..."
+          }
+        }
+      }
+    },
+    "Đang là Động cơ dịch chính (Direct AI • GGUF In-Process)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Currently Primary Engine (Direct AI • GGUF In-Process)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang là Động cơ dịch chính (Direct AI • GGUF In-Process)"
           }
         }
       }
@@ -2904,6 +3636,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Đang phân tích ngữ pháp và cấu trúc câu..."
+          }
+        }
+      }
+    },
+    "Đang sử dụng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Use"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang sử dụng"
           }
         }
       }
@@ -3069,12 +3817,18 @@
         }
       }
     },
-    "Đảo chiều (%@ ⇄ %@)" : {
+    "Đặt làm bộ dịch chính" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set as Primary Engine"
+          }
+        },
         "vi" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Đảo chiều (%1$@ ⇄ %2$@)"
+            "state" : "translated",
+            "value" : "Đặt làm bộ dịch chính"
           }
         }
       }
@@ -3160,13 +3914,84 @@
       }
     },
     "Địa chỉ AnkiConnect:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AnkiConnect URL:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Địa chỉ AnkiConnect:"
+          }
+        }
+      }
     },
     "DỊCH & TRAU CHUỐT TẠI CHỖ (IN-PLACE REPLACEMENT)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "IN-PLACE TRANSLATION & POLISHING"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DỊCH & TRAU CHUỐT TẠI CHỖ (IN-PLACE REPLACEMENT)"
+          }
+        }
+      }
     },
     "Dịch & Trau chuốt thay thế tại chỗ (In-Place Replace)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In-Place Replace & Polish"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch & Trau chuốt thay thế tại chỗ (In-Place Replace)"
+          }
+        }
+      }
+    },
+    "Dịch ${text} sang ${targetLanguage}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translate ${text} into ${targetLanguage}"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch ${text} sang ${targetLanguage}"
+          }
+        }
+      }
+    },
+    "Dịch bởi: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translated by: %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch bởi: %@"
+          }
+        }
+      }
     },
     "Dịch câu ví dụ (Tùy chọn):" : {
       "localizations" : {
@@ -3200,6 +4025,87 @@
         }
       }
     },
+    "Dịch gọn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compact"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch gọn"
+          }
+        }
+      }
+    },
+    "Dịch nhanh (Gọn)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Translate (Compact)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch nhanh (Gọn)"
+          }
+        }
+      }
+    },
+    "Dịch sang" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translate to"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch sang"
+          }
+        }
+      }
+    },
+    "Dịch thuật" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translation"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch thuật"
+          }
+        }
+      }
+    },
+    "Dịch trong cửa sổ NekoTrans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translate in NekoTrans HUD"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch trong cửa sổ NekoTrans"
+          }
+        }
+      }
+    },
     "DỊCH TỪNG TỪ TƯƠNG ỨNG" : {
       "localizations" : {
         "en" : {
@@ -3212,6 +4118,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "DỊCH TỪNG TỪ TƯƠNG ỨNG"
+          }
+        }
+      }
+    },
+    "Dịch văn bản" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translate Text"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch văn bản"
+          }
+        }
+      }
+    },
+    "Dịch văn bản bằng engine đang chọn trong NekoTrans và trả về kết quả." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translate text using the selected engine in NekoTrans and return results."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch văn bản bằng engine đang chọn trong NekoTrans và trả về kết quả."
           }
         }
       }
@@ -3672,6 +4610,7 @@
       }
     },
     "Đọc văn bản gốc" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -3704,7 +4643,20 @@
       }
     },
     "Đổi thư mục..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change Folder..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi thư mục..."
+          }
+        }
+      }
     },
     "domain.academic" : {
       "extractionState" : "manual",
@@ -3841,7 +4793,20 @@
       }
     },
     "Đồng bộ Anki Desktop (AnkiConnect)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync Anki Desktop (AnkiConnect)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đồng bộ Anki Desktop (AnkiConnect)"
+          }
+        }
+      }
     },
     "Đồng bộ đám mây GitHub" : {
       "localizations" : {
@@ -3955,7 +4920,24 @@
         }
       }
     },
+    "Động cơ dịch hiện tại: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current Engine: %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Động cơ dịch hiện tại: %@"
+          }
+        }
+      }
+    },
     "Đóng Dynamic Island" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4004,7 +4986,20 @@
       }
     },
     "Dùng" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng"
+          }
+        }
+      }
     },
     "Dùng {text} làm vị trí đoạn văn" : {
       "localizations" : {
@@ -4039,7 +5034,30 @@
       }
     },
     "Dùng bản này" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use this version"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng bản này"
+          }
+        }
+      }
+    },
+    "Dung lượng: %@ • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Size: %@ • %@"
+          }
+        }
+      }
     },
     "Dũng Nguyễn Quốc (QuocDung21)" : {
       "localizations" : {
@@ -4057,8 +5075,37 @@
         }
       }
     },
+    "Đường dẫn file .gguf:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ".gguf File Path:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đường dẫn file .gguf:"
+          }
+        }
+      }
+    },
     "Đường dẫn tệp nhật ký:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Journal File Path:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đường dẫn tệp nhật ký:"
+          }
+        }
+      }
     },
     "Emoji Icon:" : {
       "localizations" : {
@@ -4098,13 +5145,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Translation (On-Device)"
+            "value" : "Apple Translate (Offline)"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple Translation (On-Device)"
+            "value" : "Apple Dịch (Offline)"
           }
         }
       }
@@ -4115,13 +5162,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Auto (Fast-Racing)"
+            "value" : "Auto (Fastest)"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tự động (Fast-Racing)"
+            "value" : "Tự động (Nhanh nhất)"
           }
         }
       }
@@ -4132,13 +5179,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "DeepL Translator"
+            "value" : "DeepL"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "DeepL Translator"
+            "value" : "DeepL"
           }
         }
       }
@@ -4149,13 +5196,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AI (Direct)"
+            "value" : "AI Translation"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trí tuệ nhân tạo (Direct AI)"
+            "value" : "Trí tuệ nhân tạo (AI)"
           }
         }
       }
@@ -4172,7 +5219,7 @@
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Translate"
+            "value" : "Google Dịch"
           }
         }
       }
@@ -4205,6 +5252,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ESC hoặc Chuột phải để hủy"
+          }
+        }
+      }
+    },
+    "File GGUF tìm thấy trên máy (%lld):" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GGUF models found on Mac (%lld):"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File GGUF tìm thấy trên máy (%lld):"
+          }
+        }
+      }
+    },
+    "Finder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder"
           }
         }
       }
@@ -4628,6 +5707,22 @@
         }
       }
     },
+    "Giải phóng RAM" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free RAM"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giải phóng RAM"
+          }
+        }
+      }
+    },
     "GitHub Personal Access Token (PAT):" : {
       "localizations" : {
         "en" : {
@@ -4757,9 +5852,23 @@
       }
     },
     "Hiển thị so sánh đa công cụ trong HUD" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show multi-engine comparison in HUD"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiển thị so sánh đa công cụ trong HUD"
+          }
+        }
+      }
     },
     "Hiệu ứng nghiêng 3D Parallax khi di chuột" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -4824,6 +5933,38 @@
         }
       }
     },
+    "Hỏi AI" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask AI"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hỏi AI"
+          }
+        }
+      }
+    },
+    "Hỏi AI với NekoTrans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ask AI with NekoTrans"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hỏi AI với NekoTrans"
+          }
+        }
+      }
+    },
     "Hỏi nhanh:" : {
       "localizations" : {
         "en" : {
@@ -4857,7 +5998,20 @@
       }
     },
     "HUD SO SÁNH ĐA CÔNG CỤ (MULTI-ENGINE STACK)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HUD MULTI-ENGINE COMPARISON STACK"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HUD SO SÁNH ĐA CÔNG CỤ (MULTI-ENGINE STACK)"
+          }
+        }
+      }
     },
     "Hủy" : {
       "localizations" : {
@@ -4939,6 +6093,22 @@
         }
       }
     },
+    "Kéo để di chuyển khung popup" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag to reposition popup"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kéo để di chuyển khung popup"
+          }
+        }
+      }
+    },
     "Kết nối" : {
       "localizations" : {
         "en" : {
@@ -4972,7 +6142,20 @@
       }
     },
     "Kết nối trực tiếp cổng AnkiConnect (8765) để tạo thẻ từ vựng vào Anki 1-click." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Directly connects to AnkiConnect port (8765) to create flashcards in 1-click."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kết nối trực tiếp cổng AnkiConnect (8765) để tạo thẻ từ vựng vào Anki 1-click."
+          }
+        }
+      }
     },
     "KẾT QUẢ BÓC TÁCH (%lld Ngữ pháp • %lld Từ vựng)" : {
       "localizations" : {
@@ -4986,6 +6169,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "KẾT QUẢ BÓC TÁCH (%1$lld Ngữ pháp • %2$lld Từ vựng)"
+          }
+        }
+      }
+    },
+    "Khám phá Sổ tay từ vựng, quản lý Flashcards và bảng phân tích chuyên sâu." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore Vocabulary Notebook, manage flashcards, and access learning analytics."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khám phá Sổ tay từ vựng, quản lý Flashcards và bảng phân tích chuyên sâu."
+          }
+        }
+      }
+    },
+    "Khi tra từ đơn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When looking up single words"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi tra từ đơn"
+          }
+        }
+      }
+    },
+    "Khi tra từ đơn:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When looking up single words:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi tra từ đơn:"
           }
         }
       }
@@ -5150,6 +6381,22 @@
         }
       }
     },
+    "Không dịch được văn bản. Kiểm tra kết nối mạng hoặc engine dịch trong Cài đặt." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to translate text. Check network connection or translation engine in Settings."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không dịch được văn bản. Kiểm tra kết nối mạng hoặc engine dịch trong Cài đặt."
+          }
+        }
+      }
+    },
     "Không tìm thấy cấu trúc ngữ pháp hay từ vựng đặc thù trong đoạn văn này." : {
       "localizations" : {
         "en" : {
@@ -5247,7 +6494,20 @@
       }
     },
     "Kiểm tra" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra"
+          }
+        }
+      }
     },
     "Kiểm tra & Kết nối" : {
       "localizations" : {
@@ -5261,6 +6521,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kiểm tra & Kết nối"
+          }
+        }
+      }
+    },
+    "Kiểm tra lại" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recheck"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểm tra lại"
           }
         }
       }
@@ -5298,7 +6574,20 @@
       }
     },
     "Kiểu thẻ (Model):" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note Type (Model):"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểu thẻ (Model):"
+          }
+        }
+      }
     },
     "Làm mới" : {
       "localizations" : {
@@ -5434,6 +6723,22 @@
         }
       }
     },
+    "Lấy ngẫu nhiên một từ chưa thuộc trong sổ tay NekoTrans để ôn tập." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick a random unmastered word from NekoTrans notebook for review."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lấy ngẫu nhiên một từ chưa thuộc trong sổ tay NekoTrans để ôn tập."
+          }
+        }
+      }
+    },
     "Lịch sử" : {
       "localizations" : {
         "en" : {
@@ -5546,6 +6851,22 @@
         }
       }
     },
+    "Lưu ${word} vào sổ tay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save ${word} to notebook"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu ${word} vào sổ tay"
+          }
+        }
+      }
+    },
     "Lưu các mục đã chọn vào Sổ tay" : {
       "localizations" : {
         "en" : {
@@ -5626,6 +6947,22 @@
         }
       }
     },
+    "Lưu một từ hoặc cụm từ vào sổ tay NekoTrans. Tự động dịch nếu bỏ trống nghĩa." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save a word or phrase to NekoTrans notebook. Auto-translates if definition is empty."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu một từ hoặc cụm từ vào sổ tay NekoTrans. Tự động dịch nếu bỏ trống nghĩa."
+          }
+        }
+      }
+    },
     "Lưu sổ" : {
       "localizations" : {
         "en" : {
@@ -5670,6 +7007,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lưu trữ an toàn toàn bộ từ vựng, công thức ngữ pháp và lịch sử tra cứu của bạn lên kho lưu trữ riêng tư trên GitHub. Tự động đồng bộ hai chiều giữa các máy Mac."
+          }
+        }
+      }
+    },
+    "Lưu từ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Word"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu từ"
+          }
+        }
+      }
+    },
+    "Lưu từ vào sổ tay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Word to Notebook"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu từ vào sổ tay"
           }
         }
       }
@@ -5755,6 +7124,7 @@
       }
     },
     "Lưu vào sổ tay từ vựng" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5866,7 +7236,56 @@
         }
       }
     },
+    "Mẹo: Nhấn thử vào các phím tắt ở trên để cảm nhận • Tùy chỉnh tự do trong Cài đặt (⌘,)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tip: Click the shortcut cards above to try them • Customize anytime in Settings (⌘,)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mẹo: Nhấn thử vào các phím tắt ở trên để cảm nhận • Tùy chỉnh tự do trong Cài đặt (⌘,)"
+          }
+        }
+      }
+    },
+    "Mở bảng dịch nổi (HUD) của NekoTrans với văn bản đã cho, kèm từ điển và phát âm." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open NekoTrans floating HUD for given text, including dictionary and audio."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở bảng dịch nổi (HUD) của NekoTrans với văn bản đã cho, kèm từ điển và phát âm."
+          }
+        }
+      }
+    },
+    "Mở Cài đặt hệ thống để bật Trợ năng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open System Settings to enable Accessibility"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở Cài đặt hệ thống để bật Trợ năng"
+          }
+        }
+      }
+    },
     "Mở cửa sổ dịch đầy đủ" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5878,6 +7297,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mở cửa sổ dịch đầy đủ"
+          }
+        }
+      }
+    },
+    "Mở cửa sổ sổ tay từ vựng và ngữ pháp của NekoTrans." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open NekoTrans vocabulary and grammar notebook window."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở cửa sổ sổ tay từ vựng và ngữ pháp của NekoTrans."
+          }
+        }
+      }
+    },
+    "Mô hình GGUF Trực tiếp (Metal In-Process)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direct GGUF Model (Metal In-Process)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mô hình GGUF Trực tiếp (Metal In-Process)"
+          }
+        }
+      }
+    },
+    "Mô hình sẽ tự động nạp khi bạn dịch câu đầu tiên" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model will automatically load on your first translation"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mô hình sẽ tự động nạp khi bạn dịch câu đầu tiên"
+          }
+        }
+      }
+    },
+    "Mở Không gian làm việc chính (Workspace) ngay sau khi hoàn tất" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Main Workspace immediately after setup"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở Không gian làm việc chính (Workspace) ngay sau khi hoàn tất"
+          }
+        }
+      }
+    },
+    "Mở sổ tay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Notebook"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở sổ tay"
+          }
+        }
+      }
+    },
+    "Mở sổ tay NekoTrans" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open NekoTrans Notebook"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở sổ tay NekoTrans"
           }
         }
       }
@@ -5930,8 +7445,37 @@
         }
       }
     },
+    "Mở trợ lý AI nhanh của NekoTrans, có thể điền sẵn câu hỏi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open NekoTrans Quick AI assistant, optionally prefilled with a query."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trợ lý AI nhanh của NekoTrans, có thể điền sẵn câu hỏi."
+          }
+        }
+      }
+    },
     "Mở trong Finder" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show in Finder"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở trong Finder"
+          }
+        }
+      }
     },
     "Mở trong Safari" : {
       "localizations" : {
@@ -5997,6 +7541,22 @@
         }
       }
     },
+    "Mục sổ tay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notebook Item"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mục sổ tay"
+          }
+        }
+      }
+    },
     "Mục tiêu hằng ngày" : {
       "localizations" : {
         "en" : {
@@ -6013,8 +7573,21 @@
         }
       }
     },
-    "n." : {
-
+    "Nạp vào RAM ngay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Load into RAM Now"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nạp vào RAM ngay"
+          }
+        }
+      }
     },
     "NekoTrans" : {
       "localizations" : {
@@ -6028,6 +7601,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "NekoTrans"
+          }
+        }
+      }
+    },
+    "NekoTrans cần quyền Trợ năng để tự động trích xuất văn bản khi bạn bôi đen và nhấn phím tắt." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans needs Accessibility permission to automatically extract selected text when pressing shortcuts."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans cần quyền Trợ năng để tự động trích xuất văn bản khi bạn bôi đen và nhấn phím tắt."
+          }
+        }
+      }
+    },
+    "NekoTrans chạy ngầm êm ái trên thanh Menu. Khi đóng cửa sổ, bạn vẫn có thể bấm vào icon 🐱 hoặc nhấn phím tắt ⌥D để tra cứu bất cứ lúc nào." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans runs silently in the Menu Bar. When windows close, click the 🐱 icon or press ⌥D anytime to look up."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans chạy ngầm êm ái trên thanh Menu. Khi đóng cửa sổ, bạn vẫn có thể bấm vào icon 🐱 hoặc nhấn phím tắt ⌥D để tra cứu bất cứ lúc nào."
+          }
+        }
+      }
+    },
+    "NekoTrans đã sẵn sàng đồng hành cùng bạn trên macOS." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans is ready to assist you on macOS."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans đã sẵn sàng đồng hành cùng bạn trên macOS."
+          }
+        }
+      }
+    },
+    "NekoTrans đã sẵn sàng nhận diện văn bản trên Safari, Chrome, Word, Xcode, PDF Reader..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans is ready to capture text across Safari, Chrome, Word, Xcode, PDF Readers..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NekoTrans đã sẵn sàng nhận diện văn bản trên Safari, Chrome, Word, Xcode, PDF Reader..."
           }
         }
       }
@@ -6065,7 +7702,20 @@
       }
     },
     "Nghe câu gốc" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listen to Original Text"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nghe câu gốc"
+          }
+        }
+      }
     },
     "Nghe đọc" : {
       "localizations" : {
@@ -6100,6 +7750,7 @@
       }
     },
     "Nghe phát âm bản dịch" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6116,7 +7767,20 @@
       }
     },
     "Nghe phát âm bản dịch này" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Listen to this Translation"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nghe phát âm bản dịch này"
+          }
+        }
+      }
     },
     "Nghe phát âm từ này" : {
       "localizations" : {
@@ -6162,6 +7826,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nghe thử giọng đọc mẫu"
+          }
+        }
+      }
+    },
+    "Nghĩa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meaning"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nghĩa"
           }
         }
       }
@@ -6278,7 +7958,40 @@
         }
       }
     },
+    "Ngữ cảnh: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Domain: %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngữ cảnh: %@"
+          }
+        }
+      }
+    },
+    "Ngữ pháp" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grammar"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngữ pháp"
+          }
+        }
+      }
+    },
     "NGUỒN (%@)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6306,6 +8019,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nhà cung cấp AI mặc định:"
+          }
+        }
+      }
+    },
+    "Nhấn các tổ hợp phím này ở bất cứ đâu trên macOS để kích hoạt tính năng ngay:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Press these shortcuts anywhere on macOS to activate features instantly:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhấn các tổ hợp phím này ở bất cứ đâu trên macOS để kích hoạt tính năng ngay:"
           }
         }
       }
@@ -6423,10 +8152,36 @@
       }
     },
     "NHẬT KÝ TRA CỨU TỰ ĐỘNG (OBSIDIAN / LOGSEQ INTEGRATION)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AUTOMATIC LOOKUP JOURNAL (OBSIDIAN / LOGSEQ INTEGRATION)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "NHẬT KÝ TRA CỨU TỰ ĐỘNG (OBSIDIAN / LOGSEQ INTEGRATION)"
+          }
+        }
+      }
     },
     "Nhật ký tra cứu tự động (words.jsonl)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic Lookup Journal (words.jsonl)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhật ký tra cứu tự động (words.jsonl)"
+          }
+        }
+      }
     },
     "Nội dung Prompt gửi cho AI:" : {
       "localizations" : {
@@ -6445,6 +8200,7 @@
       }
     },
     "Nút bấm nảy đàn hồi (Elastic Spring Bounce)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6461,6 +8217,7 @@
       }
     },
     "Ollama Local Endpoint:" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -6472,6 +8229,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ollama Local Endpoint:"
+          }
+        }
+      }
+    },
+    "Ôn một từ ngẫu nhiên" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review a Random Word"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ôn một từ ngẫu nhiên"
+          }
+        }
+      }
+    },
+    "Ôn từ ngẫu nhiên" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review Random Word"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ôn từ ngẫu nhiên"
           }
         }
       }
@@ -6685,7 +8474,20 @@
       }
     },
     "Phát âm thanh nhẹ khi hoàn tất thay thế văn bản." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play a subtle sound when in-place text replacement finishes."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phát âm thanh nhẹ khi hoàn tất thay thế văn bản."
+          }
+        }
+      }
     },
     "PHÁT ÂM TỰ NHIÊN (TEXT-TO-SPEECH)" : {
       "localizations" : {
@@ -6735,6 +8537,22 @@
         }
       }
     },
+    "Phiên âm / Công thức" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phonetics / Formula"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên âm / Công thức"
+          }
+        }
+      }
+    },
     "Phiên âm IPA (Tùy chọn):" : {
       "localizations" : {
         "en" : {
@@ -6763,6 +8581,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PHÍM TẮT TOÀN CẦU (GLOBAL SHORTCUTS)"
+          }
+        }
+      }
+    },
+    "Phím Tắt Toàn Cầu Tiện Dụng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Handy Global Keyboard Shortcuts"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phím Tắt Toàn Cầu Tiện Dụng"
           }
         }
       }
@@ -6901,6 +8735,22 @@
         }
       }
     },
+    "Quay lại" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quay lại"
+          }
+        }
+      }
+    },
     "Quay lại Sổ tay" : {
       "localizations" : {
         "en" : {
@@ -6929,6 +8779,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Quay lại từ vừa tra (⌘[)"
+          }
+        }
+      }
+    },
+    "Quét lại" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rescan"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quét lại"
           }
         }
       }
@@ -6985,13 +8851,100 @@
       }
     },
     "Quyền Ghi màn hình (Screen Recording)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Screen Recording Permission"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quyền Ghi màn hình (Screen Recording)"
+          }
+        }
+      }
     },
     "QUYỀN HỆ THỐNG (PRIVACY & PERMISSIONS)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SYSTEM PERMISSIONS (PRIVACY & PERMISSIONS)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QUYỀN HỆ THỐNG (PRIVACY & PERMISSIONS)"
+          }
+        }
+      }
     },
     "Quyền Trợ năng (Accessibility)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility Permission"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quyền Trợ năng (Accessibility)"
+          }
+        }
+      }
+    },
+    "Quyền Trợ năng đã được kích hoạt!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility permission is enabled!"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quyền Trợ năng đã được kích hoạt!"
+          }
+        }
+      }
+    },
+    "Qwen2.5-0.5B-Instruct-GGUF (~390 MB)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qwen2.5-0.5B-Instruct-GGUF (~390 MB)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qwen2.5-0.5B-Instruct-GGUF (~390 MB)"
+          }
+        }
+      }
+    },
+    "Qwen2.5-1.5B-Instruct-GGUF (~1.1 GB)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qwen2.5-1.5B-Instruct-GGUF (~1.1 GB)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qwen2.5-1.5B-Instruct-GGUF (~1.1 GB)"
+          }
+        }
+      }
     },
     "SẮC THÁI NGHĨA & PHÂN BIỆT" : {
       "localizations" : {
@@ -7005,6 +8958,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "SẮC THÁI NGHĨA & PHÂN BIỆT"
+          }
+        }
+      }
+    },
+    "Sẵn sàng dịch tức thì không qua mạng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready for instant offline translation"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sẵn sàng dịch tức thì không qua mạng"
           }
         }
       }
@@ -7058,9 +9027,23 @@
       }
     },
     "Sao chép câu gốc" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Original Text"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sao chép câu gốc"
+          }
+        }
+      }
     },
     "Sao chép vào bộ nhớ tạm" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -7527,16 +9510,100 @@
       }
     },
     "So sánh" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compare"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So sánh"
+          }
+        }
+      }
     },
     "So sánh bản dịch đa động cơ (Multi-Engine)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multi-Engine Translation Comparison"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So sánh bản dịch đa động cơ (Multi-Engine)"
+          }
+        }
+      }
     },
     "SO SÁNH ĐA CÔNG CỤ (MULTI-ENGINE STACK)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MULTI-ENGINE COMPARISON STACK"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SO SÁNH ĐA CÔNG CỤ (MULTI-ENGINE STACK)"
+          }
+        }
+      }
     },
     "So sánh song song kết quả từ Google Translate, DeepL và AI" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compare results side-by-side across Google Translate, DeepL, and AI"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "So sánh song song kết quả từ Google Translate, DeepL và AI"
+          }
+        }
+      }
+    },
+    "Sổ tay" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notebook"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sổ tay"
+          }
+        }
+      }
+    },
+    "Sổ tay chưa có từ nào." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notebook is empty."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sổ tay chưa có từ nào."
+          }
+        }
+      }
     },
     "SỔ TAY TỪ VỰNG & NGỮ PHÁP" : {
       "extractionState" : "stale",
@@ -7551,6 +9618,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "SỔ TAY TỪ VỰNG & NGỮ PHÁP"
+          }
+        }
+      }
+    },
+    "Sử dụng" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sử dụng"
           }
         }
       }
@@ -7706,7 +9789,20 @@
       }
     },
     "Tải lại" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reload"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tải lại"
+          }
+        }
+      }
     },
     "Tải lại trang" : {
       "localizations" : {
@@ -7773,7 +9869,20 @@
       }
     },
     "Tắt bong bóng dịch và phím tắt thay thế trong các ứng dụng này để tránh gián đoạn trải nghiệm (Figma, Photoshop, Terminal, Game):" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Disable translation bubble and in-place replacement in these apps to avoid interruptions (Figma, Photoshop, Terminal, Games):"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tắt bong bóng dịch và phím tắt thay thế trong các ứng dụng này để tránh gián đoạn trải nghiệm (Figma, Photoshop, Terminal, Game):"
+          }
+        }
+      }
     },
     "Tên Cấu Trúc / Quy Tắc Ngữ Pháp:" : {
       "localizations" : {
@@ -7792,7 +9901,20 @@
       }
     },
     "Tên Deck:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deck Name:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên Deck:"
+          }
+        }
+      }
     },
     "Tên hiển thị (Tiêu đề):" : {
       "localizations" : {
@@ -7811,7 +9933,36 @@
       }
     },
     "Tên Model:" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model Name:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tên Model:"
+          }
+        }
+      }
+    },
+    "Tệp" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tệp"
+          }
+        }
+      }
     },
     "Thao tác" : {
       "localizations" : {
@@ -7846,9 +9997,23 @@
       }
     },
     "Thất bại" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thất bại"
+          }
+        }
+      }
     },
     "Thay đổi văn phong dịch thuật (Học thuật, Kinh tế, Thân mật, IT)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8009,7 +10174,20 @@
       }
     },
     "Thêm ứng dụng đang mở..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Running Application..."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm ứng dụng đang mở..."
+          }
+        }
+      }
     },
     "Thêm, sửa, hoặc xóa các mẫu câu hỏi nhanh" : {
       "localizations" : {
@@ -8075,6 +10253,22 @@
         }
       }
     },
+    "Thiết lập nhanh trong 1 phút" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick 1-Minute Setup"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thiết lập nhanh trong 1 phút"
+          }
+        }
+      }
+    },
     "Thống kê" : {
       "localizations" : {
         "en" : {
@@ -8135,6 +10329,150 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tiến độ hôm nay"
+          }
+        }
+      }
+    },
+    "Tiếng Anh" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Anh"
+          }
+        }
+      }
+    },
+    "Tiếng Đức" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "German"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Đức"
+          }
+        }
+      }
+    },
+    "Tiếng Hàn" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korean"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Hàn"
+          }
+        }
+      }
+    },
+    "Tiếng Nhật" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Japanese"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Nhật"
+          }
+        }
+      }
+    },
+    "Tiếng Pháp" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "French"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Pháp"
+          }
+        }
+      }
+    },
+    "Tiếng Tây Ban Nha" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spanish"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Tây Ban Nha"
+          }
+        }
+      }
+    },
+    "Tiếng Trung" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chinese"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Trung"
+          }
+        }
+      }
+    },
+    "Tiếng Việt" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vietnamese"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếng Việt"
+          }
+        }
+      }
+    },
+    "Tiếp tục" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiếp tục"
           }
         }
       }
@@ -8204,7 +10542,20 @@
       }
     },
     "Tính năng hoạt động trực tiếp qua macOS Accessibility API mà không can thiệp Clipboard của người dùng." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operates directly via macOS Accessibility API without touching user clipboard."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tính năng hoạt động trực tiếp qua macOS Accessibility API mà không can thiệp Clipboard của người dùng."
+          }
+        }
+      }
     },
     "Tính năng nâng cao (Bấm để mở)" : {
       "localizations" : {
@@ -8340,6 +10691,23 @@
         }
       }
     },
+    "Tra từ điển (Chi tiết)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary (Detailed)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tra từ điển (Chi tiết)"
+          }
+        }
+      }
+    },
     "Tra tự động" : {
       "localizations" : {
         "en" : {
@@ -8436,6 +10804,22 @@
         }
       }
     },
+    "Trợ lý dịch thuật & tra cứu từ vựng thông minh cho macOS" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Translation & Vocabulary Assistant for macOS"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trợ lý dịch thuật & tra cứu từ vựng thông minh cho macOS"
+          }
+        }
+      }
+    },
     "Trợ lý phân tích sâu (%@)" : {
       "localizations" : {
         "en" : {
@@ -8496,6 +10880,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Từ '%@' đã có trong Sổ tay. Bấm lưu sẽ cập nhật nội dung mới."
+          }
+        }
+      }
+    },
+    "Từ / Cấu trúc" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word / Pattern"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Từ / Cấu trúc"
+          }
+        }
+      }
+    },
+    "Từ / Cụm từ" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word / Phrase"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Từ / Cụm từ"
+          }
+        }
+      }
+    },
+    "Từ điển" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictionary"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Từ điển"
           }
         }
       }
@@ -8613,13 +11045,52 @@
       }
     },
     "Tự động đồng bộ sang Anki khi bấm Lưu từ (⌘S)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically sync to Anki when saving words (⌘S)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động đồng bộ sang Anki khi bấm Lưu từ (⌘S)"
+          }
+        }
+      }
     },
     "Tự động ghi lại mọi từ và câu đã dịch vào tệp JSON Lines để đồng bộ với Obsidian, Logseq hoặc AI data pipelines." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically logs translated words and sentences to JSON Lines for syncing with Obsidian, Logseq, or AI pipelines."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động ghi lại mọi từ và câu đã dịch vào tệp JSON Lines để đồng bộ với Obsidian, Logseq hoặc AI data pipelines."
+          }
+        }
+      }
     },
     "Tự động hiển thị song song kết quả từ Google Translate, DeepL và AI cùng lúc trong cửa sổ HUD." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatically shows side-by-side results from Google Translate, DeepL, and AI concurrently in the HUD."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tự động hiển thị song song kết quả từ Google Translate, DeepL và AI cùng lúc trong cửa sổ HUD."
+          }
+        }
+      }
     },
     "Từ đồng nghĩa, trái nghĩa & Liên quan NLP" : {
       "localizations" : {
@@ -8862,6 +11333,7 @@
       }
     },
     "Tùy chỉnh tính năng & Cài đặt (⌘,)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8894,6 +11366,7 @@
       }
     },
     "UK %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -8910,7 +11383,36 @@
       }
     },
     "ỨNG DỤNG LOẠI TRỪ & CHẾ ĐỘ IM LẶNG (APP EXCLUSION)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXCLUDED APPLICATIONS & SILENT MODE"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ỨNG DỤNG LOẠI TRỪ & CHẾ ĐỘ IM LẶNG (APP EXCLUSION)"
+          }
+        }
+      }
+    },
+    "Ứng dụng luôn túc trực trên thanh Menu (Góc trên bên phải)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App stays active in the Menu Bar (Top right corner)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ứng dụng luôn túc trực trên thanh Menu (Góc trên bên phải)"
+          }
+        }
+      }
     },
     "update_channel.beta" : {
       "extractionState" : "manual",
@@ -9116,6 +11618,7 @@
       }
     },
     "US %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9131,8 +11634,21 @@
         }
       }
     },
-    "v." : {
-
+    "Văn bản" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Văn bản"
+          }
+        }
+      }
     },
     "VĂN BẢN GỐC" : {
       "localizations" : {
@@ -9166,7 +11682,24 @@
         }
       }
     },
+    "Văn bản trống, không có gì để dịch." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text is empty, nothing to translate."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Văn bản trống, không có gì để dịch."
+          }
+        }
+      }
+    },
     "VĂN PHONG DỊCH" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9183,6 +11716,7 @@
       }
     },
     "Variant 0 (Tối giản)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9199,6 +11733,7 @@
       }
     },
     "Variant 4 (Mờ mịn)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9215,6 +11750,7 @@
       }
     },
     "Variant 7 (Tương phản cao)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9231,6 +11767,7 @@
       }
     },
     "Variant 11 (Khuyên dùng - Chuẩn Atoll)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9247,6 +11784,7 @@
       }
     },
     "Variant 15 (Đậm đà)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9487,7 +12025,20 @@
       }
     },
     "Viết lại" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewrite"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Viết lại"
+          }
+        }
+      }
     },
     "ws.deepAI" : {
       "extractionState" : "manual",
@@ -9915,7 +12466,20 @@
       }
     },
     "Xóa ứng dụng khỏi danh sách loại trừ" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove app from excluded list"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Xóa ứng dụng khỏi danh sách loại trừ"
+          }
+        }
+      }
     },
     "Xóa văn bản" : {
       "localizations" : {
@@ -9998,7 +12562,20 @@
       }
     },
     "Yêu cầu ứng dụng Anki Desktop đang mở và đã cài đặt add-on AnkiConnect (Mã: 2055492159)." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires Anki Desktop running with AnkiConnect add-on installed (Code: 2055492159)."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yêu cầu ứng dụng Anki Desktop đang mở và đã cài đặt add-on AnkiConnect (Mã: 2055492159)."
+          }
+        }
+      }
     },
     "Yêu thích" : {
       "localizations" : {
@@ -10012,86 +12589,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yêu thích"
-          }
-        }
-      }
-    },
-    "Dịch gọn" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compact"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dịch gọn"
-          }
-        }
-      }
-    },
-    "Từ điển" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dictionary"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Từ điển"
-          }
-        }
-      }
-    },
-    "Dịch nhanh (Gọn)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quick Translate (Compact)"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dịch nhanh (Gọn)"
-          }
-        }
-      }
-    },
-    "Tra từ điển (Chi tiết)" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dictionary (Detailed)"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tra từ điển (Chi tiết)"
-          }
-        }
-      }
-    },
-    "Chế độ tra từ đơn (HUD):" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Single-word lookup mode (HUD):"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chế độ tra từ đơn (HUD):"
           }
         }
       }

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NekoTrans</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <div class="brand">
+            <img src="images/icon-32.png" class="brand-logo-img" alt="NekoTrans">
+            <div class="brand-info">
+                <span class="title">NekoTrans</span>
+                <span class="subtitle">Trình dịch Web Safari</span>
+            </div>
+        </div>
+        <span class="status-badge">Sẵn sàng</span>
+    </div>
+
+    <div class="lang-row">
+        <select id="sourceLang" class="lang-select">
+            <option value="auto">Tự động phát hiện</option>
+            <option value="en">Tiếng Anh (English)</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="ja">Tiếng Nhật (日本語)</option>
+            <option value="zh-CN">Tiếng Trung (中文)</option>
+            <option value="ko">Tiếng Hàn (한국어)</option>
+            <option value="fr">Tiếng Pháp (Français)</option>
+            <option value="de">Tiếng Đức (Deutsch)</option>
+        </select>
+        <span class="lang-arrow">→</span>
+        <select id="targetLang" class="lang-select">
+            <option value="vi" selected>Tiếng Việt</option>
+            <option value="en">Tiếng Anh (English)</option>
+            <option value="ja">Tiếng Nhật (日本語)</option>
+            <option value="zh-CN">Tiếng Trung (中文)</option>
+            <option value="ko">Tiếng Hàn (한국어)</option>
+            <option value="fr">Tiếng Pháp (Français)</option>
+            <option value="de">Tiếng Đức (Deutsch)</option>
+        </select>
+    </div>
+
+    <div class="page-actions">
+        <button id="btnTranslatePage" class="btn btn-primary">
+            <span>🌐</span> Dịch song ngữ trang web
+        </button>
+        <button id="btnRestorePage" class="btn btn-secondary" style="display: none;">
+            <span>🔄</span> Khôi phục trang gốc
+        </button>
+    </div>
+
+    <div class="mode-selector">
+        <span class="mode-label">Chế độ hiển thị:</span>
+        <div class="segmented-control">
+            <button class="segment active" data-mode="bilingual">Song ngữ</button>
+            <button class="segment" data-mode="replace">Thay thế</button>
+        </div>
+    </div>
+
+    <div class="quick-translate">
+        <div class="quick-input-box">
+            <textarea id="quickInput" placeholder="Nhập từ hoặc câu để dịch nhanh..." rows="2"></textarea>
+            <button id="btnQuickTranslate" class="btn-send" title="Dịch">➔</button>
+        </div>
+        <div id="quickResult" class="quick-result" style="display: none;">
+            <div id="quickResultText" class="result-text"></div>
+            <div class="result-actions">
+                <button id="btnCopyQuick" class="btn-mini" title="Sao chép">📋</button>
+                <button id="btnSpeakQuick" class="btn-mini" title="Phát âm">🔊</button>
+                <button id="btnOpenAppQuick" class="btn-mini" title="Mở trong NekoTrans">↗️</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <label class="toggle-row">
+            <span>Hiện nút dịch khi bôi đen</span>
+            <input type="checkbox" id="toggleBubble" checked>
+            <span class="toggle-switch"></span>
+        </label>
+        <label class="toggle-row">
+            <span>Tự động phát âm khi tra từ</span>
+            <input type="checkbox" id="toggleAutoSpeak">
+            <span class="toggle-switch"></span>
+        </label>
+    </div>
+
+    <div class="footer">
+        <button id="btnOpenApp" class="btn-link">🚀 Mở ứng dụng NekoTrans</button>
+        <span class="version">v1.0</span>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

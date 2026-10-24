@@ -147,7 +147,8 @@ public final class ActionManager: ObservableObject {
             let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
             var focusedRef: AnyObject?
             if AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef) == .success,
-               let focused = focusedRef {
+               let focused = focusedRef,
+               CFGetTypeID(focused as CFTypeRef) == AXUIElementGetTypeID() {
                 let ax = focused as! AXUIElement
                 
                 // Try setting kAXSelectedTextAttribute

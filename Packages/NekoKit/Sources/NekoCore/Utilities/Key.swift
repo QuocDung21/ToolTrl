@@ -13,9 +13,10 @@ public extension Defaults.Keys {
     // ── UI & App ──────────────────────────────────────────────────────
     static let appFontSize = Key<AppFontSize>("appFontSize", default: .medium)
     static let mainWorkspaceTab = Key<MainWorkspaceTab>("mainWorkspaceTab", default: .translate)
-    static let quitActionPreference = Key<QuitActionPreference>("quitActionPreference", default: .askEveryTime)
+    static let quitActionPreference = Key<QuitActionPreference>("quitActionPreference", default: .terminateImmediately)
     static let showInDock = Key<Bool>("showInDock", default: true)
-    static let showMainWindowOnLaunch = Key<Bool>("showMainWindowOnLaunch", default: true)
+    static let showMainWindowOnLaunch = Key<Bool>("showMainWindowOnLaunch", default: false)
+    static let hasCompletedOnboarding = Key<Bool>("hasCompletedOnboarding", default: false)
     static let clickOutsideDismiss = Key<Bool>("clickOutsideDismiss", default: true)
     static let appIconType = Key<AppIconType>("app_icon_type", default: .defaultCat)
     static let appLanguage = Key<AppLanguage?>("appLanguage", default: nil)
@@ -30,7 +31,7 @@ public extension Defaults.Keys {
     // ── Translation & AI ──────────────────────────────────────────────
     static let targetLanguage = Key<String>("targetLanguage", default: TargetLanguage.vietnamese.rawValue)
     static let autoTranslateOnSelectionWhenPinned = Key<Bool>("autoTranslateOnSelectionWhenPinned", default: true)
-    static let translationDisplayMode = Key<TranslationDisplayMode>("translationDisplayMode", default: .wordByWord)
+    static let translationDisplayMode = Key<TranslationDisplayMode>("translationDisplayMode", default: .standard)
     static let wordLookupMode = Key<WordLookupMode>("wordLookupMode", default: .dictionary)
     static let translationDomain = Key<TranslationDomain>("translationDomain", default: .general)
     static let translationEngine = Key<TranslationEngine>("translationEngine", default: .auto)

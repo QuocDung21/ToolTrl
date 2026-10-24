@@ -8,7 +8,9 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
     
     private var audioPlayer: AVAudioPlayer?
     private var downloadTask: Task<Void, Never>?
+    private let maxAudioCacheEntries = 100
     private var audioCache: [String: Data] = [:]
+    private var audioCacheKeysOrder: [String] = []
     
     @Published public var isPlaying: Bool = false
     @Published public var currentPlayingURL: String? = nil
@@ -16,6 +18,30 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
     
     private override init() {
         super.init()
+    }
+    
+    private func storeAudioInCache(key: String, data: Data) {
+        if audioCache[key] == nil {
+            if audioCacheKeysOrder.count >= maxAudioCacheEntries {
+                let evicted = audioCacheKeysOrder.removeFirst()
+                audioCache.removeValue(forKey: evicted)
+            }
+            audioCacheKeysOrder.append(key)
+        }
+        audioCache[key] = data
+    }
+    
+    public func clearCache() {
+        audioCache.removeAll()
+        audioCacheKeysOrder.removeAll()
+    }
+    
+    public var cachedEntryCount: Int {
+        audioCache.count
+    }
+    
+    public func storeAudioForTesting(key: String, data: Data) {
+        storeAudioInCache(key: key, data: data)
     }
     
     /// Tải trước file audio vào bộ nhớ đệm (Prefetch) để khi bấm phát là 0ms delay
@@ -41,7 +67,7 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
                 let (data, response) = try await URLSession.shared.data(for: request)
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200, data.count > 100 {
                     await MainActor.run {
-                        self.audioCache[normalizedURLString] = data
+                        self.storeAudioInCache(key: normalizedURLString, data: data)
                     }
                 }
             } catch {
@@ -102,7 +128,7 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
                 request.timeoutInterval = 5.0
                 let (data, response) = try await URLSession.shared.data(for: request)
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200, data.count > 100 {
-                    self.audioCache[normalizedURLString] = data
+                    self.storeAudioInCache(key: normalizedURLString, data: data)
                 }
             } catch {
                 // Ignore background download failure

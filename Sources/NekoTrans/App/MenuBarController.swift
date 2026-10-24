@@ -62,68 +62,47 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
 
-        // MARK: - 1. Core Workspace & Notebook
+        // MARK: - 1. Quick Translate & Screen Actions
         menu.addItem(createMenuItem(
-            title: isEn ? "Open NekoTrans Workspace..." : "Mở NekoTrans Workspace...",
-            action: #selector(handleOpenWorkspaceAction),
-            keyEquivalent: "1",
-            modifierMask: [.command],
-            systemImage: "macwindow"
-        ))
-
-        menu.addItem(createMenuItem(
-            title: isEn ? "Vocabulary Notebook" : "Sổ tay từ vựng",
-            action: #selector(handleOpenNotebook),
-            systemImage: "character.book.closed",
-            shortcutName: .notebook
-        ))
-
-        menu.addItem(createMenuItem(
-            title: isEn ? "Learning Stats & Streak..." : "Thống kê & Chuỗi học tập...",
-            action: #selector(handleOpenStats),
-            systemImage: "chart.bar"
-        ))
-
-        menu.addItem(NSMenuItem.separator())
-
-        // MARK: - 2. Quick Actions (HUD, OCR, AI)
-        menu.addItem(createMenuItem(
-            title: isEn ? "Quick Translate" : "Dịch nhanh nổi",
+            title: isEn ? "Quick Translate" : "Dịch nhanh",
             action: #selector(handleTranslateAction),
             systemImage: "character.bubble",
             shortcutName: .translate
         ))
 
         menu.addItem(createMenuItem(
-            title: isEn ? "Screen Text Grabber (OCR)" : "Quét chữ màn hình (OCR)",
+            title: isEn ? "Capture Screen Text..." : "Chụp quét chữ màn hình...",
             action: #selector(handleOCRAction),
             systemImage: "camera.viewfinder",
             shortcutName: .ocr
         ))
 
         menu.addItem(createMenuItem(
-            title: isEn ? "Silent OCR (Copy to Clipboard)" : "Quét chữ im lặng (Chép vào clipboard)",
+            title: isEn ? "Copy Screen Text" : "Chép chữ từ màn hình",
             action: #selector(handleSilentOCRAction),
-            systemImage: "camera.badge.ellipsis",
+            systemImage: "doc.on.clipboard",
             shortcutName: .silentOCR
         ))
 
+        menu.addItem(NSMenuItem.separator())
+
+        // MARK: - 2. AI & Text Tools
         menu.addItem(createMenuItem(
-            title: isEn ? "Quick AI Assistant" : "Hỏi nhanh Trợ lý AI",
+            title: isEn ? "AI Assistant..." : "Trợ lý AI...",
             action: #selector(handleOpenAI),
             systemImage: "sparkles",
             shortcutName: .ai
         ))
 
         menu.addItem(createMenuItem(
-            title: isEn ? "Translate & Replace in Place" : "Dịch & Thay thế tại chỗ",
+            title: isEn ? "Translate & Replace" : "Dịch & Thay thế",
             action: #selector(handleTranslateAndReplace),
             systemImage: "arrow.triangle.2.circlepath",
             shortcutName: .translateAndReplace
         ))
 
         menu.addItem(createMenuItem(
-            title: isEn ? "Polish & Replace in Place" : "Sửa lỗi & Trau chuốt tại chỗ",
+            title: isEn ? "Polish Text" : "Trau chuốt văn bản",
             action: #selector(handlePolishAndReplace),
             systemImage: "wand.and.stars",
             shortcutName: .polishAndReplace
@@ -131,26 +110,57 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        // MARK: - 3. Target Language Selector
+        // MARK: - 3. Workspace & Notebook
+        menu.addItem(createMenuItem(
+            title: isEn ? "Open NekoTrans..." : "Mở NekoTrans...",
+            action: #selector(handleOpenWorkspaceAction),
+            keyEquivalent: "1",
+            modifierMask: [.command],
+            systemImage: "macwindow.on.rectangle"
+        ))
+
+        menu.addItem(createMenuItem(
+            title: isEn ? "Vocabulary Notebook..." : "Sổ từ vựng...",
+            action: #selector(handleOpenNotebook),
+            systemImage: "book.closed",
+            shortcutName: .notebook
+        ))
+
+        menu.addItem(createMenuItem(
+            title: isEn ? "Learning Statistics..." : "Thống kê học tập...",
+            action: #selector(handleOpenStats),
+            systemImage: "chart.bar.xaxis"
+        ))
+
+        menu.addItem(NSMenuItem.separator())
+
+        // MARK: - 4. Target Language Selector
         let langSubmenu = NSMenu()
         for lang in TargetLanguage.allCases {
-            let item = NSMenuItem(title: lang.displayName, action: #selector(handleLanguageChange(_:)), keyEquivalent: "")
+            let item = NSMenuItem(title: lang.displayNameWithFlag, action: #selector(handleLanguageChange(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = lang
             item.state = (lang == viewModel.targetLanguage) ? .on : .off
             langSubmenu.addItem(item)
         }
         let langPrefix = isEn ? "Target Language" : "Ngôn ngữ đích"
-        let langMenuItem = NSMenuItem(title: "\(langPrefix): \(viewModel.targetLanguage.displayName)", action: nil, keyEquivalent: "")
-        langMenuItem.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
+        let langMenuItem = NSMenuItem(title: "\(langPrefix): \(viewModel.targetLanguage.displayNameWithFlag)", action: nil, keyEquivalent: "")
+        let globeConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+        if let globeImg = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)?.withSymbolConfiguration(globeConfig) {
+            globeImg.isTemplate = true
+            langMenuItem.image = globeImg
+        }
+        if #available(macOS 27.0, *) {
+            langMenuItem.preferredImageVisibility = .visible
+        }
         langMenuItem.submenu = langSubmenu
         menu.addItem(langMenuItem)
 
-        // MARK: - 4. Accessibility Warning (Only when permission is missing)
+        // MARK: - Accessibility Warning (Only when permission is missing)
         if !TextGrabber.isAccessibilityTrusted(prompt: false) {
             menu.addItem(NSMenuItem.separator())
             let axItem = createMenuItem(
-                title: isEn ? "Grant Accessibility Permission..." : "Cấp quyền Trợ năng (Accessibility)...",
+                title: isEn ? "Grant Accessibility Permission..." : "Cấp quyền Trợ năng...",
                 action: #selector(handleAccessibilityCheck),
                 systemImage: "exclamationmark.triangle.fill"
             )
@@ -167,14 +177,6 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
             modifierMask: [.command],
             systemImage: "gearshape"
         ))
-
-        menu.addItem(createMenuItem(
-            title: isEn ? "Check for Updates…" : "Kiểm tra cập nhật…",
-            action: #selector(handleCheckForUpdates),
-            systemImage: "arrow.triangle.2.circlepath"
-        ))
-
-        menu.addItem(NSMenuItem.separator())
 
         menu.addItem(createMenuItem(
             title: isEn ? "Quit NekoTrans" : "Thoát NekoTrans",
@@ -201,7 +203,14 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
             item.keyEquivalentModifierMask = modifierMask
         }
         if let systemImage {
-            item.image = NSImage(systemSymbolName: systemImage, accessibilityDescription: title)
+            let symbolConfig = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+            if let img = NSImage(systemSymbolName: systemImage, accessibilityDescription: title)?.withSymbolConfiguration(symbolConfig) {
+                img.isTemplate = true
+                item.image = img
+            }
+            if #available(macOS 27.0, *) {
+                item.preferredImageVisibility = .visible
+            }
         }
         if let shortcutName {
             item.setShortcut(for: shortcutName)
@@ -285,7 +294,27 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         UpdaterService.shared.checkForUpdates()
     }
 
+    @objc private func handleOpenOnboarding() {
+        OnboardingWindowController.shared.showOnboarding()
+    }
+
+    @objc private func handleUninstall() {
+        UninstallWindowController.shared.show()
+    }
+
+    public func teardown() {
+        if let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
+    }
+
     @objc private func handleQuit() {
-        NSApplication.shared.terminate(nil)
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.terminateAppImmediately()
+        } else {
+            teardown()
+            NSApplication.shared.terminate(nil)
+        }
     }
 }

@@ -34,4 +34,6 @@ public enum AppLog {
     public static let ai = Logger(subsystem: subsystem, category: "ai")
     /// GitHub gist sync.
     public static let sync = Logger(subsystem: subsystem, category: "sync")
+    /// Clean application uninstallation and data purging.
+    public static let uninstall = Logger(subsystem: subsystem, category: "uninstall")
 }

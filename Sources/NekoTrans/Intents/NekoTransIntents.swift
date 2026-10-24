@@ -115,7 +115,6 @@ struct SaveWordIntent: AppIntent {
             let service = VocabularyService.shared
             guard let id = service.addWord(word: cleanWord, translation: finalMeaning),
                   let item = service.savedWords.first(where: { $0.id == id }) else { return nil }
-            SpotlightService.shared.indexItem(item)
             return VocabularyEntity(item: item)
         }
         guard let entity else { throw NekoIntentError.emptyText }

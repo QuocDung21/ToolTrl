@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import Defaults
 
 // MARK: - 🎨 App Semantic Color Palette
@@ -6,8 +7,12 @@ public enum AppColors {
     public static let accent = Color.blue
     public static let accentSubtle = Color.blue.opacity(0.1)
     
-    public static let phonetic = Color.orange
-    public static let phoneticSubtle = Color.orange.opacity(0.08)
+    public static let phonetic = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            ? NSColor(red: 1.0, green: 0.64, blue: 0.22, alpha: 1.0)
+            : NSColor(red: 0.72, green: 0.34, blue: 0.05, alpha: 1.0)
+    }))
+    public static let phoneticSubtle = phonetic.opacity(0.12)
     
     public static let grammar = Color.blue
     public static let grammarSubtle = Color.blue.opacity(0.08)
@@ -15,7 +20,11 @@ public enum AppColors {
     public static let success = Color.green
     public static let successSubtle = Color.green.opacity(0.1)
     
-    public static let warning = Color.orange
+    public static let warning = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+            ? NSColor(red: 1.0, green: 0.65, blue: 0.20, alpha: 1.0)
+            : NSColor(red: 0.76, green: 0.36, blue: 0.05, alpha: 1.0)
+    }))
     public static let destructive = Color.red
     
     public static let cardBackground = Color(nsColor: .controlBackgroundColor).opacity(0.85)

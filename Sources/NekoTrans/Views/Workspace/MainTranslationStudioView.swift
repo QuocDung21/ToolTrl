@@ -121,11 +121,10 @@ public struct MainTranslationStudioView: View {
                 Section("ĐỘNG CƠ DỊCH") {
                     ForEach(TranslationEngine.allCases) { engine in
                         Button(action: { vm.selectedEngine = engine }) {
-                            HStack {
-                                Text(engine.rawValue)
-                                if vm.selectedEngine == engine {
-                                    Image(systemName: "checkmark")
-                                }
+                            if vm.selectedEngine == engine {
+                                Text("✓  \(engine.emojiIcon)  \(engine.displayName)")
+                            } else {
+                                Text("      \(engine.emojiIcon)  \(engine.displayName)")
                             }
                         }
                     }
@@ -134,11 +133,10 @@ public struct MainTranslationStudioView: View {
                 Section("CHUYÊN NGÀNH") {
                     ForEach(TranslationDomain.allCases) { domain in
                         Button(action: { settings.translationDomain = domain }) {
-                            HStack {
-                                Text(domain.rawValue)
-                                if settings.translationDomain == domain {
-                                    Image(systemName: "checkmark")
-                                }
+                            if settings.translationDomain == domain {
+                                Text("✓  \(domain.emojiIcon)  \(domain.rawValue)")
+                            } else {
+                                Text("      \(domain.emojiIcon)  \(domain.rawValue)")
                             }
                         }
                     }
@@ -147,11 +145,10 @@ public struct MainTranslationStudioView: View {
                 Section("CHẾ ĐỘ HIỂN THỊ") {
                     ForEach(TranslationDisplayMode.allCases) { mode in
                         Button(action: { settings.translationDisplayMode = mode }) {
-                            HStack {
-                                Text(mode.rawValue)
-                                if settings.translationDisplayMode == mode {
-                                    Image(systemName: "checkmark")
-                                }
+                            if settings.translationDisplayMode == mode {
+                                Text("✓  \(mode.rawValue)")
+                            } else {
+                                Text("      \(mode.rawValue)")
                             }
                         }
                     }
@@ -160,7 +157,7 @@ public struct MainTranslationStudioView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "slider.horizontal.3")
                         .foregroundColor(.accentColor)
-                    Text(vm.selectedEngine.rawValue)
+                    Text(vm.selectedEngine.displayName)
                         .font(.appCaptionMedium)
                 }
                 .padding(.horizontal, 10)
@@ -176,7 +173,7 @@ public struct MainTranslationStudioView: View {
                 }
             }) {
                 HStack(spacing: 5) {
-                    Image(systemName: "square.split.3x1")
+                    Image(systemName: "rectangle.split.3x1")
                         .font(.system(size: 12))
                     Text("So sánh")
                         .font(.appCaptionMedium)

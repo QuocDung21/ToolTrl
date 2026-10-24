@@ -123,33 +123,29 @@ public final class SelectionBubbleController: NSObject, ObservableObject, NSWind
     private func handleMouseUp(event: NSEvent) {
         guard AppSettings.shared.isSelectionBubbleActive else { return }
         
-        // Excluded App check (Silent Mode)
-        if AppExclusionService.shared.isCurrentAppExcluded() {
+        let mouseUpLocation = NSEvent.mouseLocation
+        
+        // 1. ⚡ ANTI-SPAM & INTENT FILTER: Check drag distance or multi-click FIRST
+        // This eliminates 98% of normal clicks from doing any further window checking or IPC calls
+        let dragDistance = hypot(mouseUpLocation.x - mouseDownLocation.x, mouseUpLocation.y - mouseDownLocation.y)
+        let clickCount = event.clickCount
+        let isIntentionalSelection = (clickCount >= 2) || (dragDistance >= 10.0)
+        
+        guard isIntentionalSelection else {
+            // Normal stationary single-click: dismiss bubble and do NOT trigger any lookup!
             hideBubble()
             return
         }
         
-        let mouseUpLocation = NSEvent.mouseLocation
-        
-        // 1. Ignore if click is inside any NekoTrans window (FloatingPanel, Bubble, Settings, etc.)
+        // 2. Ignore if click is inside any NekoTrans window (FloatingPanel, Bubble, Settings, etc.)
         for window in NSApp.windows where window.isVisible {
             if window.frame.contains(mouseUpLocation) {
                 return
             }
         }
         
-        // 2. ⚡ ANTI-SPAM & INTENT FILTER:
-        // Calculate drag distance
-        let dragDistance = hypot(mouseUpLocation.x - mouseDownLocation.x, mouseUpLocation.y - mouseDownLocation.y)
-        let clickCount = event.clickCount
-        
-        // A valid selection ONLY occurs when:
-        // (a) User dragged mouse by at least 10 points (drag-to-highlight)
-        // (b) User double-clicked or triple-clicked (word / sentence selection, clickCount >= 2)
-        let isIntentionalSelection = (clickCount >= 2) || (dragDistance >= 10.0)
-        
-        guard isIntentionalSelection else {
-            // Normal stationary single-click: dismiss bubble and do NOT trigger any lookup!
+        // 3. Excluded App check (Silent Mode via zero-IPC cached lookup)
+        if AppExclusionService.shared.isCurrentAppExcluded() {
             hideBubble()
             return
         }
@@ -167,8 +163,16 @@ public final class SelectionBubbleController: NSObject, ObservableObject, NSWind
                     return
                 }
                 
-                // Pure accessibility extraction without simulated keystrokes
-                let text = TextGrabber.shared.getSelectedTextOnlyAccessibility()
+                // Non-invasive extraction: Browser JavaScript (if browser) + Accessibility API (all apps)
+                var text = await TextGrabber.shared.getSelectedTextNonInvasive()
+                
+                // Micro-OCR fallback for canvas/graphic apps (Figma, Canva, games, etc.)
+                if text == nil || text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == true {
+                    if dragDistance >= 15.0 {
+                        text = await ScreenOCRService.shared.recognizeMicroRegion(from: self.mouseDownLocation, to: mouseUpLocation)
+                    }
+                }
+                
                 guard let selected = text?.trimmingCharacters(in: .whitespacesAndNewlines), !selected.isEmpty else {
                     self.hideBubble()
                     return
@@ -232,11 +236,22 @@ public final class SelectionBubbleController: NSObject, ObservableObject, NSWind
         
         if !panel.isVisible || panel.alphaValue < 0.5 {
             panel.alphaValue = 0.0
+            panel.contentView?.wantsLayer = true
+            
+            if let layer = panel.contentView?.layer {
+                let scaleAnim = CAKeyframeAnimation(keyPath: "transform.scale")
+                scaleAnim.values = [0.82, 1.06, 1.0]
+                scaleAnim.keyTimes = [0.0, 0.65, 1.0]
+                scaleAnim.duration = 0.16
+                scaleAnim.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
+                layer.add(scaleAnim, forKey: "bubblePop")
+            }
+            
             panel.orderFrontRegardless()
             
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.15
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                context.duration = 0.14
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
                 panel.animator().alphaValue = 1.0
             }
         }
@@ -254,14 +269,27 @@ public final class SelectionBubbleController: NSObject, ObservableObject, NSWind
         autoDismissTimer?.invalidate()
         autoDismissTimer = nil
         mouseUpWorkItem?.cancel()
+        currentSelectedText = ""
         
         guard let panel = bubblePanel, panel.isVisible else { return }
         
+        if let layer = panel.contentView?.layer {
+            let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+            scaleAnim.fromValue = 1.0
+            scaleAnim.toValue = 0.88
+            scaleAnim.duration = 0.08
+            scaleAnim.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            layer.add(scaleAnim, forKey: "bubbleShrink")
+        }
+
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.10
+            context.duration = 0.08
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             panel.animator().alphaValue = 0.0
         }, completionHandler: {
             panel.orderOut(nil)
+            panel.alphaValue = 1.0
+            panel.contentView?.layer?.removeAllAnimations()
         })
     }
     
@@ -288,6 +316,8 @@ public final class SelectionBubbleController: NSObject, ObservableObject, NSWind
                 let textToTranslate = self.currentSelectedText
                 let frame = self.bubblePanel?.frame
                 self.hideBubble()
+                
+                guard !textToTranslate.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 
                 if let callback = self.onBubbleClicked {
                     callback(textToTranslate, frame)

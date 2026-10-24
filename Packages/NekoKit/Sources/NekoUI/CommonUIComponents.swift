@@ -41,10 +41,36 @@ public struct VisualEffectBackground: NSViewRepresentable {
     }
 }
 
+// MARK: - Window Drag Area (Enables moving borderless NSWindows/NSPanels by dragging)
+public struct WindowDragArea: NSViewRepresentable {
+    public init() {}
+
+    public func makeNSView(context: Context) -> WindowDragNSView {
+        return WindowDragNSView()
+    }
+
+    public func updateNSView(_ nsView: WindowDragNSView, context: Context) {}
+}
+
+public final class WindowDragNSView: NSView {
+    public override var mouseDownCanMoveWindow: Bool {
+        return true
+    }
+
+    public override func mouseDown(with event: NSEvent) {
+        if event.type == .leftMouseDown {
+            window?.performDrag(with: event)
+        } else {
+            super.mouseDown(with: event)
+        }
+    }
+}
+
 // MARK: - Live Spoken Text View with Real-time Word Highlight
 public struct LiveSpokenTextView: View {
     public let text: String
     public let speakerID: String
+    public var isStreaming: Bool = false
     @ObservedObject var speechService = SpeechService.shared
     public var font: Font = .system(size: 12)
     public var defaultColor: Color = .primary
@@ -53,12 +79,14 @@ public struct LiveSpokenTextView: View {
     public init(
         text: String,
         speakerID: String,
+        isStreaming: Bool = false,
         font: Font = .system(size: 12),
         defaultColor: Color = .primary,
         lineSpacing: CGFloat = 3.5
     ) {
         self.text = text
         self.speakerID = speakerID
+        self.isStreaming = isStreaming
         self.font = font
         self.defaultColor = defaultColor
         self.lineSpacing = lineSpacing
@@ -66,7 +94,12 @@ public struct LiveSpokenTextView: View {
 
     public var body: some View {
         Group {
-            if speechService.isSpeaking && speechService.currentSpeakerID == speakerID {
+            if isStreaming {
+                Text(text)
+                    .foregroundColor(defaultColor)
+                + Text(" ▍")
+                    .foregroundColor(AppColors.accent)
+            } else if speechService.isSpeaking && speechService.currentSpeakerID == speakerID {
                 Text(attributedText)
             } else if text.contains("*") || text.contains("`") || text.contains("[") {
                 Text(attributedText)
@@ -278,6 +311,38 @@ public extension View {
     }
 }
 
+// MARK: - ✨ Translation Shimmer Placeholder (Apple HIG Loading Effect)
+public struct TranslationShimmerPlaceholder: View {
+    public var message: String
+    @State private var isPulsing: Bool = false
+
+    public init(message: String = "Đang dịch thuật...") {
+        self.message = message
+    }
+
+    public var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(AppColors.accent)
+                .opacity(isPulsing ? 1.0 : 0.45)
+                .scaleEffect(isPulsing ? 1.08 : 0.95)
+
+            Text(message)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.secondary)
+                .opacity(isPulsing ? 0.95 : 0.55)
+        }
+        .padding(.vertical, 3)
+        .shimmering(active: true)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.85).repeatForever(autoreverses: true)) {
+                isPulsing = true
+            }
+        }
+    }
+}
+
 // MARK: - 🌟 Bookmark / Star Bounce Button with Glow
 public struct BookmarkBounceButton: View {
     public let isBookmarked: Bool
@@ -319,6 +384,10 @@ public struct BookmarkBounceButton: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isBookmarked ? "Bỏ lưu từ khỏi sổ tay" : "Lưu từ vào sổ tay")
+        .accessibilityHint("Nhấn để thay đổi trạng thái lưu trong sổ tay từ vựng")
+        .accessibilityAddTraits(.isButton)
         .sensoryFeedback(.success, trigger: isBookmarked)
     }
 }

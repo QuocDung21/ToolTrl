@@ -18,13 +18,18 @@ build:
 	@echo "$(CYAN)🚀 Bắt đầu build NekoTrans.app...$(RESET)"
 	@./Scripts/build_app.sh
 
-## ▶️ Build và chạy ứng dụng từ thư mục build/
+## ▶️ Build và chạy ứng dụng
 run: build
 	@echo "$(YELLOW)🛑 Dừng tiến trình NekoTrans cũ nếu đang chạy...$(RESET)"
 	@killall NekoTrans 2>/dev/null || killall ToolTrL 2>/dev/null || true
 	@sleep 1
-	@echo "$(GREEN)✨ Mở NekoTrans.app từ build/...$(RESET)"
-	@open build/NekoTrans.app
+	@if [ -d "/Applications/NekoTrans.app" ]; then \
+		echo "$(GREEN)✨ Mở /Applications/NekoTrans.app...$(RESET)"; \
+		open /Applications/NekoTrans.app; \
+	else \
+		echo "$(GREEN)✨ Mở NekoTrans.app từ build/...$(RESET)"; \
+		open build/NekoTrans.app; \
+	fi
 
 ## 📦 Build và cài đặt đè vào /Applications/NekoTrans.app rồi chạy
 install: build
@@ -72,11 +77,16 @@ dmg:
 test:
 	@echo "$(CYAN)🧪 Chạy kiểm thử Xcode Test...$(RESET)"
 	@. ./Scripts/toolchain.sh && xcodebuild test -project NekoTrans.xcodeproj -scheme NekoTrans -destination 'platform=macOS' -derivedDataPath .build/XcodeDerivedData
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u .build/XcodeDerivedData/Build/Products/Debug/NekoTrans.app 2>/dev/null || true
 
 ## 🧹 Xoá cache và file build
 clean:
 	@echo "$(RED)🧹 Dọn dẹp thư mục build & .build...$(RESET)"
-	@rm -rf build .build
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u build/NekoTrans.app 2>/dev/null || true
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u build.noindex/NekoTrans.app 2>/dev/null || true
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u .build/XcodeDerivedData/Build/Products/Release/NekoTrans.app 2>/dev/null || true
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u .build/XcodeDerivedData/Build/Products/Debug/NekoTrans.app 2>/dev/null || true
+	@rm -rf build build.noindex .build
 	@echo "$(GREEN)✅ Đã dọn dẹp sạch sẽ!$(RESET)"
 
 ## ❓ Hiển thị danh sách các lệnh Make có sẵn

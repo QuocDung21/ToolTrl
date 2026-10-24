@@ -52,27 +52,25 @@ Thêm icon mới thì thêm một `<symbol>` vào sprite đó.
 
 ## Việc cần làm trước khi publish
 
-### 1. Điền các liên kết đang để `href="#"`
+### 1. Cấu hình liên kết
 
-Mọi chỗ cần link thật đều được đánh dấu bằng `data-placeholder`, tìm nhanh bằng:
+Mọi chỗ cần link thật đều được đánh dấu bằng `data-placeholder` và được **tự động bind từ `site-data.js` (`SITE_DATA.links`)** khi trang tải:
 
-```bash
-grep -n 'data-placeholder' LandingPage/index.html
-```
-
-| `data-placeholder` | Số chỗ | Cần điền |
+| `data-placeholder` | Số chỗ | Trường trong `SITE_DATA.links` |
 |---|---|---|
-| `download-url` | 3 | Link tải file `.dmg` / `.zip` |
-| `source-url` | 2 | Repo GitHub |
-| `changelog-url` | 1 | Trang "Có gì mới" |
-| `support-url` | 1 | Kênh hỗ trợ (email, issue, Discord…) |
-| `privacy-url` | 1 | Chính sách quyền riêng tư |
+| `download-url` | 3 | `download` (Link tải release `.dmg` / `.zip`) |
+| `source-url` | 2 | `source` (Repo GitHub) |
+| `changelog-url` | 1 | `changelog` (Trang releases / có gì mới) |
+| `support-url` | 1 | `support` (Kênh issues / hỗ trợ) |
+| `privacy-url` | 1 | `privacy` (Chính sách quyền riêng tư) |
 
-### 2. Nguồn thông số
+Khi cần đổi link, chỉ cần sửa một nơi duy nhất tại `LandingPage/site-data.js`.
+
+### 2. Nguồn thông số kỹ thuật (`site-data.js`)
 
 Các thông số hiển thị trên trang không nằm rải rác trong HTML hoặc bản dịch.
 Chúng được bind từ `site-data.js` khi trang chạy: số provider, số phần phân
-tích, phiên bản macOS tối thiểu, kích thước bản phát hành và phím tắt. Khi
+tích, phiên bản macOS tối thiểu, kích thước bản phát hành, phím tắt và links. Khi
 thay đổi code hoặc artifact release, chỉ cập nhật nguồn dữ liệu này; nội dung
 giao diện sẽ tự dùng giá trị mới ở cả tiếng Việt và tiếng Anh.
 

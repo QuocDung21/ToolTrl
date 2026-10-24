@@ -31,6 +31,10 @@ public final class AppSettings {
         didSet { Defaults[.showMainWindowOnLaunch] = showMainWindowOnLaunch }
     }
 
+    public var hasCompletedOnboarding: Bool {
+        didSet { Defaults[.hasCompletedOnboarding] = hasCompletedOnboarding }
+    }
+
     public var clickOutsideDismiss: Bool {
         didSet { Defaults[.clickOutsideDismiss] = clickOutsideDismiss }
     }
@@ -206,6 +210,7 @@ public final class AppSettings {
         self.mainWorkspaceTab = Defaults[.mainWorkspaceTab]
         self.quitActionPreference = Defaults[.quitActionPreference]
         self.showMainWindowOnLaunch = Defaults[.showMainWindowOnLaunch]
+        self.hasCompletedOnboarding = Defaults[.hasCompletedOnboarding]
         self.clickOutsideDismiss = Defaults[.clickOutsideDismiss]
         self.showInDock = Defaults[.showInDock]
         self.appLanguage = Defaults[.appLanguage]

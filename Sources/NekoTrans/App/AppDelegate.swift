@@ -21,7 +21,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var clipboardChangeCount: Int = NSPasteboard.general.changeCount
     private var clipboardTimer: Timer?
     private var featureFlagsObserver: NSObjectProtocol?
-    private var isTerminatingConfirmed = false
+    internal var isTerminatingConfirmed = false
+    private var isQuitFromKeyboardShortcut = false
 
     public override init() {
         super.init()
@@ -35,6 +36,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         setupMainMenu()
         configureActivationPolicy()
 
+        // Purge any legacy Spotlight indexed items to ensure zero system overhead
+        SpotlightService.shared.clearAllIndex()
+
+        // Configure bounded URLCache for safe memory footprint (25MB RAM, 100MB Disk)
+        URLCache.shared = URLCache(memoryCapacity: 25 * 1024 * 1024, diskCapacity: 100 * 1024 * 1024)
+
         setupFloatingPanel()
         setupMenuBar()
         setupHotKey()
@@ -43,12 +50,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         checkAccessibilityOnLaunch()
 
-        if AppSettings.shared.showMainWindowOnLaunch {
+        if !AppSettings.shared.hasCompletedOnboarding {
+            OnboardingWindowController.shared.showOnboarding()
+        } else if AppSettings.shared.showMainWindowOnLaunch {
             MainWindowController.shared.showMainWindow()
         }
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
+        cleanupBeforeTermination()
         stopClipboardMonitor()
         SelectionBubbleController.shared.stopMonitoring()
         if let observer = featureFlagsObserver {
@@ -58,12 +68,69 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        MainWindowController.shared.showMainWindow()
+        if !flag {
+            MainWindowController.shared.showMainWindow()
+        }
         return true
     }
 
     public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    // MARK: - URL Scheme Handling (nekotrans://)
+
+    public func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            handleIncomingURL(url)
+        }
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        guard url.scheme?.lowercased() == "nekotrans" else { return }
+
+        let host = url.host?.lowercased() ?? ""
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let queryItems = components?.queryItems ?? []
+
+        func param(_ name: String) -> String? {
+            queryItems.first(where: { $0.name == name })?.value
+        }
+
+        switch host {
+        case "translate":
+            if let text = param("text"), !text.isEmpty {
+                triggerTranslationWithText(text)
+            } else {
+                openQuickLookup()
+            }
+
+        case "save-word":
+            if let text = param("text"), !text.isEmpty {
+                let meaning = param("meaning") ?? ""
+                let phonetic = param("phonetic") ?? ""
+                if !VocabularyService.shared.isWordSaved(text) {
+                    VocabularyService.shared.toggleSaveWord(
+                        word: text,
+                        phonetic: phonetic.isEmpty ? nil : phonetic,
+                        translation: meaning
+                    )
+                }
+                SoundService.play(.pop)
+            }
+
+        case "open-notebook", "notebook":
+            VocabularyWindowController.shared.showNotebook()
+
+        case "open-settings", "settings":
+            SettingsWindowController.shared.showSettings()
+
+        case "safari-extension", "safari":
+            SettingsWindowController.shared.showSettings()
+
+        default:
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
 
     // MARK: - Setup & Configuration
@@ -132,8 +199,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 onTogglePin: { [weak panel] in
                     panel?.togglePin()
                 },
-                onHeightChanged: { [weak panel] newHeight in
-                    panel?.updateHeight(newHeight, animate: true)
+                onDimensionsChanged: { [weak panel] width, newHeight, animate in
+                    panel?.updateDimensions(width: width, targetHeight: newHeight, animate: animate)
                 },
                 onClose: { [weak panel] in
                     panel?.hidePanel()
@@ -290,7 +357,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
                 triggerTranslationWithText(selectedText)
             } else {
-                openQuickLookup()
+                openQuickLookup(resetIfShowingPrevious: true)
             }
         }
     }
@@ -301,18 +368,22 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         SelectionBubbleController.shared.hideBubble()
         viewModel.processText(trimmed)
 
+        let predictedHeight = FloatingPanel.predictInitialHeight(for: trimmed)
         if let rect = nearRect {
-            floatingPanel?.showNearRect(rect)
+            floatingPanel?.showNearRect(rect, initialHeight: predictedHeight)
         } else {
-            floatingPanel?.showNearCursorOrCenter()
+            floatingPanel?.showNearCursorOrCenter(initialHeight: predictedHeight)
         }
     }
 
-    public func openQuickLookup() {
+    public func openQuickLookup(resetIfShowingPrevious: Bool = true) {
         guard let panel = floatingPanel else { return }
         if panel.isVisible {
             panel.hidePanel()
         } else {
+            if resetIfShowingPrevious {
+                viewModel.reset()
+            }
             panel.showNearCursorOrCenter()
         }
     }
@@ -357,6 +428,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         TextAnalysisWindowController.shared.closeWindow()
         VocabularyWindowController.shared.hideNotebook()
         SettingsWindowController.shared.hideSettings()
+        OnboardingWindowController.shared.closeOnboarding()
 
         for window in NSApp.windows where window.isVisible {
             let className = NSStringFromClass(type(of: window))
@@ -368,19 +440,55 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.deactivate()
     }
 
+    private func cleanupBeforeTermination() {
+        menuBarController?.teardown()
+        stopClipboardMonitor()
+        SelectionBubbleController.shared.stopMonitoring()
+        LocalGGUFService.shared.shutdown()
+        if let observer = featureFlagsObserver {
+            NotificationCenter.default.removeObserver(observer)
+            featureFlagsObserver = nil
+        }
+    }
+
+    public func terminateAppImmediately() {
+        isTerminatingConfirmed = true
+        cleanupBeforeTermination()
+        NSApp.terminate(nil)
+    }
+
     public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         if isTerminatingConfirmed {
+            cleanupBeforeTermination()
             return .terminateNow
         }
 
         switch AppSettings.shared.quitActionPreference {
-        case .runInBackground:
-            hideToBackground()
-            return .terminateCancel
         case .terminateImmediately:
             isTerminatingConfirmed = true
+            cleanupBeforeTermination()
             return .terminateNow
+
+        case .runInBackground:
+            if isQuitFromKeyboardShortcut {
+                isQuitFromKeyboardShortcut = false
+                hideToBackground()
+                return .terminateCancel
+            } else {
+                // Dock (taskbar) Quit or system quit must terminate completely
+                isTerminatingConfirmed = true
+                cleanupBeforeTermination()
+                return .terminateNow
+            }
+
         case .askEveryTime:
+            // Dock (taskbar) Quit terminates cleanly without blocking prompt
+            if !isQuitFromKeyboardShortcut {
+                isTerminatingConfirmed = true
+                cleanupBeforeTermination()
+                return .terminateNow
+            }
+            isQuitFromKeyboardShortcut = false
             break
         }
 
@@ -396,8 +504,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.showsSuppressionButton = true
         alert.suppressionButton?.title = isEn ? "Remember this choice" : "Ghi nhớ lựa chọn này"
 
-        alert.addButton(withTitle: isEn ? "Run in Background" : "Chạy dưới nền")
         alert.addButton(withTitle: isEn ? "Quit Completely" : "Thoát hoàn toàn")
+        alert.addButton(withTitle: isEn ? "Run in Background" : "Chạy dưới nền")
         let cancelBtn = alert.addButton(withTitle: isEn ? "Cancel" : "Hủy")
         cancelBtn.keyEquivalent = "\u{1b}"
 
@@ -407,17 +515,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         switch response {
         case .alertFirstButtonReturn:
             if shouldRemember {
+                AppSettings.shared.quitActionPreference = .terminateImmediately
+            }
+            isTerminatingConfirmed = true
+            cleanupBeforeTermination()
+            return .terminateNow
+
+        case .alertSecondButtonReturn:
+            if shouldRemember {
                 AppSettings.shared.quitActionPreference = .runInBackground
             }
             hideToBackground()
             return .terminateCancel
-
-        case .alertSecondButtonReturn:
-            if shouldRemember {
-                AppSettings.shared.quitActionPreference = .terminateImmediately
-            }
-            isTerminatingConfirmed = true
-            return .terminateNow
 
         default:
             return .terminateCancel
@@ -437,6 +546,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         appMenu.addItem(
             withTitle: isEn ? "About NekoTrans" : "Giới thiệu NekoTrans",
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
+            keyEquivalent: ""
+        )
+        appMenu.addItem(
+            withTitle: isEn ? "Welcome Guide..." : "Hướng dẫn bắt đầu...",
+            action: #selector(handleOpenOnboardingFromMenu),
             keyEquivalent: ""
         )
         appMenu.addItem(.separator())
@@ -544,7 +658,16 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         UpdaterService.shared.checkForUpdates()
     }
 
+    @objc private func handleOpenOnboardingFromMenu() {
+        OnboardingWindowController.shared.showOnboarding()
+    }
+
     @objc private func handleQuitApp() {
-        NSApp.terminate(nil)
+        if AppSettings.shared.quitActionPreference == .terminateImmediately {
+            terminateAppImmediately()
+        } else {
+            isQuitFromKeyboardShortcut = true
+            NSApp.terminate(nil)
+        }
     }
 }

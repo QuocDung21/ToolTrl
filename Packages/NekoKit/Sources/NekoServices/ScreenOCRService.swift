@@ -182,4 +182,69 @@ public final class ScreenOCRService: ObservableObject {
         str = str.replacingOccurrences(of: " ?", with: "?")
         return str
     }
+
+    /// Micro-region OCR for canvas/graphic apps (Figma, Canva, games, etc.)
+    /// Captures a tight bounding box between mouseDown and mouseUp,
+    /// running Vision OCR with .fast recognition level for near-instant latency (~25-40ms).
+    public func recognizeMicroRegion(from startPoint: CGPoint, to endPoint: CGPoint) async -> String? {
+        let minX = min(startPoint.x, endPoint.x)
+        let maxX = max(startPoint.x, endPoint.x)
+        let minY = min(startPoint.y, endPoint.y)
+        let maxY = max(startPoint.y, endPoint.y)
+        
+        let width = Int(max(maxX - minX, 32.0) + 16.0)
+        let height = Int(max(maxY - minY, 18.0) + 16.0)
+        let originX = Int(minX - 8.0)
+        let originY = Int(minY - 8.0)
+        
+        guard let primaryScreen = NSScreen.screens.first else { return nil }
+        let screenHeight = Int(primaryScreen.frame.height)
+        let globalY = screenHeight - (originY + height)
+        let globalX = originX
+        
+        let tempURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("neko_micro_\(UUID().uuidString).png")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+        process.arguments = ["-x", "-R\(globalX),\(globalY),\(width),\(height)", tempURL.path]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0,
+                  FileManager.default.fileExists(atPath: tempURL.path),
+                  let image = NSImage(contentsOf: tempURL),
+                  let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+                return nil
+            }
+            
+            return await withCheckedContinuation { continuation in
+                let request = VNRecognizeTextRequest { request, error in
+                    guard error == nil,
+                          let observations = request.results as? [VNRecognizedTextObservation],
+                          !observations.isEmpty else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    let rawLines = observations.compactMap { $0.topCandidates(1).first?.string }
+                    let text = Self.assembleSmartText(from: rawLines)
+                    continuation.resume(returning: text.isEmpty ? nil : text)
+                }
+                request.recognitionLevel = .fast
+                request.usesLanguageCorrection = false
+                
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        try handler.perform([request])
+                    } catch {
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+        } catch {
+            return nil
+        }
+    }
 }

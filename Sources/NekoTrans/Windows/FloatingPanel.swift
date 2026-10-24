@@ -5,6 +5,7 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     private var outsideClickMonitor: Any?
     private var localKeyMonitor: Any?
     private var selectionMonitor: Any?
+    private var previousApp: NSRunningApplication?
 
     public var isPinned: Bool = false
 
@@ -41,14 +42,12 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     }
 
     public override var canBecomeMain: Bool {
-        return true
+        return false
     }
 
     public override func cancelOperation(_ sender: Any?) {
         hidePanel()
     }
-
-    private var idleCleanupTimer: Timer?
 
     public func hidePanel() {
         stopOutsideClickMonitor()
@@ -56,24 +55,48 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
         stopSelectionMonitor()
         SpeechService.shared.stop()
 
+        let appToRestore = self.previousApp
+        self.previousApp = nil
+
+        // Zero-latency focus restore: user can immediately continue typing in previous application
+        DispatchQueue.main.async {
+            if let app = appToRestore, !app.isTerminated {
+                app.activate()
+            } else if NSApp.isActive && MainWindowController.shared.window?.isVisible != true {
+                NSApp.deactivate()
+            }
+        }
+
+        // Native snappy exit: 0.08s fade + subtle shrink (1.0 -> 0.975)
+        if let layer = self.contentView?.layer {
+            let scaleAnim = CABasicAnimation(keyPath: "transform.scale")
+            scaleAnim.fromValue = 1.0
+            scaleAnim.toValue = 0.975
+            scaleAnim.duration = 0.08
+            scaleAnim.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            layer.add(scaleAnim, forKey: "shrinkOut")
+        }
+
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
+            context.duration = 0.08
+            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             self.animator().alphaValue = 0.0
         }, completionHandler: {
             self.orderOut(nil)
             self.alphaValue = 1.0
+            self.contentView?.layer?.removeAnimation(forKey: "shrinkOut")
         })
-
-        idleCleanupTimer?.invalidate()
-        idleCleanupTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: false) { _ in
-            URLCache.shared.removeAllCachedResponses()
-        }
     }
 
     public func windowDidResignKey(_ notification: Notification) {
         if !isPinned {
             hidePanel()
         }
+    }
+
+    public func windowDidMove(_ notification: Notification) {
+        // When user manually moves the panel, anchor to top edge so future height updates expand downwards smoothly
+        currentAnchor = .top
     }
 
     public func togglePin() {
@@ -95,12 +118,38 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
         case bottom
     }
 
+    public static func predictInitialHeight(for text: String) -> CGFloat {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            return 160
+        }
+        let count = trimmed.count
+        let hasSpaces = trimmed.contains(" ") || trimmed.contains("\n")
+
+        // Single word or very short idiom -> Dictionary Mode
+        if !hasSpaces && count < 35 {
+            return 280
+        }
+
+        // Sentence or Paragraph Translation Mode
+        if count < 60 {
+            return 210
+        } else if count < 150 {
+            return 270
+        } else if count < 300 {
+            return 340
+        } else {
+            return 400
+        }
+    }
+
     public private(set) var currentAnchor: WindowAnchor = .top
     private var lastMeasuredHeight: CGFloat = 160
 
     public func showNearRect(_ rect: NSRect, initialHeight: CGFloat? = nil) {
         let windowWidth: CGFloat = 515
         let windowHeight: CGFloat = initialHeight ?? lastMeasuredHeight
+        lastMeasuredHeight = windowHeight
 
         let centerPoint = NSPoint(x: rect.midX, y: rect.midY)
         let screen = NSScreen.screens.first(where: { NSMouseInRect(centerPoint, $0.frame, false) })
@@ -141,6 +190,7 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
         let mouseLoc = NSEvent.mouseLocation
         let windowWidth: CGFloat = 515
         let windowHeight: CGFloat = initialHeight ?? lastMeasuredHeight
+        lastMeasuredHeight = windowHeight
 
         if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLoc, $0.frame, false) }) ?? NSScreen.main {
             var x = mouseLoc.x + 8
@@ -181,22 +231,40 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
     }
 
     private func presentPanel() {
+        if let frontApp = NSWorkspace.shared.frontmostApplication,
+           frontApp.bundleIdentifier != Bundle.main.bundleIdentifier {
+            self.previousApp = frontApp
+        }
+
         if !self.isVisible || self.alphaValue < 0.8 {
             self.alphaValue = 0.0
+            self.contentView?.wantsLayer = true
+
+            // Native macOS micro-scale spring pop-in (0.965 -> 1.008 -> 1.0)
+            if let layer = self.contentView?.layer {
+                let scaleAnim = CAKeyframeAnimation(keyPath: "transform.scale")
+                scaleAnim.values = [0.965, 1.008, 1.0]
+                scaleAnim.keyTimes = [0.0, 0.65, 1.0]
+                scaleAnim.duration = 0.16
+                scaleAnim.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
+                layer.add(scaleAnim, forKey: "popIn")
+            }
+
             self.invalidateShadow()
             self.orderFrontRegardless()
             self.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
 
             // Smooth fade-in animation
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.15
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
                 self.animator().alphaValue = 1.0
             }
         } else {
             self.orderFrontRegardless()
             self.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
         }
 
         startOutsideClickMonitor()
@@ -206,11 +274,28 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
         }
     }
 
-    public func updateHeight(_ targetHeight: CGFloat, animate: Bool = true) {
-        let clampedHeight = min(max(targetHeight.rounded(), 120), 520)
+    public func updateDimensions(width: CGFloat? = nil, targetHeight: CGFloat, animate: Bool = true) {
+        let clampedHeight = min(max(targetHeight.rounded(), 120), 540)
         lastMeasuredHeight = clampedHeight
         let currentFrame = self.frame
-        guard abs(currentFrame.height - clampedHeight) > 1 else { return }
+        let targetWidth = width ?? currentFrame.width
+        let clampedWidth = min(max(targetWidth.rounded(), 480), 750)
+
+        let heightDiff = abs(currentFrame.height - clampedHeight)
+        let widthDiff = abs(currentFrame.width - clampedWidth)
+        let threshold: CGFloat = animate ? 1.0 : 8.0
+        guard heightDiff >= threshold || widthDiff >= threshold else { return }
+
+        var newX = currentFrame.origin.x
+        if let screen = self.screen ?? NSScreen.main {
+            let visibleFrame = screen.visibleFrame
+            if newX + clampedWidth > visibleFrame.maxX - 16 {
+                newX = visibleFrame.maxX - clampedWidth - 16
+            }
+            if newX < visibleFrame.minX + 16 {
+                newX = visibleFrame.minX + 16
+            }
+        }
 
         var newY: CGFloat
         if currentAnchor == .bottom {
@@ -235,24 +320,27 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
         }
 
         let newFrame = NSRect(
-            x: currentFrame.origin.x,
+            x: newX,
             y: newY,
-            width: currentFrame.size.width,
+            width: clampedWidth,
             height: clampedHeight
         )
 
         if animate && self.isVisible {
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = 0.18
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.22, 1.0, 0.36, 1.0)
                 self.animator().setFrame(newFrame, display: true)
             }, completionHandler: {
                 self.invalidateShadow()
             })
         } else {
             self.setFrame(newFrame, display: true)
-            self.invalidateShadow()
         }
+    }
+
+    public func updateHeight(_ targetHeight: CGFloat, animate: Bool = true) {
+        updateDimensions(width: nil, targetHeight: targetHeight, animate: animate)
     }
 
     private func startOutsideClickMonitor() {
@@ -327,6 +415,14 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
 
             // Command key combinations
             if event.modifierFlags.contains(.command) {
+                // Allow standard text editing commands to reach focused editable text fields (Cmd+C, Cmd+V, Cmd+A, Cmd+X, Cmd+Z)
+                if let textEditor = self.firstResponder as? NSTextView, textEditor.isEditable {
+                    let char = event.charactersIgnoringModifiers?.lowercased()
+                    if char == "v" || char == "c" || char == "a" || char == "x" || char == "z" {
+                        return event
+                    }
+                }
+
                 switch event.charactersIgnoringModifiers?.lowercased() {
                 case "c":
                     self.onCopyRequested?()
@@ -339,9 +435,6 @@ public final class FloatingPanel: NSPanel, NSWindowDelegate {
                     return nil
                 case "[":
                     self.onBackRequested?()
-                    return nil
-                case "v":
-                    self.onOpenNotebookRequested?()
                     return nil
                 case ",":
                     self.onOpenSettingsRequested?()

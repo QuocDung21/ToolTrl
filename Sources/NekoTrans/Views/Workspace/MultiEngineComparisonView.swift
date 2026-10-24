@@ -13,7 +13,7 @@ public struct MultiEngineComparisonView: View {
         VStack(alignment: .leading, spacing: 14) {
             // Header bar
             HStack(spacing: 8) {
-                Image(systemName: "square.split.3x1")
+                Image(systemName: "rectangle.split.3x1")
                     .foregroundColor(.accentColor)
                     .font(.system(size: 14, weight: .semibold))
                 

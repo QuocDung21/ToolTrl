@@ -1,4 +1,5 @@
 import Foundation
+import NekoCore
 
 /// Swift 6 Actor-Isolated Multi-Tier Cache with Zero Race Conditions
 public actor TranslationCache {
@@ -56,6 +57,9 @@ public actor TranslationCache {
         }
         if let diskVal = diskTranslations[normKey] {
             memoryTranslations[normKey] = diskVal
+            if memoryTranslations.count > 600 {
+                memoryTranslations = Dictionary(uniqueKeysWithValues: Array(memoryTranslations.suffix(400)))
+            }
             return diskVal
         }
         return nil
@@ -65,6 +69,9 @@ public actor TranslationCache {
         let normKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normKey.isEmpty, !value.isEmpty else { return }
         memoryTranslations[normKey] = value
+        if memoryTranslations.count > 600 {
+            memoryTranslations = Dictionary(uniqueKeysWithValues: Array(memoryTranslations.suffix(400)))
+        }
         diskTranslations[normKey] = value
         scheduleSaveToDisk()
     }
@@ -84,6 +91,9 @@ public actor TranslationCache {
         if let diskEntry = diskDictionaries[normKey] {
             if let sanitized = Self.sanitize(diskEntry) {
                 memoryDictionaries[normKey] = sanitized
+                if memoryDictionaries.count > 250 {
+                    memoryDictionaries = Dictionary(uniqueKeysWithValues: Array(memoryDictionaries.suffix(180)))
+                }
                 return sanitized
             } else {
                 diskDictionaries.removeValue(forKey: normKey)
@@ -104,6 +114,9 @@ public actor TranslationCache {
         }
         
         memoryDictionaries[normKey] = sanitized
+        if memoryDictionaries.count > 250 {
+            memoryDictionaries = Dictionary(uniqueKeysWithValues: Array(memoryDictionaries.suffix(180)))
+        }
         diskDictionaries[normKey] = sanitized
         scheduleSaveToDisk()
     }
@@ -252,8 +265,11 @@ public actor TranslationCache {
         let empty = PersistentCacheData(version: currentCacheVersion, translations: [:], dictionaries: [:])
         guard let url = cacheFileURL,
               FileManager.default.fileExists(atPath: url.path),
-              let data = try? Data(contentsOf: url),
-              let decoded = decodeCache(data) else {
+              let rawData = try? Data(contentsOf: url) else {
+            return empty
+        }
+        let data = DataCompression.decompress(data: rawData) ?? rawData
+        guard let decoded = decodeCache(data) else {
             return empty
         }
         let cleanDicts = decoded.dictionaries.compactMapValues { Self.sanitize($0) }
@@ -289,7 +305,8 @@ public actor TranslationCache {
             dictionaries: diskDictionaries
         )
         if let encoded = try? JSONEncoder().encode(dataObj) {
-            try? encoded.write(to: url, options: .atomic)
+            let toWrite = DataCompression.compress(data: encoded) ?? encoded
+            try? toWrite.write(to: url, options: .atomic)
         }
     }
 }

@@ -46,7 +46,7 @@ public final class AppIconService {
     
     public func updateDockIcon() {
         if selectedType == .defaultCat {
-            NSApp.applicationIconImage = AppLogo.nsImage
+            NSApp.applicationIconImage = nil
         } else if selectedType == .custom, let img = NSImage(contentsOf: customImageFileURL) {
             NSApp.applicationIconImage = img
         } else if let sym = selectedType.sfSymbol, let img = NSImage(systemSymbolName: sym, accessibilityDescription: selectedType.rawValue) {
