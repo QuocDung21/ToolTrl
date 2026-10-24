@@ -81,6 +81,32 @@ chrome.commands.onCommand.addListener((command) => {
     }
 });
 
+// NekoTrans Local Bridge Configuration (Unified App Core)
+const BRIDGE_URL = 'http://127.0.0.1:42421';
+let isBridgeConnected = false;
+let bridgeConfig = null;
+
+async function checkBridgeStatus() {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600);
+        const res = await fetch(`${BRIDGE_URL}/api/status`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+            bridgeConfig = await res.json();
+            isBridgeConnected = true;
+            return bridgeConfig;
+        }
+    } catch (e) {
+        isBridgeConnected = false;
+        bridgeConfig = null;
+    }
+    return null;
+}
+
+// Initial status check
+checkBridgeStatus();
+
 // Communication Hub
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'translateText') {
@@ -95,6 +121,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             .then(results => sendResponse({ success: true, results }))
             .catch(error => sendResponse({ success: false, error: error.message }));
         return true; // asynchronous response
+    }
+
+    if (request.action === 'saveWord') {
+        saveWordToApp(request.word, request.translation, request.phonetic)
+            .then(result => sendResponse(result))
+            .catch(error => sendResponse({ success: false, error: error.message }));
+        return true;
+    }
+
+    if (request.action === 'checkWord') {
+        checkWordInApp(request.word)
+            .then(result => sendResponse(result))
+            .catch(error => sendResponse({ isSaved: false }));
+        return true;
+    }
+
+    if (request.action === 'getAppStatus') {
+        checkBridgeStatus().then(status => {
+            sendResponse({
+                connected: isBridgeConnected,
+                config: status
+            });
+        });
+        return true;
     }
 
     if (request.action === 'openApp') {
@@ -134,7 +184,109 @@ function setCachedTranslation(text, targetLang, sourceLang, result) {
     TRANSLATION_CACHE.set(key, result);
 }
 
-// Core Translation Engine with Multi-Tier Fallback
+// Save word directly into NekoTrans App Vocabulary Notebook
+async function saveWordToApp(word, translation, phonetic) {
+    if (!word) return { success: false, error: 'Empty word' };
+
+    // 1. Try Local Bridge first
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1200);
+        const response = await fetch(`${BRIDGE_URL}/api/save-word`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ word, translation, phonetic }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+    } catch (e) {
+        // Bridge unreachable
+    }
+
+    // 2. Try Safari Native Message
+    if (typeof browser !== 'undefined' && browser.runtime && browser.runtime.sendNativeMessage) {
+        try {
+            const res = await new Promise((resolve) => {
+                browser.runtime.sendNativeMessage('com.nekotrans.mac.SafariExtension', {
+                    action: 'saveWord',
+                    word,
+                    translation,
+                    phonetic
+                }, resolve);
+            });
+            if (res && res.saved) {
+                return { success: true, isSaved: true, word };
+            }
+        } catch (e) {}
+    }
+
+    // 3. Fallback: URL Scheme
+    const url = `nekotrans://save-word?text=${encodeURIComponent(word)}&meaning=${encodeURIComponent(translation || '')}&phonetic=${encodeURIComponent(phonetic || '')}`;
+    openNekoTransURL(url);
+    return { success: true, isSaved: true, word };
+}
+
+// Check if word is saved in NekoTrans App
+async function checkWordInApp(word) {
+    if (!word) return { isSaved: false };
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 800);
+        const response = await fetch(`${BRIDGE_URL}/api/check-word?word=${encodeURIComponent(word)}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response.ok) {
+            return await response.json();
+        }
+    } catch (e) {}
+    return { isSaved: false };
+}
+
+// Bridge Translation Request
+async function fetchTranslationViaBridge(text, targetLang, sourceLang) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const response = await fetch(`${BRIDGE_URL}/api/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            text: text,
+            targetLang: targetLang,
+            sourceLang: sourceLang
+        }),
+        signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+        throw new Error(`Bridge HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data && data.success) {
+        isBridgeConnected = true;
+        return {
+            success: true,
+            translated: data.translated,
+            original: data.original || text,
+            phonetic: data.phonetic || '',
+            dictEntries: data.dictEntries || [],
+            sourceLang: sourceLang,
+            targetLang: targetLang,
+            isSaved: data.isSaved || false,
+            engine: data.engine || 'native'
+        };
+    }
+    throw new Error(data.error || 'Bridge translation failed');
+}
+
+// Core Translation Engine with Multi-Tier Fallback (Bridge -> dict-chrome-ex -> MyMemory -> gtx)
 async function fetchTranslation(text, targetLang = 'vi', sourceLang = 'auto') {
     if (!text || !text.trim()) {
         return { success: false, error: 'Empty text' };
@@ -148,16 +300,27 @@ async function fetchTranslation(text, targetLang = 'vi', sourceLang = 'auto') {
         return cached;
     }
 
-    // 2. Try Google Translate with Chrome Extension client (dict-chrome-ex)
+    // 2. Priority: Try NekoTrans Local Bridge (Unified App Core)
+    try {
+        const bridgeRes = await fetchTranslationViaBridge(cleanText, targetLang, sourceLang);
+        if (bridgeRes && bridgeRes.success) {
+            setCachedTranslation(cleanText, targetLang, sourceLang, bridgeRes);
+            return bridgeRes;
+        }
+    } catch (e) {
+        // Fallback to standalone web engines below
+    }
+
+    // 3. Try Google Translate with Chrome Extension client (dict-chrome-ex)
     try {
         const res = await fetchGoogleTranslate(cleanText, targetLang, sourceLang, 'dict-chrome-ex');
         setCachedTranslation(cleanText, targetLang, sourceLang, res);
         return res;
     } catch (err) {
-        // If 429 or other error, fallback to MyMemory
+        // Fallback to MyMemory
     }
 
-    // 3. Fallback: MyMemory API
+    // 4. Fallback: MyMemory API
     try {
         const res = await fetchMyMemory(cleanText, targetLang, sourceLang);
         setCachedTranslation(cleanText, targetLang, sourceLang, res);
@@ -252,9 +415,48 @@ async function fetchMyMemory(cleanText, targetLang, sourceLang) {
     };
 }
 
+// Bridge Batch Translation Request
+async function translateBatchViaBridge(texts, targetLang, sourceLang) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(`${BRIDGE_URL}/api/translate-batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            texts: texts,
+            targetLang: targetLang,
+            sourceLang: sourceLang
+        }),
+        signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+        throw new Error(`Bridge HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data && data.success && Array.isArray(data.results)) {
+        isBridgeConnected = true;
+        return data.results;
+    }
+    throw new Error(data.error || 'Bridge batch translation failed');
+}
+
 // Smart High-Speed Packed Batch Translation
 async function translateBatch(texts, targetLang = 'vi', sourceLang = 'auto') {
     if (!texts || texts.length === 0) return [];
+
+    // Priority: Try NekoTrans Local Bridge (Unified App Core)
+    try {
+        const bridgeResults = await translateBatchViaBridge(texts, targetLang, sourceLang);
+        if (bridgeResults && bridgeResults.length === texts.length) {
+            return bridgeResults;
+        }
+    } catch (e) {
+        // Fallback to standalone web packed translation below
+    }
 
     const results = new Array(texts.length).fill(null);
     const DELIMITER = '\n\n|||\n\n';

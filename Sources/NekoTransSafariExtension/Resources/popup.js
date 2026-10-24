@@ -17,7 +17,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnOpenAppQuick = document.getElementById('btnOpenAppQuick');
     const btnOpenApp = document.getElementById('btnOpenApp');
 
+    const statusBadge = document.querySelector('.status-badge');
     let currentTranslation = null;
+
+    // Check NekoTrans App Bridge Connection
+    chrome.runtime.sendMessage({ action: 'getAppStatus' }, (res) => {
+        if (res && res.connected && statusBadge) {
+            const engineLabel = res.config?.engineName || res.config?.engine || 'App';
+            statusBadge.innerText = `🟢 Đã kết nối (${engineLabel})`;
+            statusBadge.style.background = 'rgba(52, 199, 89, 0.15)';
+            statusBadge.style.color = '#34c759';
+            statusBadge.title = `Đang đồng bộ trực tiếp với NekoTrans App (Lõi: ${engineLabel})`;
+            
+            // Sync target language from App if available
+            if (res.config?.targetLanguage) {
+                targetLangSelect.value = res.config.targetLanguage;
+                saveSetting('targetLang', res.config.targetLanguage);
+            }
+        } else if (statusBadge) {
+            statusBadge.innerText = '⚪ Chế độ Web';
+            statusBadge.title = 'Mở NekoTrans App để tự động dùng Apple Offline & Direct AI';
+        }
+    });
 
     // Load Settings
     chrome.storage.sync.get({

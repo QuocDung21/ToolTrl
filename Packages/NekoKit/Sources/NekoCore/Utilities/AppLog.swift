@@ -36,4 +36,6 @@ public enum AppLog {
     public static let sync = Logger(subsystem: subsystem, category: "sync")
     /// Clean application uninstallation and data purging.
     public static let uninstall = Logger(subsystem: subsystem, category: "uninstall")
+    /// Local HTTP Bridge server for Web Extension synchronization.
+    public static let bridge = Logger(subsystem: subsystem, category: "bridge")
 }

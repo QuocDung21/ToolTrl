@@ -50,6 +50,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         checkAccessibilityOnLaunch()
 
+        // Start Local HTTP loopback bridge server for Web Extensions
+        LocalBridgeServer.shared.start()
+
         if !AppSettings.shared.hasCompletedOnboarding {
             OnboardingWindowController.shared.showOnboarding()
         } else if AppSettings.shared.showMainWindowOnLaunch {
@@ -58,6 +61,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
+        LocalBridgeServer.shared.stop()
         cleanupBeforeTermination()
         stopClipboardMonitor()
         SelectionBubbleController.shared.stopMonitoring()

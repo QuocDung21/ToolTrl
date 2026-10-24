@@ -239,10 +239,15 @@
         // Update Header Actions
         const actions = card.querySelector('.nekotrans-card-actions');
         if (actions) {
+            const isSaved = !!data.isSaved;
+            const starIcon = isSaved ? '★' : '☆';
+            const starColor = isSaved ? 'color: #f59e0b;' : '';
+            const starTitle = isSaved ? 'Đã lưu trong Sổ tay' : 'Lưu vào Sổ tay NekoTrans';
+
             actions.innerHTML = `
                 <button class="nekotrans-btn-icon" id="nekotrans-speak-btn" title="Phát âm">🔊</button>
                 <button class="nekotrans-btn-icon" id="nekotrans-copy-btn" title="Sao chép">📋</button>
-                <button class="nekotrans-btn-icon" id="nekotrans-save-btn" title="Lưu vào Sổ tay">🔖</button>
+                <button class="nekotrans-btn-icon" id="nekotrans-save-btn" title="${starTitle}" style="${starColor}">${starIcon}</button>
                 <button class="nekotrans-btn-icon" id="nekotrans-app-btn" title="Mở trong NekoTrans">↗️</button>
                 <button class="nekotrans-btn-icon" id="nekotrans-close-card" title="Đóng">✕</button>
             `;
@@ -259,12 +264,21 @@
                 setTimeout(() => { if (e.target) e.target.innerHTML = '📋'; }, 1500);
             });
 
-            actions.querySelector('#nekotrans-save-btn').addEventListener('click', (e) => {
-                const saveUrl = `nekotrans://save-word?text=${encodeURIComponent(data.original)}&meaning=${encodeURIComponent(data.translated)}&phonetic=${encodeURIComponent(data.phonetic || '')}`;
-                chrome.runtime.sendMessage({ action: 'openApp', url: saveUrl });
-                e.target.innerHTML = '✓';
-                setTimeout(() => { if (e.target) e.target.innerHTML = '🔖'; }, 1500);
-            });
+            const saveBtn = actions.querySelector('#nekotrans-save-btn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', () => {
+                    chrome.runtime.sendMessage({
+                        action: 'saveWord',
+                        word: data.original,
+                        translation: data.translated,
+                        phonetic: data.phonetic || ''
+                    }, (res) => {
+                        saveBtn.innerHTML = '★';
+                        saveBtn.style.color = '#f59e0b';
+                        saveBtn.title = 'Đã lưu vào Sổ tay NekoTrans';
+                    });
+                });
+            }
 
             actions.querySelector('#nekotrans-app-btn').addEventListener('click', () => {
                 const appUrl = `nekotrans://translate?text=${encodeURIComponent(data.original)}`;
@@ -277,8 +291,9 @@
         if (!footer) {
             footer = document.createElement('div');
             footer.className = 'nekotrans-card-footer';
+            const coreLabel = data.engine ? `Lõi: ${escapeHtml(data.engine)}` : 'NekoTrans Core';
             footer.innerHTML = `
-                <span>NekoTrans Web</span>
+                <span>${coreLabel}</span>
                 <a class="nekotrans-link-app" id="nekotrans-open-main">Mở NekoTrans</a>
             `;
             card.appendChild(footer);

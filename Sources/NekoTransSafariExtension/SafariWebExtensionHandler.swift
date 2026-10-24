@@ -26,8 +26,28 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         if let dict = message as? [String: Any], let action = dict["action"] as? String {
             switch action {
-            case "ping":
+            case "ping", "status":
                 responsePayload["pong"] = true
+                responsePayload["connected"] = true
+
+            case "saveWord":
+                let word = (dict["word"] as? String) ?? ""
+                let meaning = (dict["translation"] as? String) ?? ""
+                let phonetic = (dict["phonetic"] as? String) ?? ""
+                var components = URLComponents()
+                components.scheme = "nekotrans"
+                components.host = "save-word"
+                components.queryItems = [
+                    URLQueryItem(name: "text", value: word),
+                    URLQueryItem(name: "meaning", value: meaning),
+                    URLQueryItem(name: "phonetic", value: phonetic)
+                ]
+                if let url = components.url {
+                    DispatchQueue.main.async {
+                        NSWorkspace.shared.open(url)
+                    }
+                    responsePayload["saved"] = true
+                }
 
             case "openApp":
                 let urlString = (dict["url"] as? String) ?? "nekotrans://"
