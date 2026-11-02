@@ -21,8 +21,11 @@ cd LandingPage && python3 -m http.server 8080
 
 ```
 LandingPage/
-├── index.html              # toàn bộ nội dung, một trang
+├── index.html              # Landing page chuẩn (GUI)
 ├── styles.css              # design tokens + layout + responsive + dark mode
+├── cli.html                # Landing page phong cách Terminal / Command Line
+├── cli.css                 # Theme retro terminal (Obsidian, Matrix, Amber, Cyberpunk, Dracula)
+├── cli.js                  # Engine tương tác CLI, lệnh tra từ, giả lập âm thanh phím
 ├── i18n.js                 # bản dịch tiếng Việt và tiếng Anh
 ├── site-data.js            # thông số dùng chung cho nội dung và thống kê
 ├── app.js                  # đổi ngôn ngữ, ghi nhớ lựa chọn, cập nhật meta

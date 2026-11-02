@@ -42,7 +42,7 @@ public enum LanguagePreference: Hashable, Identifiable, Sendable, CaseIterable {
 
 // MARK: - Localization
 
-@MainActor
+@MainActor  
 public final class Localization: ObservableObject {
     public static let shared = Localization()
 

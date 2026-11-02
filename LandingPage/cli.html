@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NekoTrans — Terminal Edition | Command Line Landing Page</title>
+    <meta name="description" content="Khám phá NekoTrans qua giao diện dòng lệnh tương tác: Dịch nổi tức thì, OCR, sổ tay từ vựng và AI sâu trên macOS." />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="NekoTrans — Terminal Edition" />
+    <meta property="og:description" content="Trải nghiệm ứng dụng dịch thuật và học từ vựng thông minh cho macOS qua giao diện Terminal dòng lệnh tương tác." />
+    <meta property="og:image" content="assets/app-icon.png" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="apple-touch-icon" href="assets/app-icon.png" />
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="cli.css" />
+</head>
+<body data-theme="default">
+    <!-- Optional CRT Scanlines Effect -->
+    <div class="scanlines-overlay" aria-hidden="true"></div>
+
+    <div class="page-container">
+        <!-- Top Utility Header -->
+        <header class="top-nav">
+            <a href="index.html" class="top-brand" title="NekoTrans macOS">
+                <img src="assets/app-icon.png" width="24" height="24" alt="NekoTrans Logo" />
+                <span>NekoTrans</span>
+                <span class="top-brand-badge">&gt;_ CLI Edition</span>
+            </a>
+
+            <div class="top-actions">
+                <!-- Theme Chooser -->
+                <select id="theme-select" class="theme-select" aria-label="Select Terminal Theme">
+                    <option value="default">Theme: Obsidian Dark</option>
+                    <option value="matrix">Theme: Matrix Green</option>
+                    <option value="amber">Theme: Amber CRT</option>
+                    <option value="cyberpunk">Theme: Cyberpunk Neon</option>
+                    <option value="dracula">Theme: Dracula</option>
+                </select>
+
+                <!-- Sound FX Toggle -->
+                <button id="btn-sound" class="top-btn" type="button" title="Toggle Mechanical Key Clicks">
+                    🔇 Sound: OFF
+                </button>
+
+                <!-- Fullscreen Toggle -->
+                <button id="btn-fullscreen" class="top-btn" type="button" title="Toggle Fullscreen">
+                    ⤢ Fullscreen
+                </button>
+
+                <!-- Language Toggle -->
+                <div style="display: flex; gap: 2px;">
+                    <button id="btn-lang-vi" class="top-btn active" type="button">VI</button>
+                    <button id="btn-lang-en" class="top-btn" type="button">EN</button>
+                </div>
+
+                <!-- Link to GUI landing page -->
+                <a href="index.html" class="top-btn" style="border-color: var(--c-cyan); color: var(--c-cyan);">
+                    🖥️ <span class="label-text">GUI Landing Page</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Terminal Window -->
+        <main class="terminal-window" id="terminal-window">
+            <!-- macOS Window Titlebar -->
+            <div class="terminal-titlebar">
+                <div class="window-dots">
+                    <button class="window-dot close" id="dot-close" title="Close" aria-label="Close"></button>
+                    <button class="window-dot minimize" id="dot-min" title="Minimize" aria-label="Minimize"></button>
+                    <button class="window-dot maximize" id="dot-max" title="Zoom" aria-label="Zoom"></button>
+                </div>
+
+                <div class="window-title">
+                    <span>guest@macbook-pro: ~/nekotrans (zsh)</span>
+                </div>
+
+                <div class="window-meta">
+                    <span>80×24 · UTF-8</span>
+                </div>
+            </div>
+
+            <!-- Quick Suggestion Action Chips -->
+            <nav class="chips-bar" id="chips-bar" aria-label="Quick Terminal Commands">
+                <span class="chips-label">&gt;_ Quick:</span>
+                <button type="button" class="chip-btn" data-cmd="help">help</button>
+                <button type="button" class="chip-btn" data-cmd="about">about</button>
+                <button type="button" class="chip-btn" data-cmd="features">features</button>
+                <button type="button" class="chip-btn" data-cmd="shortcuts">shortcuts</button>
+                <button type="button" class="chip-btn" data-cmd="providers">providers</button>
+                <button type="button" class="chip-btn highlight" data-cmd="demo ubiquitous">demo</button>
+                <button type="button" class="chip-btn" data-cmd="specs">specs</button>
+                <button type="button" class="chip-btn highlight" data-cmd="download">download</button>
+                <button type="button" class="chip-btn" data-cmd="neofetch">neofetch</button>
+                <button type="button" class="chip-btn" data-cmd="gui">gui</button>
+                <button type="button" class="chip-btn" data-cmd="clear">clear</button>
+            </nav>
+
+            <!-- Scrollable Terminal Body -->
+            <div class="terminal-body" id="terminal-body">
+                <!-- Terminal Output Buffer -->
+                <div id="terminal-output"></div>
+
+                <!-- Terminal Interactive Prompt -->
+                <div class="input-line" id="terminal-input-line">
+                    <span class="prompt-prefix">
+                        <span class="prompt-user">guest</span><span class="prompt-at">@</span><span class="prompt-host">nekotrans</span><span class="prompt-colon">:</span><span class="prompt-path">~</span><span class="prompt-symbol">$</span>
+                    </span>
+                    <div class="cli-input-wrapper">
+                        <input
+                            type="text"
+                            id="cli-input"
+                            class="cli-input"
+                            autocomplete="off"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            placeholder="Type a command (e.g. 'help', 'features', 'demo', 'download')..."
+                            aria-label="Terminal Command Input"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Window Footer with Helpful Hints -->
+            <footer class="terminal-footer">
+                <div class="footer-shortcuts">
+                    <span><span class="footer-key">Enter</span> Run</span>
+                    <span><span class="footer-key">Tab</span> Auto-complete</span>
+                    <span><span class="footer-key">↑ / ↓</span> History</span>
+                    <span><span class="footer-key">Ctrl + L</span> Clear</span>
+                </div>
+                <div>
+                    <span>NekoTrans macOS 15.0+ · Native Swift</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Data & Interactive Logic -->
+    <script src="site-data.js"></script>
+    <script src="cli.js"></script>
+</body>
+</html>

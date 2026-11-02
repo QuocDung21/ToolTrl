@@ -30,6 +30,7 @@ window.I18N = {
     "nav.requirements": "Yêu cầu",
     "nav.faq": "Hỏi đáp",
     "nav.langLabel": "Ngôn ngữ",
+    "nav.cli": "CLI",
 
     /* --- Hero ------------------------------------------------------------- */
     "hero.eyebrow": "Phiên bản 1.0 · Dành cho macOS",
@@ -143,6 +144,7 @@ window.I18N = {
     "footer.changelog": "Có gì mới",
     "footer.support": "Hỗ trợ",
     "footer.privacy": "Quyền riêng tư",
+    "footer.cli": "Bản dòng lệnh (CLI)",
     "footer.trademark": "Apple, macOS là thương hiệu của Apple Inc."
   },
 
@@ -166,6 +168,7 @@ window.I18N = {
     "nav.requirements": "Requirements",
     "nav.faq": "FAQ",
     "nav.langLabel": "Language",
+    "nav.cli": "CLI",
 
     /* --- Hero ------------------------------------------------------------- */
     "hero.eyebrow": "Version 1.0 · Built for macOS",
@@ -279,6 +282,7 @@ window.I18N = {
     "footer.changelog": "What's new",
     "footer.support": "Support",
     "footer.privacy": "Privacy",
+    "footer.cli": "Terminal Edition",
     "footer.trademark": "Apple and macOS are trademarks of Apple Inc."
   }
 };

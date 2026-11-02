@@ -85,32 +85,27 @@ public struct GeneralSettingsSection: View {
     }
 
     private var permissionsSection: some View {
-        let isEn = l10n.resolvedLanguage == .english
-        return Section {
+        Section {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Label(
-                        isEn ? "Accessibility" : "Quyền Trợ năng",
+                        "Accessibility",
                         systemImage: "figure.roll"
                     )
                     .font(.system(size: 13, weight: .medium))
-                    Text(
-                        isEn
-                            ? "Allows automatic text selection capture when triggering translation shortcuts."
-                            : "Tự động lấy văn bản đang chọn khi bấm phím tắt dịch."
-                    )
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    Text("Allows automatic text selection capture when triggering translation shortcuts.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
                 if isAccessibilityGranted {
-                    Label(isEn ? "Granted" : "Đã cấp", systemImage: "checkmark.circle.fill")
+                    Label("Granted", systemImage: "checkmark.circle.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.green)
                 } else {
-                    Button(isEn ? "Grant" : "Cấp quyền") {
+                    Button("Grant") {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                             NSWorkspace.shared.open(url)
                         }
@@ -123,27 +118,23 @@ public struct GeneralSettingsSection: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Label(
-                        isEn ? "Screen Recording" : "Ghi màn hình",
+                        "Screen Recording",
                         systemImage: "viewfinder"
                     )
                     .font(.system(size: 13, weight: .medium))
-                    Text(
-                        isEn
-                            ? "Required to capture and recognize screen text via OCR (Option + S)."
-                            : "Cần thiết để chụp vùng màn hình khi dịch OCR (Option + S)."
-                    )
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    Text("Required to capture and recognize screen text via OCR (Option + S).")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
                 if isScreenCaptureGranted {
-                    Label(isEn ? "Granted" : "Đã cấp", systemImage: "checkmark.circle.fill")
+                    Label("Granted", systemImage: "checkmark.circle.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.green)
                 } else {
-                    Button(isEn ? "Grant" : "Cấp quyền") {
+                    Button("Grant") {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
                             NSWorkspace.shared.open(url)
                         }
@@ -153,7 +144,7 @@ public struct GeneralSettingsSection: View {
                 }
             }
         } header: {
-            Text(isEn ? "Permissions" : "Quyền hệ thống")
+            Text("Permissions")
         }
     }
 
@@ -304,10 +295,10 @@ public struct GeneralSettingsSection: View {
         }
     }
 }
-
-#Preview {
-    LocalizedRootView {
-        GeneralSettingsSection()
-    }
-    .frame(width: 600, height: 700)
-}
+//
+//#Preview {
+//    LocalizedRootView {
+//        GeneralSettingsSection()
+//    }
+//    .frame(width: 600, height: 700)
+//}
