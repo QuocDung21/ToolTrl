@@ -432,9 +432,19 @@ struct Phase2And3OptimizationTests {
         // Cache must not exceed maxAudioCacheEntries (100)
         #expect(service.cachedEntryCount == 100)
 
+        // Byte budget test: storing 5 chunks of 1 MB each must evict older entries to stay <= 4 MB
+        service.clearCache()
+        let oneMB = Data(repeating: 0x49, count: 1_024 * 1_024)
+        for i in 1...5 {
+            service.storeAudioForTesting(key: "https://example.com/large_\(i).mp3", data: oneMB)
+        }
+        #expect(service.cachedEntryCount == 4)
+        #expect(service.cachedByteCount <= 4 * 1_024 * 1_024)
+
         // Clear cache frees all memory
         service.clearCache()
         #expect(service.cachedEntryCount == 0)
+        #expect(service.cachedByteCount == 0)
     }
 }
 

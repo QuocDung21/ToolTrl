@@ -5,11 +5,18 @@ import NekoCore
 public actor TranslationCache {
     public static let shared = TranslationCache()
     
-    private var memoryTranslations: [String: String]
-    private var memoryDictionaries: [String: RichWordEntry]
+    private let maxMemoryTranslations = 250
+    private let maxMemoryDictionaries = 80
+
+    private var memoryTranslations: [String: String] = [:]
+    private var memoryTranslationOrder: [String] = []
+
+    private var memoryDictionaries: [String: RichWordEntry] = [:]
+    private var memoryDictionaryOrder: [String] = []
     
-    private var diskTranslations: [String: String]
-    private var diskDictionaries: [String: RichWordEntry]
+    /// Ephemeral L2 staging loaded only on L1 cache miss or pending write; released after disk flush.
+    private var pendingDiskData: PersistentCacheData?
+    private var isDirty: Bool = false
     private var saveTask: Task<Void, Never>?
     
     private static var cacheFileURL: URL? {
@@ -33,34 +40,65 @@ public actor TranslationCache {
     
     private init() {
         let loaded = Self.loadInitialData()
-        self.diskTranslations = loaded.translations
-        self.diskDictionaries = loaded.dictionaries
-        
-        var memTrans: [String: String] = [:]
-        for (k, v) in loaded.translations.prefix(500) {
-            memTrans[k] = v
+        for (k, v) in loaded.translations.prefix(maxMemoryTranslations) {
+            memoryTranslations[k] = v
+            memoryTranslationOrder.append(k)
         }
-        self.memoryTranslations = memTrans
-        
-        var memDicts: [String: RichWordEntry] = [:]
-        for (k, v) in loaded.dictionaries.prefix(200) where v.hasValidDefinitions {
-            memDicts[k] = v
+        for (k, v) in loaded.dictionaries.prefix(maxMemoryDictionaries) where v.hasValidDefinitions {
+            memoryDictionaries[k] = v
+            memoryDictionaryOrder.append(k)
         }
-        self.memoryDictionaries = memDicts
+        // Note: `loaded` is intentionally NOT retained permanently in RAM; L2 stays on compressed LZFSE disk.
+    }
+
+    private func ensureDiskStagingLoaded() -> PersistentCacheData {
+        if let existing = pendingDiskData {
+            return existing
+        }
+        let loaded = Self.loadInitialData()
+        pendingDiskData = loaded
+        return loaded
+    }
+
+    private func touchTranslationKey(_ key: String, value: String) {
+        if memoryTranslations[key] != nil {
+            memoryTranslationOrder.removeAll { $0 == key }
+        } else if memoryTranslationOrder.count >= maxMemoryTranslations {
+            let evicted = memoryTranslationOrder.removeFirst()
+            memoryTranslations.removeValue(forKey: evicted)
+        }
+        memoryTranslationOrder.append(key)
+        memoryTranslations[key] = value
+    }
+
+    private func touchDictionaryKey(_ key: String, entry: RichWordEntry) {
+        if memoryDictionaries[key] != nil {
+            memoryDictionaryOrder.removeAll { $0 == key }
+        } else if memoryDictionaryOrder.count >= maxMemoryDictionaries {
+            let evicted = memoryDictionaryOrder.removeFirst()
+            memoryDictionaries.removeValue(forKey: evicted)
+        }
+        memoryDictionaryOrder.append(key)
+        memoryDictionaries[key] = entry
     }
     
     // MARK: - Translation Cache (Async Actor-Isolated)
     public func getTranslation(key: String) -> String? {
         let normKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         if let memoryVal = memoryTranslations[normKey] {
+            touchTranslationKey(normKey, value: memoryVal)
             return memoryVal
         }
-        if let diskVal = diskTranslations[normKey] {
-            memoryTranslations[normKey] = diskVal
-            if memoryTranslations.count > 600 {
-                memoryTranslations = Dictionary(uniqueKeysWithValues: Array(memoryTranslations.suffix(400)))
+        let disk = ensureDiskStagingLoaded()
+        if let diskVal = disk.translations[normKey] {
+            touchTranslationKey(normKey, value: diskVal)
+            if !isDirty {
+                pendingDiskData = nil
             }
             return diskVal
+        }
+        if !isDirty {
+            pendingDiskData = nil
         }
         return nil
     }
@@ -68,11 +106,11 @@ public actor TranslationCache {
     public func setTranslation(key: String, value: String) {
         let normKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normKey.isEmpty, !value.isEmpty else { return }
-        memoryTranslations[normKey] = value
-        if memoryTranslations.count > 600 {
-            memoryTranslations = Dictionary(uniqueKeysWithValues: Array(memoryTranslations.suffix(400)))
-        }
-        diskTranslations[normKey] = value
+        touchTranslationKey(normKey, value: value)
+        var disk = ensureDiskStagingLoaded()
+        disk.translations[normKey] = value
+        pendingDiskData = disk
+        isDirty = true
         scheduleSaveToDisk()
     }
     
@@ -81,24 +119,35 @@ public actor TranslationCache {
         let normKey = key.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if let entry = memoryDictionaries[normKey] {
             if let sanitized = Self.sanitize(entry) {
+                touchDictionaryKey(normKey, entry: sanitized)
                 return sanitized
             } else {
                 memoryDictionaries.removeValue(forKey: normKey)
-                diskDictionaries.removeValue(forKey: normKey)
+                memoryDictionaryOrder.removeAll { $0 == normKey }
+                var disk = ensureDiskStagingLoaded()
+                disk.dictionaries.removeValue(forKey: normKey)
+                pendingDiskData = disk
+                isDirty = true
                 scheduleSaveToDisk()
             }
         }
-        if let diskEntry = diskDictionaries[normKey] {
+        var disk = ensureDiskStagingLoaded()
+        if let diskEntry = disk.dictionaries[normKey] {
             if let sanitized = Self.sanitize(diskEntry) {
-                memoryDictionaries[normKey] = sanitized
-                if memoryDictionaries.count > 250 {
-                    memoryDictionaries = Dictionary(uniqueKeysWithValues: Array(memoryDictionaries.suffix(180)))
+                touchDictionaryKey(normKey, entry: sanitized)
+                if !isDirty {
+                    pendingDiskData = nil
                 }
                 return sanitized
             } else {
-                diskDictionaries.removeValue(forKey: normKey)
+                disk.dictionaries.removeValue(forKey: normKey)
+                pendingDiskData = disk
+                isDirty = true
                 scheduleSaveToDisk()
             }
+        }
+        if !isDirty {
+            pendingDiskData = nil
         }
         return nil
     }
@@ -113,19 +162,23 @@ public actor TranslationCache {
             return
         }
         
-        memoryDictionaries[normKey] = sanitized
-        if memoryDictionaries.count > 250 {
-            memoryDictionaries = Dictionary(uniqueKeysWithValues: Array(memoryDictionaries.suffix(180)))
-        }
-        diskDictionaries[normKey] = sanitized
+        touchDictionaryKey(normKey, entry: sanitized)
+        var disk = ensureDiskStagingLoaded()
+        disk.dictionaries[normKey] = sanitized
+        pendingDiskData = disk
+        isDirty = true
         scheduleSaveToDisk()
     }
     
     public func clearAll() {
+        saveTask?.cancel()
+        saveTask = nil
         memoryTranslations.removeAll()
+        memoryTranslationOrder.removeAll()
         memoryDictionaries.removeAll()
-        diskTranslations.removeAll()
-        diskDictionaries.removeAll()
+        memoryDictionaryOrder.removeAll()
+        pendingDiskData = nil
+        isDirty = false
         if let url = Self.cacheFileURL {
             try? FileManager.default.removeItem(at: url)
         }
@@ -290,23 +343,31 @@ public actor TranslationCache {
     }
     
     private func persistToDisk() {
-        guard let url = Self.cacheFileURL else { return }
-        
-        if diskTranslations.count > 2500 {
-            diskTranslations = Dictionary(uniqueKeysWithValues: Array(diskTranslations.suffix(2000)))
+        guard isDirty, let url = Self.cacheFileURL else {
+            pendingDiskData = nil
+            return
         }
-        if diskDictionaries.count > 1000 {
-            diskDictionaries = Dictionary(uniqueKeysWithValues: Array(diskDictionaries.suffix(800)))
+        
+        var disk = pendingDiskData ?? Self.loadInitialData()
+        if disk.translations.count > 2000 {
+            disk.translations = Dictionary(uniqueKeysWithValues: Array(disk.translations.prefix(1600)))
+        }
+        if disk.dictionaries.count > 600 {
+            disk.dictionaries = Dictionary(uniqueKeysWithValues: Array(disk.dictionaries.prefix(450)))
         }
         
         let dataObj = PersistentCacheData(
             version: Self.currentCacheVersion,
-            translations: diskTranslations,
-            dictionaries: diskDictionaries
+            translations: disk.translations,
+            dictionaries: disk.dictionaries
         )
         if let encoded = try? JSONEncoder().encode(dataObj) {
             let toWrite = DataCompression.compress(data: encoded) ?? encoded
             try? toWrite.write(to: url, options: .atomic)
         }
+
+        // Release L2 staging dictionary from RAM once safely persisted to LZFSE disk
+        pendingDiskData = nil
+        isDirty = false
     }
 }

@@ -264,6 +264,8 @@ public final class TranslationService {
         return fullResult.isEmpty ? nil : fullResult
     }
     
+    private static let googleWebResultRegex = try? NSRegularExpression(pattern: #"class="result-container">([\s\S]*?)<\/div>"#, options: [])
+
     // MARK: - Engine 1: Google Web Mobile Engine (High Speed, Ultra Reliable)
     private func translateViaGoogleWeb(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let lowerSource = sourceLang.lowercased()
@@ -311,8 +313,7 @@ public final class TranslationService {
             }
             
             // Extract from <div class="result-container">...</div> (supports multiline)
-            let pattern = #"class="result-container">([\s\S]*?)<\/div>"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+            if let regex = Self.googleWebResultRegex,
                let match = regex.firstMatch(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count)),
                let range = Range(match.range(at: 1), in: html) {
                 let rawText = String(html[range])

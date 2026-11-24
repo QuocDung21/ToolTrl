@@ -54,6 +54,7 @@ public struct ApexChartView: NSViewRepresentable {
 
     public func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
+        config.websiteDataStore = .nonPersistent()
         let preferences = WKWebpagePreferences()
         preferences.allowsContentJavaScript = true
         config.defaultWebpagePreferences = preferences
@@ -92,6 +93,12 @@ public struct ApexChartView: NSViewRepresentable {
         )
     }
 
+    public static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
+        webView.stopLoading()
+        webView.loadHTMLString("", baseURL: nil)
+        coordinator.webView = nil
+    }
+
     public final class Coordinator {
         weak var webView: WKWebView?
         private var isLoaded = false
@@ -117,9 +124,9 @@ public struct ApexChartView: NSViewRepresentable {
             self.lastValues = values
             self.lastDonutValues = donutItems.map { $0.value }
             
-            let scriptContent = loadApexChartsScript()
+            let hasLocalScript = Bundle.main.url(forResource: "apexcharts.min", withExtension: "js") != nil
             let html = buildHTML(
-                scriptSource: scriptContent,
+                useLocalScriptFile: hasLocalScript,
                 chartStyle: chartStyle,
                 categories: categories,
                 values: values,
@@ -128,7 +135,7 @@ public struct ApexChartView: NSViewRepresentable {
                 yTitle: yTitle,
                 isDarkMode: isDarkMode
             )
-            webView.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
+            webView.loadHTMLString(html, baseURL: Bundle.main.resourceURL ?? Bundle.main.bundleURL)
             isLoaded = true
         }
         
@@ -198,17 +205,6 @@ public struct ApexChartView: NSViewRepresentable {
             }
         }
         
-        private func loadApexChartsScript() -> String {
-            // Bundled copy (Scripts/build_app.sh puts it in Contents/Resources).
-            if let bundleURL = Bundle.main.url(forResource: "apexcharts.min", withExtension: "js"),
-               let content = try? String(contentsOf: bundleURL, encoding: .utf8) {
-                return content
-            }
-            // Empty result makes the caller fall back to the pinned CDN build,
-            // so the chart still renders in a bare `swift run` without the bundle.
-            return ""
-        }
-        
         private func jsonString<T: Encodable>(_ value: T) -> String {
             guard let data = try? JSONEncoder().encode(value),
                   let str = String(data: data, encoding: .utf8) else {
@@ -218,7 +214,7 @@ public struct ApexChartView: NSViewRepresentable {
         }
         
         private func buildHTML(
-            scriptSource: String,
+            useLocalScriptFile: Bool,
             chartStyle: ApexChartStyle,
             categories: [String],
             values: [Double],
@@ -228,8 +224,8 @@ public struct ApexChartView: NSViewRepresentable {
             isDarkMode: Bool
         ) -> String {
             let scriptTag: String
-            if !scriptSource.isEmpty {
-                scriptTag = "<script>\(scriptSource)</script>"
+            if useLocalScriptFile {
+                scriptTag = "<script src=\"apexcharts.min.js\"></script>"
             } else {
                 scriptTag = "<script src=\"https://cdn.jsdelivr.net/npm/apexcharts@3.52.0/dist/apexcharts.min.js\"></script>"
             }

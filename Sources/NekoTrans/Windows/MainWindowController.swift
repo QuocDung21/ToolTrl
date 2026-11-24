@@ -67,7 +67,11 @@ public final class MainWindowController: NSObject, ObservableObject, NSWindowDel
     }
     
     public func hideMainWindow() {
-        window?.orderOut(nil)
+        guard let win = window else { return }
+        win.saveFrame(usingName: "NekoTransMainWindow")
+        win.orderOut(nil)
+        win.contentView = nil
+        self.window = nil
         if !AppSettings.shared.showInDock {
             NSApp.setActivationPolicy(.accessory)
         }
@@ -82,10 +86,15 @@ public final class MainWindowController: NSObject, ObservableObject, NSWindowDel
     }
     
     public func windowShouldClose(_ sender: NSWindow) -> Bool {
+        sender.saveFrame(usingName: "NekoTransMainWindow")
         sender.orderOut(nil)
+        sender.contentView = nil
+        if self.window === sender {
+            self.window = nil
+        }
         if !AppSettings.shared.showInDock {
             NSApp.setActivationPolicy(.accessory)
         }
-        return true
+        return false
     }
 }

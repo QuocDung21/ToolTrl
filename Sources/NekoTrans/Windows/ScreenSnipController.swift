@@ -151,6 +151,7 @@ public final class ScreenSnipController: NSObject {
         
         for window in overlayWindows {
             window.orderOut(nil)
+            window.contentView = nil
         }
         overlayWindows.removeAll()
     }

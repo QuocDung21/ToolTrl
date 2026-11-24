@@ -243,9 +243,35 @@ private struct RawEntry: Codable {
 @MainActor
 public final class SmartDictionaryService {
     public static let shared = SmartDictionaryService()
-    private let englishEmbedding = NLEmbedding.wordEmbedding(for: .english)
+    private var cachedEnglishEmbedding: NLEmbedding?
+    private var embeddingUnloadTask: Task<Void, Never>?
+    private let lemmaTagger = NLTagger(tagSchemes: [.lemma])
+    private static let idleEmbeddingUnloadSeconds: UInt64 = 180
     
     private init() {}
+
+    private func acquireEnglishEmbedding() -> NLEmbedding? {
+        if cachedEnglishEmbedding == nil {
+            cachedEnglishEmbedding = NLEmbedding.wordEmbedding(for: .english)
+        }
+        scheduleEmbeddingIdleUnload()
+        return cachedEnglishEmbedding
+    }
+
+    private func scheduleEmbeddingIdleUnload() {
+        embeddingUnloadTask?.cancel()
+        embeddingUnloadTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: Self.idleEmbeddingUnloadSeconds * 1_000_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.cachedEnglishEmbedding = nil
+        }
+    }
+
+    public func releaseIdleMemory() {
+        embeddingUnloadTask?.cancel()
+        embeddingUnloadTask = nil
+        cachedEnglishEmbedding = nil
+    }
     
     /// Balances parentheses and trims punctuation from extracted definition chunks
     nonisolated public static func cleanConciseMeaningChunk(_ raw: String) -> String {
@@ -262,7 +288,7 @@ public final class SmartDictionaryService {
     /// Finds semantically similar words offline using Apple Neural NLP Embedding (0ms latency, zero tokens)
     public func findSemanticNeighbors(for word: String, maxCount: Int = 8) -> [String] {
         let clean = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !clean.isEmpty, let embedding = englishEmbedding else { return [] }
+        guard !clean.isEmpty, let embedding = acquireEnglishEmbedding() else { return [] }
         
         let neighbors = embedding.neighbors(for: clean, maximumCount: maxCount)
         return neighbors.map { $0.0 }
@@ -273,9 +299,9 @@ public final class SmartDictionaryService {
         let clean = word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !clean.isEmpty, !clean.contains(" ") else { return nil }
         
-        let tagger = NLTagger(tagSchemes: [.lemma])
-        tagger.string = clean
-        let (tag, _) = tagger.tag(at: clean.startIndex, unit: .word, scheme: .lemma)
+        lemmaTagger.string = clean
+        defer { lemmaTagger.string = nil }
+        let (tag, _) = lemmaTagger.tag(at: clean.startIndex, unit: .word, scheme: .lemma)
         if let lemma = tag?.rawValue, !lemma.isEmpty, lemma.lowercased() != clean {
             return lemma.lowercased()
         }

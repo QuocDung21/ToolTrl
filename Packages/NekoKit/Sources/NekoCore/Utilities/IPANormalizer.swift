@@ -3,6 +3,7 @@ import Foundation
 /// Standardizes and cleans phonetic transcriptions to international broad IPA standards (Oxford / Cambridge).
 /// Eliminates legacy ASCII stress symbols (', ,), narrow phonetic markers (ɹ), and normalizes American Heritage DCS notation.
 public enum IPANormalizer {
+    private static let commaStressRegex = try? NSRegularExpression(pattern: #",(?=[a-zA-Zæɑɒɔəɛɜɪiʊuʌθðʃʒŋˈˌ])"#)
 
     /// Normalizes any raw phonetic string into clean, textbook Unicode IPA wrapped in `/.../`
     public static func normalize(_ raw: String?, forWord word: String? = nil) -> String? {
@@ -25,8 +26,7 @@ public enum IPANormalizer {
         text = text.replacingOccurrences(of: "´", with: "ˈ")
 
         // 3. Standardize secondary stress marks to Unicode IPA U+02CC (ˌ)
-        let commaStressPattern = #",(?=[a-zA-Zæɑɒɔəɛɜɪiʊuʌθðʃʒŋˈˌ])"#
-        if let regex = try? NSRegularExpression(pattern: commaStressPattern) {
+        if text.contains(","), let regex = commaStressRegex {
             let ns = text as NSString
             text = regex.stringByReplacingMatches(in: text, options: [], range: NSRange(location: 0, length: ns.length), withTemplate: "ˌ")
         }

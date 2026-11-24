@@ -62,10 +62,17 @@ public final class SettingsWindowController: NSObject, NSWindowDelegate {
     
     public func hideSettings() {
         window?.orderOut(nil)
+        window?.contentView = nil
+        window = nil
     }
     
     public func updateTitle(_ title: String) {
         window?.title = title
+    }
+
+    public func windowWillClose(_ notification: Notification) {
+        window?.contentView = nil
+        window = nil
     }
     
     public func windowDidBecomeKey(_ notification: Notification) {

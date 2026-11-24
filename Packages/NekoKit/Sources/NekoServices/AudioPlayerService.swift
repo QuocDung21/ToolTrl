@@ -9,6 +9,8 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
     private var audioPlayer: AVAudioPlayer?
     private var downloadTask: Task<Void, Never>?
     private let maxAudioCacheEntries = 100
+    private let maxAudioCacheBytes = 4 * 1024 * 1024 // 4 MB strict RAM cap
+    private var currentAudioCacheBytes = 0
     private var audioCache: [String: Data] = [:]
     private var audioCacheKeysOrder: [String] = []
     
@@ -21,23 +23,38 @@ public final class AudioPlayerService: NSObject, ObservableObject, AVAudioPlayer
     }
     
     private func storeAudioInCache(key: String, data: Data) {
-        if audioCache[key] == nil {
-            if audioCacheKeysOrder.count >= maxAudioCacheEntries {
-                let evicted = audioCacheKeysOrder.removeFirst()
-                audioCache.removeValue(forKey: evicted)
-            }
-            audioCacheKeysOrder.append(key)
+        guard data.count <= maxAudioCacheBytes else { return }
+
+        if let old = audioCache.removeValue(forKey: key) {
+            currentAudioCacheBytes = max(0, currentAudioCacheBytes - old.count)
+            audioCacheKeysOrder.removeAll { $0 == key }
         }
+
+        while (!audioCacheKeysOrder.isEmpty) &&
+              (audioCacheKeysOrder.count >= maxAudioCacheEntries || currentAudioCacheBytes + data.count > maxAudioCacheBytes) {
+            let evicted = audioCacheKeysOrder.removeFirst()
+            if let removed = audioCache.removeValue(forKey: evicted) {
+                currentAudioCacheBytes = max(0, currentAudioCacheBytes - removed.count)
+            }
+        }
+
+        audioCacheKeysOrder.append(key)
         audioCache[key] = data
+        currentAudioCacheBytes += data.count
     }
     
     public func clearCache() {
         audioCache.removeAll()
         audioCacheKeysOrder.removeAll()
+        currentAudioCacheBytes = 0
     }
     
     public var cachedEntryCount: Int {
         audioCache.count
+    }
+
+    public var cachedByteCount: Int {
+        currentAudioCacheBytes
     }
     
     public func storeAudioForTesting(key: String, data: Data) {
