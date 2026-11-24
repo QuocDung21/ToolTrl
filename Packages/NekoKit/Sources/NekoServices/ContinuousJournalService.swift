@@ -1,19 +1,16 @@
 import Foundation
+import Synchronization
 import Defaults
 
 /// Service for continuously journaling all lookups and translations to a local `words.jsonl` file.
 /// Inherited from Easydict's persistent journal architecture for seamless Obsidian / Logseq integration.
-public final class ContinuousJournalService: @unchecked Sendable {
+public final class ContinuousJournalService: Sendable {
     public static let shared = ContinuousJournalService()
 
     private let fileQueue = DispatchQueue(label: "com.nekotrans.continuous-journal", qos: .utility)
-    private let isoDateFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
+    private let writeLock = Mutex(())
 
-    public struct JournalEntry: Codable, Identifiable {
+    public struct JournalEntry: Codable, Identifiable, Sendable {
         public let id: String
         public let timestamp: String
         public let word: String
@@ -78,8 +75,9 @@ public final class ContinuousJournalService: @unchecked Sendable {
         let trimmedTranslation = translation.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty, !trimmedTranslation.isEmpty else { return }
 
+        let isoTimestamp = Date().ISO8601Format(.iso8601(includingFractionalSeconds: true))
         let entry = JournalEntry(
-            timestamp: isoDateFormatter.string(from: Date()),
+            timestamp: isoTimestamp,
             word: trimmedWord,
             phonetic: phonetic,
             translation: trimmedTranslation,
@@ -90,7 +88,9 @@ public final class ContinuousJournalService: @unchecked Sendable {
 
         fileQueue.async { [weak self] in
             guard let self = self else { return }
-            self.writeEntry(entry)
+            self.writeLock.withLock { _ in
+                self.writeEntry(entry)
+            }
         }
     }
 

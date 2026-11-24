@@ -31,7 +31,7 @@ public struct WordDetailHeaderView: View {
                             .padding(.vertical, 2)
                             .background(AppColors.grammarSubtle)
                             .cornerRadius(4)
-                    } else if let ph = item.phonetic, !ph.isEmpty {
+                    } else if let ph = (item.phonetic?.isEmpty == false ? item.phonetic : PinyinConverter.toPinyin(item.cleanTitle)), !ph.isEmpty {
                         Text(ph)
                             .font(.appPhonetic)
                             .foregroundColor(AppColors.phonetic)
@@ -42,60 +42,83 @@ public struct WordDetailHeaderView: View {
                     }
                     
                     if !item.isGrammarFormula {
-                        // UK & US Audio Buttons
-                        HStack(spacing: 4) {
-                            let ukID = "uk_\(item.id.uuidString)"
-                            let usID = "us_\(item.id.uuidString)"
-                            let isUkPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == ukID) ||
-                                              (speechService.isSpeaking && speechService.currentSpeakerID == ukID)
-                            let isUsPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == usID) ||
-                                              (speechService.isSpeaking && speechService.currentSpeakerID == usID)
-                            
+                        if PinyinConverter.containsChineseCharacters(item.cleanTitle) {
+                            let zhID = "zh_\(item.id.uuidString)"
+                            let isZhPlaying = speechService.isSpeaking && speechService.currentSpeakerID == zhID
                             Button(action: {
-                                if let ukUrl = richDictionaryEntry?.ukAudioURL, !ukUrl.isEmpty {
-                                    audioPlayerService.playAudio(from: ukUrl, fallbackText: item.word, fallbackVoiceCode: "en-GB", speakerID: ukID)
-                                } else {
-                                    speechService.speak(text: item.word, languageCode: "en-GB", speakerID: ukID)
-                                }
+                                speechService.speak(text: item.cleanTitle, languageCode: "zh-CN", speakerID: zhID)
                             }) {
                                 HStack(spacing: 3) {
-                                    Text("🇬🇧")
+                                    Text("🇨🇳")
                                         .font(.appSubcaption)
-                                    Text("UK")
+                                    Text("ZH")
                                         .font(.appSubcaptionBold)
-                                    EqualizerWaveView(isActive: isUkPlaying, barColor: AppColors.accent, height: 9)
+                                    EqualizerWaveView(isActive: isZhPlaying, barColor: AppColors.accent, height: 9)
                                 }
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 2)
-                                .background(isUkPlaying ? AppColors.accent.opacity(0.18) : AppColors.accentSubtle)
+                                .background(isZhPlaying ? AppColors.accent.opacity(0.18) : AppColors.accentSubtle)
                                 .foregroundColor(AppColors.accent)
                                 .cornerRadius(4)
                             }
                             .buttonStyle(.plain)
-                            .help("Phát âm Anh - Anh (UK)")
-                            
-                            Button(action: {
-                                if let usUrl = richDictionaryEntry?.usAudioURL, !usUrl.isEmpty {
-                                    audioPlayerService.playAudio(from: usUrl, fallbackText: item.word, fallbackVoiceCode: "en-US", speakerID: usID)
-                                } else {
-                                    speechService.speak(text: item.word, languageCode: "en-US", speakerID: usID)
+                            .help("發音 / Phát âm tiếng Trung (ZH)")
+                        } else {
+                            // UK & US Audio Buttons
+                            HStack(spacing: 4) {
+                                let ukID = "uk_\(item.id.uuidString)"
+                                let usID = "us_\(item.id.uuidString)"
+                                let isUkPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == ukID) ||
+                                                  (speechService.isSpeaking && speechService.currentSpeakerID == ukID)
+                                let isUsPlaying = (audioPlayerService.isPlaying && audioPlayerService.currentSpeakerID == usID) ||
+                                                  (speechService.isSpeaking && speechService.currentSpeakerID == usID)
+                                
+                                Button(action: {
+                                    if let ukUrl = richDictionaryEntry?.ukAudioURL, !ukUrl.isEmpty {
+                                        audioPlayerService.playAudio(from: ukUrl, fallbackText: item.word, fallbackVoiceCode: "en-GB", speakerID: ukID)
+                                    } else {
+                                        speechService.speak(text: item.word, languageCode: "en-GB", speakerID: ukID)
+                                    }
+                                }) {
+                                    HStack(spacing: 3) {
+                                        Text("🇬🇧")
+                                            .font(.appSubcaption)
+                                        Text("UK")
+                                            .font(.appSubcaptionBold)
+                                        EqualizerWaveView(isActive: isUkPlaying, barColor: AppColors.accent, height: 9)
+                                    }
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(isUkPlaying ? AppColors.accent.opacity(0.18) : AppColors.accentSubtle)
+                                    .foregroundColor(AppColors.accent)
+                                    .cornerRadius(4)
                                 }
-                            }) {
-                                HStack(spacing: 3) {
-                                    Text("🇺🇸")
-                                        .font(.appSubcaption)
-                                    Text("US")
-                                        .font(.appSubcaptionBold)
-                                    EqualizerWaveView(isActive: isUsPlaying, barColor: AppColors.phonetic, height: 9)
+                                .buttonStyle(.plain)
+                                .help("Phát âm Anh - Anh (UK)")
+                                
+                                Button(action: {
+                                    if let usUrl = richDictionaryEntry?.usAudioURL, !usUrl.isEmpty {
+                                        audioPlayerService.playAudio(from: usUrl, fallbackText: item.word, fallbackVoiceCode: "en-US", speakerID: usID)
+                                    } else {
+                                        speechService.speak(text: item.word, languageCode: "en-US", speakerID: usID)
+                                    }
+                                }) {
+                                    HStack(spacing: 3) {
+                                        Text("🇺🇸")
+                                            .font(.appSubcaption)
+                                        Text("US")
+                                            .font(.appSubcaptionBold)
+                                        EqualizerWaveView(isActive: isUsPlaying, barColor: AppColors.phonetic, height: 9)
+                                    }
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(isUsPlaying ? AppColors.phonetic.opacity(0.2) : AppColors.phoneticSubtle)
+                                    .foregroundColor(AppColors.phonetic)
+                                    .cornerRadius(4)
                                 }
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 2)
-                                .background(isUsPlaying ? AppColors.phonetic.opacity(0.2) : AppColors.phoneticSubtle)
-                                .foregroundColor(AppColors.phonetic)
-                                .cornerRadius(4)
+                                .buttonStyle(.plain)
+                                .help("Phát âm Anh - Mỹ (US)")
                             }
-                            .buttonStyle(.plain)
-                            .help("Phát âm Anh - Mỹ (US)")
                         }
                     }
                 }

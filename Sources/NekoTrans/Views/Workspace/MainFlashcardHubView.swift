@@ -13,7 +13,8 @@ public struct MainFlashcardHubView: View {
     }
     
     private var needReviewItems: [SavedWordItem] {
-        allItems.filter { !$0.isMastered }
+        let now = Date()
+        return allItems.filter { $0.isDueForReview(at: now) }
     }
     
     private var favoriteItems: [SavedWordItem] {

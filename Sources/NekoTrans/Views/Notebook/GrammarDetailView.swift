@@ -31,7 +31,11 @@ public struct GrammarDetailView: View {
                 
                 Button(action: {
                     QuickAIWindowController.shared.showAI(
-                        prompt: AIPromptBuilder.grammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                        prompt: AIPromptBuilder.grammarFormulaPrompt(
+                            for: item.cleanTitle,
+                            context: item.exampleEn,
+                            outputLang: Localization.shared.resolvedLanguage.rawValue
+                        ),
                         targetWordId: item.id,
                         targetWordTitle: item.cleanTitle
                     )
@@ -239,7 +243,11 @@ public struct GrammarDetailView: View {
                         
                         Button(action: {
                             QuickAIWindowController.shared.showAI(
-                                prompt: AIPromptBuilder.grammarFormulaPrompt(for: item.cleanTitle, context: item.exampleEn),
+                                prompt: AIPromptBuilder.grammarFormulaPrompt(
+                            for: item.cleanTitle,
+                            context: item.exampleEn,
+                            outputLang: Localization.shared.resolvedLanguage.rawValue
+                        ),
                                 targetWordId: item.id,
                                 targetWordTitle: item.cleanTitle
                             )

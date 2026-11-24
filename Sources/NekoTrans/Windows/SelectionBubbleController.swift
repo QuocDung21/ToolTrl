@@ -11,22 +11,23 @@ public struct SelectionBubbleView: View {
     }
     
     public var body: some View {
+        let hudStyle = AppSettings.shared.hudMaterialStyle
         Button(action: onClick) {
             ZStack {
-                VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow, cornerRadius: 18)
+                VisualEffectBackground(material: hudStyle.nsMaterial, blendingMode: .behindWindow, cornerRadius: 18)
                 
                 Circle()
                     .fill(Color(nsColor: .windowBackgroundColor).opacity(0.88))
                 
                 Image(systemName: "character.bubble.fill")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(isHovered ? Color.blue : Color.primary.opacity(0.85))
+                    .foregroundColor(isHovered ? AppColors.accent : Color.primary.opacity(0.85))
             }
             .frame(width: 32, height: 32)
             .clipShape(Circle())
             .overlay(
                 Circle()
-                    .stroke(isHovered ? Color.blue.opacity(0.7) : Color.primary.opacity(0.18), lineWidth: 1.2)
+                    .stroke(isHovered ? AppColors.accent.opacity(0.7) : Color.primary.opacity(0.18), lineWidth: 1.2)
             )
             .shadow(color: Color.black.opacity(isHovered ? 0.35 : 0.2), radius: isHovered ? 6 : 4, x: 0, y: 2)
             .scaleEffect(isHovered ? 1.15 : 1.0)

@@ -4,8 +4,13 @@ import Defaults
 
 // MARK: - 🎨 App Semantic Color Palette
 public enum AppColors {
-    public static let accent = Color.blue
-    public static let accentSubtle = Color.blue.opacity(0.1)
+    public static var accent: Color {
+        Defaults[.appAccentTheme].color
+    }
+
+    public static var accentSubtle: Color {
+        Defaults[.appAccentTheme].color.opacity(0.12)
+    }
     
     public static let phonetic = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
         appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
@@ -14,6 +19,7 @@ public enum AppColors {
     }))
     public static let phoneticSubtle = phonetic.opacity(0.12)
     
+    // RULE 4: Grammar formulas retain blue tint to separate Grammar vs Vocabulary domains
     public static let grammar = Color.blue
     public static let grammarSubtle = Color.blue.opacity(0.08)
     

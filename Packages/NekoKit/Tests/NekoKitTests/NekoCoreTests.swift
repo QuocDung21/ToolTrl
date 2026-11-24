@@ -397,3 +397,123 @@ struct VocabularyModelTests {
         #expect(!secondPass)
     }
 }
+
+// MARK: - 5. AppLanguage Tests
+@Suite("NekoCore - AppLanguage Tests")
+struct AppLanguageTests {
+    @Test("Matches Simplified Chinese locale variants")
+    func matchesSimplifiedChinese() {
+        #expect(AppLanguage.match("zh-Hans") == .chineseSimplified)
+        #expect(AppLanguage.match("zh-Hans-CN") == .chineseSimplified)
+        #expect(AppLanguage.match("zh_CN") == .chineseSimplified)
+        #expect(AppLanguage.match("zh-SG") == .chineseSimplified)
+        #expect(AppLanguage.match("zh") == .chineseSimplified)
+    }
+
+    @Test("Matches Traditional Chinese locale variants")
+    func matchesTraditionalChinese() {
+        #expect(AppLanguage.match("zh-Hant") == .chineseTraditional)
+        #expect(AppLanguage.match("zh-Hant-TW") == .chineseTraditional)
+        #expect(AppLanguage.match("zh-Hant-HK") == .chineseTraditional)
+        #expect(AppLanguage.match("zh_TW") == .chineseTraditional)
+        #expect(AppLanguage.match("zh-HK") == .chineseTraditional)
+        #expect(AppLanguage.match("zh-MO") == .chineseTraditional)
+    }
+
+    @Test("Resolves preferred languages with Chinese fallback to English")
+    func resolvesPreferredLanguages() {
+        #expect(AppLanguage.resolved(preferredLanguages: ["fr-FR", "zh-Hans-CN"]) == .chineseSimplified)
+        #expect(AppLanguage.resolved(preferredLanguages: ["zh-Hant-TW", "en-US"]) == .chineseTraditional)
+        #expect(AppLanguage.resolved(preferredLanguages: ["ja-JP"]) == .english)
+    }
+}
+
+// MARK: - 6. PinyinConverter Tests
+@Suite("NekoCore - PinyinConverter Tests")
+struct PinyinConverterTests {
+    @Test("Detects Chinese characters accurately")
+    func detectsChineseCharacters() {
+        #expect(PinyinConverter.containsChineseCharacters("你好"))
+        #expect(PinyinConverter.containsChineseCharacters("Hello 世界"))
+        #expect(!PinyinConverter.containsChineseCharacters("Hello World"))
+        #expect(!PinyinConverter.containsChineseCharacters("Xin chào"))
+    }
+
+    @Test("Returns nil for non-Chinese or empty input and converts Chinese to Pinyin")
+    func convertsChineseToPinyin() {
+        #expect(PinyinConverter.toPinyin("") == nil)
+        #expect(PinyinConverter.toPinyin("   ") == nil)
+        #expect(PinyinConverter.toPinyin("Hello") == nil)
+
+        let pinyin = PinyinConverter.toPinyin("你好")
+        #expect(pinyin != nil)
+        #expect(pinyin?.lowercased().contains("nǐ") == true)
+        #expect(pinyin?.lowercased().contains("hǎo") == true)
+    }
+}
+
+// MARK: - 7. Spaced Repetition (SM-2) & TargetLanguage Tests
+@Suite("NekoCore - Spaced Repetition & TargetLanguage Tests")
+struct SpacedRepetitionTests {
+    @Test("New unmastered item is due for review immediately")
+    func newCardIsDue() {
+        let item = SavedWordItem(word: "resilient", phonetic: nil, translation: "kiên cường")
+        #expect(item.isDueForReview(at: Date()))
+    }
+
+    @Test("Applying SM-2 grades updates intervals, ease factor, and next review date")
+    func sm2SchedulingProgression() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        var item = SavedWordItem(word: "你好", phonetic: "nǐ hǎo", translation: "Xin chào")
+
+        item.applyReview(grade: .good, now: now)
+        #expect(item.reviewCount == 1)
+        #expect(item.intervalDays == 1)
+        #expect(!item.isDueForReview(at: now))
+
+        let nextDay = now.addingTimeInterval(86_400 * 2)
+        #expect(item.isDueForReview(at: nextDay))
+
+        item.applyReview(grade: .easy, now: nextDay)
+        #expect(item.reviewCount == 2)
+        #expect((item.intervalDays ?? 0) >= 4)
+        #expect((item.easeFactor ?? 2.5) > 2.5)
+
+        item.applyReview(grade: .again, now: nextDay)
+        #expect(item.reviewCount == 0)
+        #expect(item.intervalDays == 1)
+        #expect(!item.isMastered)
+    }
+
+    @Test("TargetLanguage includes Traditional Chinese and voice locale codes")
+    func targetLanguageVoiceCodes() {
+        #expect(TargetLanguage.chinese.voiceLocaleCode == "zh-CN")
+        #expect(TargetLanguage.chineseTraditional.voiceLocaleCode == "zh-TW")
+        #expect(TargetLanguage.vietnamese.voiceLocaleCode == "vi-VN")
+    }
+}
+
+// MARK: - 8. Theme & Appearance Models Tests
+@Suite("NekoCore - Theme & Appearance Models Tests")
+struct ThemeModelsTests {
+    @Test("AppAppearanceMode maps accurately to SwiftUI ColorScheme and NSAppearance")
+    func appearanceModeMapping() {
+        #expect(AppAppearanceMode.system.colorScheme == nil)
+        #expect(AppAppearanceMode.system.nsAppearance == nil)
+        #expect(AppAppearanceMode.light.colorScheme == .light)
+        #expect(AppAppearanceMode.dark.colorScheme == .dark)
+    }
+
+    @Test("AppAccentTheme and HUDMaterialStyle expose complete cases and valid opacities")
+    func accentAndHUDMaterialCases() {
+        #expect(AppAccentTheme.allCases.count == 6)
+        #expect(HUDMaterialStyle.allCases.count == 3)
+        for style in HUDMaterialStyle.allCases {
+            #expect(style.tintOverlayOpacity > 0.0 && style.tintOverlayOpacity < 1.0)
+        }
+    }
+}
+
+
+
+

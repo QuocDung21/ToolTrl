@@ -32,6 +32,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         _ = UpdaterService.shared
+        AppSettings.shared.applyAppAppearance()
         AppIconService.shared.updateDockIcon()
         setupMainMenu()
         configureActivationPolicy()

@@ -20,6 +20,9 @@ public extension Defaults.Keys {
     static let clickOutsideDismiss = Key<Bool>("clickOutsideDismiss", default: true)
     static let appIconType = Key<AppIconType>("app_icon_type", default: .defaultCat)
     static let appLanguage = Key<AppLanguage?>("appLanguage", default: nil)
+    static let appAppearanceMode = Key<AppAppearanceMode>("appAppearanceMode", default: .system)
+    static let appAccentTheme = Key<AppAccentTheme>("appAccentTheme", default: .oceanBlue)
+    static let hudMaterialStyle = Key<HUDMaterialStyle>("hudMaterialStyle", default: .deepHUDGlass)
 
     // ── Speech & Audio ────────────────────────────────────────────────
     static let speechRate = Key<Double>("speechRate", default: 0.50)

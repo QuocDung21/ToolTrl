@@ -63,6 +63,37 @@ public final class AppSettings {
         }
     }
 
+    public var appAppearanceMode: AppAppearanceMode {
+        didSet {
+            Defaults[.appAppearanceMode] = appAppearanceMode
+            applyAppAppearance()
+        }
+    }
+
+    public var appAccentTheme: AppAccentTheme {
+        didSet {
+            Defaults[.appAccentTheme] = appAccentTheme
+            NotificationCenter.default.post(name: .appThemeDidChange, object: nil)
+        }
+    }
+
+    public var hudMaterialStyle: HUDMaterialStyle {
+        didSet {
+            Defaults[.hudMaterialStyle] = hudMaterialStyle
+        }
+    }
+
+    public func applyAppAppearance() {
+        let targetAppearance = appAppearanceMode.nsAppearance
+        DispatchQueue.main.async {
+            NSApp?.appearance = targetAppearance
+            for window in NSApp?.windows ?? [] {
+                window.appearance = targetAppearance
+            }
+            NotificationCenter.default.post(name: .appThemeDidChange, object: nil)
+        }
+    }
+
     // MARK: - 🔊 Speech & Audio
     public var speechRate: Double {
         didSet { Defaults[.speechRate] = speechRate }
@@ -214,6 +245,9 @@ public final class AppSettings {
         self.clickOutsideDismiss = Defaults[.clickOutsideDismiss]
         self.showInDock = Defaults[.showInDock]
         self.appLanguage = Defaults[.appLanguage]
+        self.appAppearanceMode = Defaults[.appAppearanceMode]
+        self.appAccentTheme = Defaults[.appAccentTheme]
+        self.hudMaterialStyle = Defaults[.hudMaterialStyle]
 
         let savedRate = Defaults[.speechRate]
         self.speechRate = savedRate > 0.05 ? savedRate : 0.50
@@ -298,4 +332,5 @@ public final class AppSettings {
 
 extension Notification.Name {
     public static let showInDockDidChange = Notification.Name("showInDockDidChange")
+    public static let appThemeDidChange = Notification.Name("appThemeDidChange")
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 import SwiftUI
 import NaturalLanguage
 import Defaults
@@ -8,38 +9,35 @@ import Translation
 #endif
 import QuartzCore
 
-private final class StreamThrottleState: @unchecked Sendable {
-    private var accumulated = ""
-    private var lastFlush = CACurrentMediaTime()
-    private let lock = NSLock()
+private final class StreamThrottleState: Sendable {
+    private struct State {
+        var accumulated = ""
+        var lastFlush = CACurrentMediaTime()
+    }
+    private let state = Mutex(State())
 
     func appendAndThrottle(token: String, interval: Double = 0.045) -> String? {
-        lock.lock()
-        defer { lock.unlock() }
-        accumulated += token
-        let now = CACurrentMediaTime()
-        if now - lastFlush >= interval {
-            lastFlush = now
-            return accumulated
+        state.withLock { s in
+            s.accumulated += token
+            let now = CACurrentMediaTime()
+            if now - s.lastFlush >= interval {
+                s.lastFlush = now
+                return s.accumulated
+            }
+            return nil
         }
-        return nil
     }
 }
 
-private final class CancellationBox: @unchecked Sendable {
-    private var cancelled = false
-    private let lock = NSLock()
+private final class CancellationBox: Sendable {
+    private let cancelled = Mutex(false)
 
     var isCancelled: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return cancelled
+        cancelled.withLock { $0 }
     }
 
     func cancel() {
-        lock.lock()
-        cancelled = true
-        lock.unlock()
+        cancelled.withLock { $0 = true }
     }
 }
 
@@ -585,12 +583,26 @@ public final class TranslationViewModel {
     }
     
     public func speakOriginal() {
-        let voiceCode = detectedLanguage == "vi" ? "vi-VN" : (detectedLanguage == "ja" ? "ja-JP" : (detectedLanguage == "zh" ? "zh-CN" : "en-US"))
+        let lower = detectedLanguage.lowercased()
+        let voiceCode: String
+        if lower == "vi" {
+            voiceCode = "vi-VN"
+        } else if lower == "ja" {
+            voiceCode = "ja-JP"
+        } else if lower == "zh-hant" || lower == "zh-tw" || lower == "zh-hk" {
+            voiceCode = "zh-TW"
+        } else if lower.hasPrefix("zh") || PinyinConverter.containsChineseCharacters(originalText) {
+            voiceCode = "zh-CN"
+        } else if lower == "ko" {
+            voiceCode = "ko-KR"
+        } else {
+            voiceCode = "en-US"
+        }
         SpeechService.shared.speak(text: originalText, languageCode: voiceCode, speakerID: "original")
     }
     
     public func speakTranslated() {
-        let voiceCode = targetLanguage == .vietnamese ? "vi-VN" : (targetLanguage == .japanese ? "ja-JP" : (targetLanguage == .chinese ? "zh-CN" : "en-US"))
+        let voiceCode = activeTargetLanguage.voiceLocaleCode
         SpeechService.shared.speak(text: translatedText, languageCode: voiceCode, speakerID: "translated")
     }
     
@@ -607,9 +619,10 @@ public final class TranslationViewModel {
     public func toggleBookmark() {
         guard !originalText.isEmpty else { return }
         let meaning = !translatedText.isEmpty ? translatedText : (richEntry?.mainTranslation ?? "")
+        let resolvedPhonetic = richEntry?.phonetic ?? PinyinConverter.toPinyin(originalText)
         VocabularyService.shared.toggleSaveWord(
             word: originalText,
-            phonetic: richEntry?.phonetic,
+            phonetic: resolvedPhonetic,
             translation: meaning
         )
         self.isBookmarked = VocabularyService.shared.isWordSaved(originalText)
@@ -617,7 +630,7 @@ public final class TranslationViewModel {
         // Easydict Inheritance: 1-Click AnkiConnect Auto-sync
         if self.isBookmarked && Defaults[.enableAnkiConnect] && Defaults[.ankiAutoSyncOnBookmark] {
             let wordToSync = originalText
-            let phoneticToSync = richEntry?.phonetic
+            let phoneticToSync = resolvedPhonetic
             let defsToSync = richEntry?.conciseParts.map { "\($0.part): \($0.meanings.joined(separator: ", "))" }.joined(separator: "\n")
             let exToSync = richEntry?.meanings.first?.definitions.first?.exampleEn
             

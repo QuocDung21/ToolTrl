@@ -1,27 +1,37 @@
 import Foundation
+import Synchronization
 import Network
 import Defaults
 import NekoCore
 
 /// Local HTTP loopback bridge server for synchronizing NekoTrans Core with Web Extensions (Chrome, Edge, Brave, Safari).
 /// Listens exclusively on 127.0.0.1:42421 to ensure complete privacy, zero external exposure, and high performance.
-public final class LocalBridgeServer: @unchecked Sendable {
+public final class LocalBridgeServer: Sendable {
     public static let shared = LocalBridgeServer()
 
     public static let defaultPort: UInt16 = 42421
 
-    public var onOpenAppRequested: (@MainActor () -> Void)?
+    private struct ServerState: @unchecked Sendable {
+        var listener: NWListener?
+        var isRunning: Bool = false
+        var onOpenAppRequested: (@MainActor @Sendable () -> Void)?
+    }
 
-    private var listener: NWListener?
+    private let state = Mutex(ServerState())
     private let queue = DispatchQueue(label: "com.nekotrans.bridge.server", qos: .userInitiated)
-    private var isRunning: Bool = false
+
+    public var onOpenAppRequested: (@MainActor @Sendable () -> Void)? {
+        get { state.withLock { $0.onOpenAppRequested } }
+        set { state.withLock { $0.onOpenAppRequested = newValue } }
+    }
 
     private init() {}
 
     // MARK: - Lifecycle
 
     public func start(port: UInt16 = defaultPort) {
-        guard !isRunning else { return }
+        let alreadyRunning = state.withLock { $0.isRunning }
+        guard !alreadyRunning else { return }
 
         do {
             let tcpOptions = NWProtocolTCP.Options()
@@ -35,16 +45,16 @@ public final class LocalBridgeServer: @unchecked Sendable {
             }
 
             let newListener = try NWListener(using: params, on: portEndpoint)
-            newListener.stateUpdateHandler = { [weak self] state in
-                switch state {
+            newListener.stateUpdateHandler = { [weak self] listenerState in
+                switch listenerState {
                 case .ready:
                     AppLog.bridge.info("LocalBridgeServer running on 127.0.0.1:\(port, privacy: .public)")
-                    self?.isRunning = true
+                    self?.state.withLock { $0.isRunning = true }
                 case .failed(let error):
                     AppLog.bridge.error("LocalBridgeServer failed: \(error.localizedDescription, privacy: .public)")
                     self?.stop()
                 case .cancelled:
-                    self?.isRunning = false
+                    self?.state.withLock { $0.isRunning = false }
                 default:
                     break
                 }
@@ -55,17 +65,22 @@ public final class LocalBridgeServer: @unchecked Sendable {
             }
 
             newListener.start(queue: queue)
-            self.listener = newListener
+            state.withLock { $0.listener = newListener }
         } catch {
             AppLog.bridge.error("Failed to start LocalBridgeServer: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     public func stop() {
-        guard isRunning || listener != nil else { return }
-        listener?.cancel()
-        listener = nil
-        isRunning = false
+        let listenerToCancel: NWListener? = state.withLock { s in
+            guard s.isRunning || s.listener != nil else { return nil }
+            let existing = s.listener
+            s.listener = nil
+            s.isRunning = false
+            return existing
+        }
+        guard listenerToCancel != nil else { return }
+        listenerToCancel?.cancel()
         AppLog.bridge.info("LocalBridgeServer stopped")
     }
 

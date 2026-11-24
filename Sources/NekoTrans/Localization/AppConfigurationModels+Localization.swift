@@ -123,3 +123,37 @@ public extension UpdateChannel {
         }
     }
 }
+
+public extension AppAppearanceMode {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .system: return LocalizedStringResource("theme.mode.system", defaultValue: "System")
+        case .light:  return LocalizedStringResource("theme.mode.light", defaultValue: "Light")
+        case .dark:   return LocalizedStringResource("theme.mode.dark", defaultValue: "Dark")
+        }
+    }
+}
+
+public extension AppAccentTheme {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .oceanBlue:   return LocalizedStringResource("theme.accent.ocean_blue", defaultValue: "Ocean Blue")
+        case .nekoAmber:   return LocalizedStringResource("theme.accent.neko_amber", defaultValue: "Neko Amber")
+        case .sakuraPink:  return LocalizedStringResource("theme.accent.sakura_pink", defaultValue: "Sakura Pink")
+        case .emerald:     return LocalizedStringResource("theme.accent.emerald", defaultValue: "Emerald Green")
+        case .royalIndigo: return LocalizedStringResource("theme.accent.royal_indigo", defaultValue: "Royal Indigo")
+        case .graphite:    return LocalizedStringResource("theme.accent.graphite", defaultValue: "Graphite")
+        }
+    }
+}
+
+public extension HUDMaterialStyle {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .frostedPopover: return LocalizedStringResource("theme.hud.popover", defaultValue: "Frosted Light")
+        case .deepHUDGlass:   return LocalizedStringResource("theme.hud.deep_glass", defaultValue: "Deep HUD Glass")
+        case .ultraClean:     return LocalizedStringResource("theme.hud.ultra_clean", defaultValue: "Ultra Clean Matte")
+        }
+    }
+}
+
