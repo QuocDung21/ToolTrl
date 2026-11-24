@@ -1,91 +1,157 @@
+<div align="center">
+
+<img src="logo-macos.png" alt="NekoTrans Logo" width="128" height="128" />
+
 # NekoTrans
 
-**NekoTrans** (repo `ToolTrl`) là ứng dụng Menu Bar trên **macOS 15.0+ (Sequoia)** giúp bạn tra từ điển, dịch nhanh đoạn văn (hỗ trợ Apple Translation offline, AI trực tuyến & mô hình GGUF chạy local), chụp quét chữ OCR, lưu sổ tay từ vựng và quản lý công thức ngữ pháp trực tiếp khi làm việc hay duyệt web.
+**Trợ lý Dịch thuật AI, Từ điển Thông minh & Sổ tay Từ vựng / Ngữ pháp Native cho macOS**
+
+[![Platform](https://img.shields.io/badge/macOS-15.0%2B%20Sequoia-007AFF?logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![Swift](https://img.shields.io/badge/Swift-6.0%20Toolchain-F05138?logo=swift&logoColor=white)](https://swift.org)
+[![Architecture](https://img.shields.io/badge/Architecture-Modular%20NekoKit-34C759)](#%EF%B8%8F-kiến-trúc-dự-án)
+[![Languages](https://img.shields.io/badge/UI-VI%20%7C%20EN%20%7C%20简体%20%7C%20繁體-AF52DE)](#-đa-ngôn-ngữ--phiên-âm)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B)](https://opensource.org/licenses/MIT)
+
+</div>
 
 ---
 
-## 🌟 Tính năng chính
+## 📖 Giới thiệu
 
-### 1. Dịch nhanh tại vị trí con trỏ (`⌥ + D`)
-- Bôi đen đoạn văn bản ở bất kỳ đâu (trình duyệt, file PDF, Xcode, Slack...) rồi bấm `Option + D`.
-- Cửa sổ dịch nổi (HUD) xuất hiện ngay bên cạnh con trỏ chuột, hỗ trợ nhiều engine dịch (Apple Translation offline, AI API, Local GGUF).
+**NekoTrans** là ứng dụng thanh Menu Bar gốc (100% Native `SwiftUI` + `AppKit`) dành riêng cho **macOS 15.0+ (Sequoia)**, giúp bạn tra từ điển chuyên sâu, dịch nhanh đoạn văn theo ngữ cảnh, quét chữ màn hình (OCR), chạy mô hình AI cục bộ (Local GGUF trên Apple Metal) và ôn luyện từ vựng/công thức ngữ pháp bằng thuật toán lặp lại ngắt quãng (**SM-2 Spaced Repetition**).
 
-### 2. Chụp và quét chữ trên màn hình (`⌥ + S`)
-- Khoanh vùng bất kỳ khu vực nào trên màn hình (video YouTube, hình ảnh, trang web chặn bôi đen).
-- Ứng dụng tự động nhận diện chữ (Apple Vision OCR) và hiển thị bản dịch ngay lập tức.
+Ứng dụng được thiết kế tối ưu hiệu năng cao và tiết kiệm bộ nhớ tối đa khi túc trực nền: tự động thu hồi cửa sổ/WebKit khi đóng, nén dữ liệu LZFSE, bảo mật toàn bộ khóa API trong **macOS Keychain**, và hoạt động trực tiếp qua Accessibility API mà không làm bẩn Clipboard của bạn.
 
-### 3. Sổ tay từ vựng & Cẩm nang ngữ pháp (`⌥ + V`)
-- **Giao diện 3 cột hoặc dạng bảng**: Dễ dàng tìm kiếm, lọc theo từ loại, độ quan trọng hay chủ đề; hỗ trợ đồng bộ GitHub & AnkiConnect.
-- **Phần Từ vựng**: Lưu nghĩa tiếng Việt, câu ví dụ thực tế kèm phát âm và từ điển giải nghĩa.
-- **Phần Ngữ pháp**: Lưu công thức chuẩn dạng toán học, ý nghĩa/dấu hiệu nhận biết, ví dụ 3 thể (+, -, ?) và lưu ý bẫy đề thi.
-- **Xem nhanh (Quick Look)**: Chọn một mục và bấm phím `Space` để xem toàn bộ thông tin chi tiết.
-- **Ôn tập Flashcards**: Chế độ lật thẻ ghi nhớ 3D hỗ trợ phát âm.
+---
 
-### 4. Trợ lý AI hỗ trợ học (`⌥ + A`)
-- Cửa sổ nổi tích hợp nhanh ChatGPT, Gemini, Claude, Perplexity và phân tích AI trực tiếp.
-- Tự động điền câu lệnh hỏi và hỗ trợ lưu kết quả phân tích về sổ tay chỉ với 1 nút bấm.
+## ✨ Tính năng nổi bật
 
-### 5. Tiện ích mở rộng trình duyệt (Chrome / Safari)
-- Hỗ trợ dịch trực tiếp trên trang web và kết nối với ứng dụng NekoTrans trên macOS.
+### 1. ⚡ Dịch nhanh HUD & Đa động cơ (`⌥ + D`)
+- Bôi đen từ hoặc đoạn văn ở bất kỳ ứng dụng nào (PDF, Xcode, trình duyệt, Slack...) và nhấn `Option + D` (hoặc dùng bong bóng chọn từ / nhấn đúp `⌘C`).
+- **Đa tầng Engine dịch thuật**:
+  - **Apple Translation (Offline)**: Dịch ngoại tuyến tốc độ cao, bảo mật tuyệt đối trên macOS 15+.
+  - **Direct Cloud AI**: OpenAI, Anthropic Claude, Google Gemini, Groq, DeepSeek với ngữ cảnh chuyên ngành (*Công nghệ, Kinh doanh, Học thuật, Y khoa, Đời sống*).
+  - **In-Process Local GGUF (`llama.cpp` + Metal)**: Chạy trực tiếp mô hình LLM `.gguf` ngay trên chip Apple Silicon không cần internet, tự động giải phóng RAM khi nhàn rỗi.
+  - **So sánh song song (Multi-Engine)**: Đối chiếu đồng thời kết quả từ Google Translate, DeepL và AI ngay trong một khung nhìn, kèm kiểm tra ngữ pháp & gợi ý viết lại theo 3 văn phong.
+
+### 2. 🔍 Từ điển học thuật, IPA & Pinyin thông minh
+- Tự động chuẩn hóa IPA chuẩn Oxford/Cambridge (`IPANormalizer`), phát âm giọng người thật **UK / US** và giọng **Tiếng Trung (`ZH`)**.
+- **Hỗ trợ Tiếng Trung chuyên sâu**: Tự động nhận diện chữ Hán và hiển thị **Pinyin có dấu thanh điệu** dưới cả văn bản gốc, bản dịch, HUD, Sổ tay và Flashcards.
+- Tích hợp từ điển hệ thống macOS ngoại tuyến (`DictionaryServices`) và gợi ý từ liên quan ngữ nghĩa bằng vector `NLEmbedding` (`NaturalLanguage`).
+
+### 3. 📸 Quét chữ màn hình OCR (`⌥ + S`)
+- Khoanh vùng bất kỳ khu vực nào trên màn hình (video bài giảng, ảnh chụp, slide, trang web khóa bôi đen).
+- Nhận diện ký tự tức thì qua **Apple Vision OCR** và hiển thị bản dịch ngay tại chỗ.
+
+### 4. 📚 Sổ tay Từ vựng, Công thức Ngữ pháp & Ôn tập SM-2 (`⌥ + V`)
+- **Tách biệt rành mạch Từ vựng & Ngữ pháp**:
+  - **Từ vựng**: Lưu nghĩa, phiên âm IPA / Pinyin, từ loại, chủ đề tự động phân loại bằng NLP và ví dụ song ngữ.
+  - **Ngữ pháp (`📐`)**: Lưu công thức chuẩn dạng toán học (monospaced), dấu hiệu nhận biết, ví dụ 3 thể (`+`, `-`, `?`), bẫy đề thi TOEIC/IELTS và mẹo ghi nhớ.
+- **Flashcards 3D & Spaced Repetition (SM-2)**: Lật thẻ 3D mượt mà với 4 mức đánh giá trí nhớ (**Quên / Khó / Nhớ / Dễ**) tự động tính chu kỳ ngày ôn tập tiếp theo.
+- **Xem nhanh (`Spacebar`)**: Nhấn phím cách để mở cửa sổ Quick Look xem chi tiết mục đang chọn.
+- **Đồng bộ & Xuất dữ liệu**: Sao lưu đám mây qua **GitHub Gist**, đồng bộ 1 chạm sang **Anki Desktop (`AnkiConnect`)**, tự động ghi nhật ký `words.jsonl` cho Obsidian/Logseq, hoặc xuất ra Markdown / TSV.
+
+### 5. 🤖 Trợ lý AI & Tiện ích Trình duyệt (`⌥ + A`)
+- **Quick AI Assistant**: Cửa sổ nổi tích hợp ChatGPT, Gemini, Claude, Perplexity — tự động điền prompt chuẩn hóa và trích xuất kết quả phân tích lưu thẳng vào Sổ tay.
+- **Safari & Chrome Web Extension**: Dịch song ngữ trực tiếp trên trang web (giữ nguyên cấu trúc DOM, thẻ inline & icon) kết nối an toàn với NekoTrans qua cầu nối loopback cục bộ (`127.0.0.1:42421`).
+- **Apple Shortcuts & Siri (`AppIntents`)**: Hỗ trợ chuỗi hành động tự động hóa dịch văn bản, lưu từ mới và lấy từ cần ôn tập trên macOS.
+
+### 6. 🎨 Hệ thống Theme 3 lớp & Đa ngôn ngữ
+- **Giao diện 4 ngôn ngữ**: Tiếng Việt (`vi`), Tiếng Anh (`en`), Tiếng Trung Giản thể (`简体中文`), Tiếng Trung Phồn thể (`繁體中文`).
+- **Tùy biến giao diện chuẩn macOS Sequoia HIG**:
+  - Chế độ **Hệ thống / Sáng / Tối** độc lập.
+  - **6 bảng màu nhấn chủ đạo**: *Ocean Blue, Neko Amber, Sakura Pink, Emerald, Royal Indigo, Graphite*.
+  - **3 chất liệu mặt kính cửa sổ HUD** & đồng bộ thang cỡ chữ toàn ứng dụng.
 
 ---
 
 ## ⌨️ Phím tắt mặc định
 
-| Phím tắt | Thao tác |
-|---|---|
-| `⌥ + D` (`Option + D`) | Dịch văn bản đang chọn |
-| `⌥ + S` (`Option + S`) | Chụp quét chữ trên màn hình (OCR) |
-| `⌥ + A` (`Option + A`) | Mở trợ lý AI |
-| `⌥ + V` (`Option + V`) | Mở Sổ tay từ vựng & ngữ pháp |
-| `Space` | Xem nhanh chi tiết từ/ngữ pháp đang chọn |
-| `Esc` | Đóng nhanh cửa sổ nổi |
+| Phím tắt | Chức năng |
+| :--- | :--- |
+| `⌥ + D` (`Option + D`) | Dịch nhanh văn bản đang chọn (mở cửa sổ nổi HUD) |
+| `⌥ + S` (`Option + S`) | Chụp vùng màn hình để quét chữ OCR & dịch |
+| `⌥ + A` (`Option + A`) | Mở cửa sổ Trợ lý AI nhanh |
+| `⌥ + V` (`Option + V`) | Mở Sổ tay Từ vựng & Ngữ pháp |
+| `Space` | Xem nhanh (Quick Look) từ vựng / ngữ pháp đang chọn trong Sổ tay |
+| `⌘ + N` / `⇧ + ⌘ + N` | Thêm nhanh Từ vựng mới / Công thức Ngữ pháp mới |
+| `Esc` | Đóng nhanh cửa sổ nổi HUD / Quick Look / OCR |
 
-*(Các phím tắt có thể tùy chỉnh lại trong phần Cài đặt của ứng dụng)*
+*(Tất cả phím tắt toàn cục đều có thể tùy chỉnh lại trong **Cài đặt ➔ Phím tắt**).*
 
 ---
 
-## 🚀 Hướng dẫn cài đặt & Phát triển
+## 🚀 Cài đặt & Xây dựng từ mã nguồn
 
 ### Yêu cầu hệ thống
-- **macOS 15.0 (Sequoia)** trở lên (sử dụng Apple `Translation` framework).
-- Để build từ mã nguồn: cần cài đặt đầy đủ **Xcode** (SwiftUI macros không chạy được nếu chỉ có Command Line Tools; `Scripts/toolchain.sh` sẽ tự động chọn Xcode phù hợp).
+- **Hệ điều hành**: **macOS 15.0 (Sequoia)** trở lên.
+- **Công cụ biên dịch** *(nếu tự build)*: Cài đặt đầy đủ **Xcode 16+** (các macro SwiftUI `@Observable` / `@State` / `#Preview` yêu cầu trình biên dịch đi kèm Xcode; script `Scripts/toolchain.sh` sẽ tự động phát hiện Xcode trên máy).
 
-### Cách 1: Tải file cài đặt `.dmg` (Khuyên dùng)
-1. Tải file **`NekoTrans-1.0.0.dmg`** mới nhất tại mục [Releases](https://github.com/QuocDung21/ToolTrl/releases).
-2. Mở file `.dmg` vừa tải về.
-3. Kéo biểu tượng **NekoTrans** vào thư mục **Applications** (Ứng dụng).
-4. Mở **NekoTrans** từ Launchpad hoặc Spotlight để sử dụng ngay!
+### Cách 1: Cài đặt từ gói `.dmg` (Khuyên dùng)
+1. Tải tệp **`NekoTrans-1.0.0.dmg`** mới nhất tại trang [**Releases**](https://github.com/QuocDung21/ToolTrl/releases).
+2. Mở tệp `.dmg` và kéo biểu tượng **NekoTrans** vào thư mục **Applications**.
+3. Mở **NekoTrans** từ Launchpad hoặc Spotlight và hoàn tất bước cấp quyền ban đầu.
 
-### Cách 2: Build, Test & Đóng gói từ mã nguồn
+### Cách 2: Biên dịch & Phát triển bằng `Makefile`
+
 ```bash
-# 1. Clone repository
+# 1. Sao chép mã nguồn
 git clone https://github.com/QuocDung21/ToolTrl.git
 cd ToolTrl
 
-# 2. Build & chạy ứng dụng
+# 2. Biên dịch bản Release và khởi chạy ngay
 make run
 
-# 3. Chạy Unit Tests
+# 3. Biên dịch & cài đặt trực tiếp vào /Applications/NekoTrans.app
+make install
+
+# 4. Chạy bộ kiểm thử tự động (NekoKit & NekoTrans Tests)
 make test
+swift test --package-path Packages/NekoKit
 
-# 4. Tạo file cài đặt .dmg (output: build/NekoTrans-1.0.0.dmg)
+# 5. Đóng gói bộ cài đặt .dmg và tiện ích mở rộng Chrome (.zip)
 make dmg
-
-# 5. Đóng gói tiện ích mở rộng cho Chrome / Chromium
 make chrome
+
+# 6. Dọn dẹp thư mục build & cache
+make clean
 ```
 
 ---
 
-## 🔒 Cấp quyền hệ thống trên macOS
+## 🔒 Quyền hệ thống trên macOS
 
-Để ứng dụng hoạt động chính xác khi bấm phím tắt:
-1. **Quyền Trợ năng (Accessibility)**: Cho phép ứng dụng đọc văn bản bạn vừa bôi đen (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Trợ năng ➔ Bật NekoTrans*).
-2. **Quyền Ghi màn hình (Screen Recording)**: Cho phép chụp vùng màn hình để quét chữ OCR (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Ghi màn hình ➔ Bật NekoTrans*).
+NekoTrans tôn trọng tuyệt đối quyền riêng tư của người dùng và chỉ yêu cầu 2 quyền hệ thống khi bạn sử dụng tính năng tương ứng:
+
+1. **Trợ năng (Accessibility)**: Đọc văn bản đang bôi đen khi nhấn phím tắt dịch và hỗ trợ thay thế bản dịch tại chỗ (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Trợ năng ➔ Bật NekoTrans*).
+2. **Ghi màn hình (Screen Recording)**: Chụp vùng màn hình do bạn khoanh chọn khi bấm `⌥ + S` để nhận diện chữ OCR (*Cài đặt hệ thống ➔ Quyền riêng tư & Bảo mật ➔ Ghi màn hình ➔ Bật NekoTrans*).
+
+---
+
+## 🏗️ Kiến trúc dự án
+
+Dự án tuân thủ kiến trúc phân tầng mô-đun sạch (**Clean Modular Architecture**) thông qua gói cục bộ `Packages/NekoKit`:
+
+```text
+ToolTrl/
+├── Packages/NekoKit/                 # Local Swift Package đa tầng
+│   ├── Sources/NekoCore/             # Tầng 1: Domain Models, AIPromptBuilder, Parsers, Pinyin, Keychain, SafeURL, AppLog
+│   ├── Sources/NekoServices/         # Tầng 2: Translation, Dictionary, LocalGGUF (llama.xcframework), OCR, Sync, Cache
+│   ├── Sources/NekoUI/               # Tầng 3: Design System (AppColors, AppTypography, Theme) & Reusable Components
+│   └── Tests/NekoKitTests/           # Swift Testing suites cho Core & Services
+├── Sources/
+│   ├── NekoTrans/                    # Tầng 4: macOS App Shell, Windows/HUD, SwiftUI Views, AppIntents & String Catalog
+│   └── NekoTransSafariExtension/     # Mã nguồn Safari / Chromium Web Extension (Manifest V3)
+├── Tests/NekoTransTests/             # Bộ kiểm thử tích hợp chia theo mô-đun chức năng
+├── Scripts/                          # Script tự động chọn Xcode toolchain, build .app, đóng gói .dmg & Chrome extension
+└── .github/workflows/                # Pipeline CI kiểm thử tự động & Release phát hành trên macOS 15
+```
+
+Chi tiết về các quy ước bất biến (Domain Invariants, bảo mật Keychain, chuẩn URL và logging) được tài liệu hóa đầy đủ trong [`AGENTS.md`](AGENTS.md).
 
 ---
 
 ## 👨‍💻 Tác giả & Giấy phép
-- Tác giả: **Dũng Nguyễn Quốc** ([@QuocDung21](https://github.com/QuocDung21))
-- Mã nguồn phát hành theo giấy phép **MIT**.
+
+- **Tác giả**: **Dũng Nguyễn Quốc** ([@QuocDung21](https://github.com/QuocDung21))
+- **Giấy phép**: Phát hành theo giấy phép [**MIT License**](https://opensource.org/licenses/MIT).
