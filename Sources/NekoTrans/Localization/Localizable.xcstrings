@@ -7588,6 +7588,34 @@
         }
       }
     },
+    "Kiểu hiển thị khi bôi đen:" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selection Popup Style:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kiểu hiển thị khi bôi đen:"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "划词弹窗样式："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "劃詞彈窗樣式："
+          }
+        }
+      }
+    },
     "Kiểu thẻ (Model):" : {
       "localizations" : {
         "en" : {
@@ -20034,6 +20062,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新頻道"
+          }
+        }
+      }
+    },
+    "selection.style.action_bar" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Action Bar (PopClip Style)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thanh Công Cụ Nhanh (Kiểu PopClip)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷操作栏（PopClip 风格）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷操作列（PopClip 風格）"
+          }
+        }
+      }
+    },
+    "selection.style.icon_bubble" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal Icon Bubble"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nút Tròn Nhỏ Tối Giản"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "极简小圆点气泡"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "極簡小圓點氣泡"
+          }
+        }
+      }
+    },
+    "selection.style.instant" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instant Floating Translation (0-Click)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dịch Nổi Tức Thì (Không cần click)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即时悬浮翻译（零点击）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即時懸浮翻譯（零點擊）"
           }
         }
       }

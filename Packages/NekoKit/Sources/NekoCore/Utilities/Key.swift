@@ -57,11 +57,12 @@ public extension Defaults.Keys {
 
     // ── Triggers & Feature Flags ──────────────────────────────────────
     static let enableSelectionBubble = Key<Bool>("enableSelectionBubble", default: false)
+    static let selectionPopupStyle = Key<SelectionPopupStyle>("selectionPopupStyle", default: .instantTranslation)
     static let enableDoubleCmdCTrigger = Key<Bool>("enableDoubleCmdC", default: false)
 
     static let devModeUnlocked = Key<Bool>("dev_mode_unlocked", default: true)
     static let betaLabsEnabled = Key<Bool>("beta_labs_enabled", default: true)
-    static let flagSelectionBubble = Key<Bool>("flag_selection_bubble", default: false)
+    static let flagSelectionBubble = Key<Bool>("flag_selection_bubble", default: true)
     static let flagDoubleCmdCTrigger = Key<Bool>("flag_double_cmd_c_trigger", default: false)
     static let flagLocalLLM = Key<Bool>("flag_local_llm", default: false)
 

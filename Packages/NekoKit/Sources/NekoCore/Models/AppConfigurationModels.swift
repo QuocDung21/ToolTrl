@@ -648,6 +648,22 @@ public enum HUDMaterialStyle: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+public enum SelectionPopupStyle: String, CaseIterable, Identifiable, Sendable {
+    case instantTranslation = "instant_translation"
+    case actionBar          = "action_bar"
+    case iconBubble         = "icon_bubble"
+
+    public var id: String { rawValue }
+
+    public var sfSymbol: String {
+        switch self {
+        case .instantTranslation: return "bolt.horizontal.circle.fill"
+        case .actionBar:          return "menubar.rectangle"
+        case .iconBubble:         return "character.bubble.fill"
+        }
+    }
+}
+
 extension TranslationDomain: Defaults.Serializable {}
 extension TranslationEngine: Defaults.Serializable {}
 extension DirectAIProvider: Defaults.Serializable {}
@@ -664,4 +680,6 @@ extension AppLanguage: Defaults.Serializable {}
 extension AppAppearanceMode: Defaults.Serializable {}
 extension AppAccentTheme: Defaults.Serializable {}
 extension HUDMaterialStyle: Defaults.Serializable {}
+extension SelectionPopupStyle: Defaults.Serializable {}
+
 

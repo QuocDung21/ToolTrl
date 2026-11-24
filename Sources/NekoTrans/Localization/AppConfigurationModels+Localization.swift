@@ -157,3 +157,14 @@ public extension HUDMaterialStyle {
     }
 }
 
+public extension SelectionPopupStyle {
+    var localizedTitle: LocalizedStringResource {
+        switch self {
+        case .instantTranslation: return LocalizedStringResource("selection.style.instant", defaultValue: "Instant Floating Translation")
+        case .actionBar:          return LocalizedStringResource("selection.style.action_bar", defaultValue: "Quick Action Bar")
+        case .iconBubble:         return LocalizedStringResource("selection.style.icon_bubble", defaultValue: "Minimal Icon Bubble")
+        }
+    }
+}
+
+

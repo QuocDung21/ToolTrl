@@ -198,6 +198,12 @@ public final class AppSettings {
         }
     }
 
+    public var selectionPopupStyle: SelectionPopupStyle {
+        didSet {
+            Defaults[.selectionPopupStyle] = selectionPopupStyle
+        }
+    }
+
     public var enableDoubleCmdCTrigger: Bool {
         didSet {
             Defaults[.enableDoubleCmdCTrigger] = enableDoubleCmdCTrigger
@@ -227,7 +233,7 @@ public final class AppSettings {
 
     // MARK: - 🧪 Active State
     @MainActor public var isSelectionBubbleActive: Bool {
-        enableSelectionBubble && FeatureFlagService.shared.isFeatureEnabled(.selectionBubble)
+        enableSelectionBubble
     }
 
     @MainActor public var isDoubleCmdCActive: Bool {
@@ -289,6 +295,7 @@ public final class AppSettings {
 
         // ── Flags ─────────────────────────────────────────────
         self.enableSelectionBubble = Defaults[.enableSelectionBubble]
+        self.selectionPopupStyle = Defaults[.selectionPopupStyle]
         self.enableDoubleCmdCTrigger = Defaults[.enableDoubleCmdCTrigger]
         self.enableInPlaceReplace = Defaults[.enableInPlaceReplace]
         self.inPlaceReplaceSound = Defaults[.inPlaceReplaceSound]

@@ -195,11 +195,23 @@ public struct GeneralSettingsSection: View {
                             )
                         }
 
-                        if flags.isFeatureEnabled(.selectionBubble) {
-                            Toggle(
-                                .generalSelectionBubble,
-                                isOn: $settings.enableSelectionBubble
-                            )
+                        Toggle(
+                            .generalSelectionBubble,
+                            isOn: $settings.enableSelectionBubble
+                        )
+
+                        if settings.enableSelectionBubble {
+                            Picker("Kiểu hiển thị khi bôi đen:", selection: $settings.selectionPopupStyle) {
+                                ForEach(SelectionPopupStyle.allCases) { style in
+                                    Label {
+                                        Text(style.localizedTitle)
+                                    } icon: {
+                                        Image(systemName: style.sfSymbol)
+                                    }
+                                    .tag(style)
+                                }
+                            }
+                            .padding(.leading, 18)
                         }
                     }
 

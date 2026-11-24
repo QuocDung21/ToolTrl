@@ -504,12 +504,16 @@ struct ThemeModelsTests {
         #expect(AppAppearanceMode.dark.colorScheme == .dark)
     }
 
-    @Test("AppAccentTheme and HUDMaterialStyle expose complete cases and valid opacities")
+    @Test("AppAccentTheme, HUDMaterialStyle, and SelectionPopupStyle expose complete cases and valid opacities")
     func accentAndHUDMaterialCases() {
         #expect(AppAccentTheme.allCases.count == 6)
         #expect(HUDMaterialStyle.allCases.count == 3)
+        #expect(SelectionPopupStyle.allCases.count == 3)
         for style in HUDMaterialStyle.allCases {
             #expect(style.tintOverlayOpacity > 0.0 && style.tintOverlayOpacity < 1.0)
+        }
+        for popupStyle in SelectionPopupStyle.allCases {
+            #expect(!popupStyle.sfSymbol.isEmpty)
         }
     }
 }
