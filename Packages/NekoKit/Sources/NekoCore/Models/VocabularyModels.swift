@@ -6,6 +6,14 @@ public enum VocabularyItemType: String, Codable, Sendable, CaseIterable {
     case grammar
 }
 
+/// Spaced Repetition review grade (SM-2 / Anki style)
+public enum ReviewGrade: Int, Codable, Sendable, CaseIterable {
+    case again = 0
+    case hard  = 1
+    case good  = 2
+    case easy  = 3
+}
+
 public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID = UUID()
     public var word: String
@@ -21,6 +29,13 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
     /// `VocabularyService.loadWords()` backfills those exactly once.
     public var itemType: VocabularyItemType?
 
+    // Spaced Repetition (SM-2) optional metadata — nil for unreviewed / legacy cards
+    public var reviewCount: Int?
+    public var easeFactor: Double?
+    public var intervalDays: Int?
+    public var nextReviewDate: Date?
+    public var lastReviewedDate: Date?
+
     public init(
         id: UUID = UUID(),
         word: String,
@@ -32,7 +47,12 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         isFavorite: Bool = false,
         isMastered: Bool = false,
         aiDetailedAnalysis: String? = nil,
-        itemType: VocabularyItemType? = nil
+        itemType: VocabularyItemType? = nil,
+        reviewCount: Int? = nil,
+        easeFactor: Double? = nil,
+        intervalDays: Int? = nil,
+        nextReviewDate: Date? = nil,
+        lastReviewedDate: Date? = nil
     ) {
         self.id = id
         self.word = word
@@ -45,6 +65,76 @@ public struct SavedWordItem: Identifiable, Codable, Equatable, Sendable {
         self.isMastered = isMastered
         self.aiDetailedAnalysis = aiDetailedAnalysis
         self.itemType = itemType
+        self.reviewCount = reviewCount
+        self.easeFactor = easeFactor
+        self.intervalDays = intervalDays
+        self.nextReviewDate = nextReviewDate
+        self.lastReviewedDate = lastReviewedDate
+    }
+
+    /// Whether this item is due for spaced repetition review at `referenceDate`.
+    public func isDueForReview(at referenceDate: Date = Date()) -> Bool {
+        if isMastered, let next = nextReviewDate {
+            return next <= referenceDate
+        }
+        if isMastered {
+            return false
+        }
+        guard let next = nextReviewDate else {
+            return true
+        }
+        return next <= referenceDate
+    }
+
+    /// Applies an SM-2 spaced repetition review grade and updates scheduling metadata.
+    public mutating func applyReview(grade: ReviewGrade, now: Date = Date()) {
+        let currentReps = reviewCount ?? 0
+        let currentEF = easeFactor ?? 2.5
+        let currentInterval = intervalDays ?? 0
+
+        let newReps: Int
+        let newInterval: Int
+        var newEF = currentEF
+
+        switch grade {
+        case .again:
+            newReps = 0
+            newInterval = 1
+            newEF = max(1.3, currentEF - 0.2)
+            isMastered = false
+        case .hard:
+            newReps = currentReps + 1
+            newInterval = max(1, Int((Double(max(1, currentInterval)) * 1.2).rounded()))
+            newEF = max(1.3, currentEF - 0.15)
+        case .good:
+            newReps = currentReps + 1
+            if currentReps == 0 {
+                newInterval = 1
+            } else if currentReps == 1 {
+                newInterval = 4
+            } else {
+                newInterval = max(1, Int((Double(currentInterval) * currentEF).rounded()))
+            }
+        case .easy:
+            newReps = currentReps + 1
+            if currentReps == 0 {
+                newInterval = 4
+            } else {
+                newInterval = max(4, Int((Double(max(1, currentInterval)) * currentEF * 1.3).rounded()))
+            }
+            newEF = min(3.2, currentEF + 0.15)
+        }
+
+        if newInterval >= 21 {
+            isMastered = true
+        }
+
+        reviewCount = newReps
+        easeFactor = newEF
+        intervalDays = newInterval
+        lastReviewedDate = now
+        nextReviewDate = Calendar.current.date(byAdding: .day, value: newInterval, to: now)
+            ?? now.addingTimeInterval(Double(newInterval) * 86_400)
     }
 
     public static func buildStructuredWordPrompt(for word: String) -> String {

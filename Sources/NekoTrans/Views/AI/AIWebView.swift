@@ -96,6 +96,13 @@ public struct AIWebView: NSViewRepresentable {
         }
     }
 
+    public static func dismantleNSView(_ nsView: WKWebView, coordinator: Coordinator) {
+        nsView.stopLoading()
+        nsView.navigationDelegate = nil
+        nsView.uiDelegate = nil
+        nsView.loadHTMLString("", baseURL: nil)
+    }
+
     public class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         var parent: AIWebView
         var currentProvider: AIProvider

@@ -56,7 +56,7 @@ public struct TranslationHUDDictionaryView: View {
                     let usPh = IPANormalizer.normalize(entry?.usPhonetic)
                     let mainPh = IPANormalizer.normalize(entry?.phonetic ?? DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
 
-                    if let ph = mainPh ?? usPh ?? ukPh, !ph.isEmpty {
+                    if let ph = mainPh ?? usPh ?? ukPh ?? PinyinConverter.toPinyin(viewModel.originalText), !ph.isEmpty {
                         Text(ph)
                             .font(.system(size: 11.5, design: .serif))
                             .foregroundColor(AppColors.phonetic)
@@ -582,7 +582,7 @@ public struct TranslationHUDDictionaryView: View {
     // MARK: - Dictionary Loading Skeleton (Matches Rich Content Layout)
     private var dictionaryLoadingSkeleton: some View {
         let displayWord = viewModel.originalText.capitalized
-        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
+        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText)) ?? PinyinConverter.toPinyin(viewModel.originalText)
 
         return VStack(alignment: .leading, spacing: 10) {
             // Hero Header matching richDictionaryContent
@@ -691,7 +691,7 @@ public struct TranslationHUDDictionaryView: View {
     // MARK: - Dictionary Fallback View
     private var dictionaryFallbackView: some View {
         let displayWord = viewModel.originalText.capitalized
-        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText))
+        let localPhonetic = IPANormalizer.normalize(DictionaryService.shared.extractPhonetic(for: viewModel.originalText)) ?? PinyinConverter.toPinyin(viewModel.originalText)
 
         return VStack(alignment: .leading, spacing: 10) {
             // Hero Header matching richDictionaryContent

@@ -111,9 +111,14 @@ struct SaveWordIntent: AppIntent {
         let finalMeaning = resolvedMeaning
 
         // Idempotent: `addWord` merges into an existing entry with the same title.
+        let inferredPhonetic = PinyinConverter.toPinyin(cleanWord)
         let entity: VocabularyEntity? = await MainActor.run {
             let service = VocabularyService.shared
-            guard let id = service.addWord(word: cleanWord, translation: finalMeaning),
+            guard let id = service.addWord(
+                word: cleanWord,
+                phonetic: inferredPhonetic,
+                translation: finalMeaning
+            ),
                   let item = service.savedWords.first(where: { $0.id == id }) else { return nil }
             return VocabularyEntity(item: item)
         }
@@ -124,18 +129,20 @@ struct SaveWordIntent: AppIntent {
 
 // MARK: - Random review word
 
-/// Returns a random not-yet-mastered notebook entry, handy for a daily-review shortcut.
+/// Returns a random due-for-review notebook entry, handy for a daily-review shortcut.
 struct ReviewRandomWordIntent: AppIntent {
     static let title: LocalizedStringResource = "Ôn một từ ngẫu nhiên"
     static let description = IntentDescription(
-        "Lấy ngẫu nhiên một từ chưa thuộc trong sổ tay NekoTrans để ôn tập.",
+        "Lấy ngẫu nhiên một từ cần ôn tập trong sổ tay NekoTrans để ôn tập.",
         categoryName: "Sổ tay"
     )
 
     func perform() async throws -> some IntentResult & ReturnsValue<VocabularyEntity> & ProvidesDialog {
         let entity: VocabularyEntity? = await MainActor.run {
-            let words = VocabularyService.shared.savedWords
-            let pool = words.filter { !$0.isMastered }
+            let service = VocabularyService.shared
+            let words = service.savedWords
+            let duePool = service.dueForReviewWords
+            let pool = duePool.isEmpty ? words.filter { !$0.isMastered } : duePool
             return (pool.isEmpty ? words : pool).randomElement().map(VocabularyEntity.init(item:))
         }
         guard let entity else { throw NekoIntentError.notebookEmpty }

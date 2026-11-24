@@ -4,12 +4,16 @@ import Foundation
 public enum AIPromptBuilder {
     
     // MARK: 1. Deep Structured Vocabulary Analysis
-    public static func structuredWordPrompt(for word: String) -> String {
+    public static func structuredWordPrompt(for word: String, outputLang: String = "vi") -> String {
+        let langName = languageDisplayName(for: outputLang)
+        let langInstruction = outputLang.lowercased() == "vi"
+            ? ""
+            : "\n        (Write all explanations, meanings, and translations in \(langName), while keeping the exact ### 1..6 section headers below unchanged for parsing.)\n"
         return """
-        Hãy phân tích từ vựng/cấu trúc '\(word)' thành một mục từ điển chuyên sâu theo đúng cấu trúc chuẩn sau để lưu vào Sổ Tay:
+        Hãy phân tích từ vựng/cấu trúc '\(word)' thành một mục từ điển chuyên sâu theo đúng cấu trúc chuẩn sau để lưu vào Sổ Tay:\(langInstruction)
 
         ### 1. 🏷️ TỪ LOẠI & TẦNG NGHĨA CHÍNH
-        - Liệt kê các nghĩa quan trọng nhất kèm giải thích tiếng Việt ngắn gọn.
+        - Liệt kê các nghĩa quan trọng nhất kèm giải thích ngắn gọn (\(langName)).
 
         ### 2. 🌿 HỌ TỪ (WORD FAMILY)
         - Danh từ (Noun): ...
@@ -24,7 +28,7 @@ public enum AIPromptBuilder {
         - Phân biệt với các từ dễ nhầm lẫn hoặc lưu ý quan trọng khi dùng.
 
         ### 5. 📖 VÍ DỤ MINH HỌA
-        - 2 câu ví dụ tự nhiên (kèm dịch nghĩa).
+        - 2 câu ví dụ tự nhiên (kèm dịch nghĩa \(langName)).
 
         ### 6. 🧠 MẸO GHI NHỚ (MNEMONIC & ETYMOLOGY)
         - Gốc từ hoặc mẹo liên tưởng dễ nhớ.
@@ -32,10 +36,14 @@ public enum AIPromptBuilder {
     }
     
     // MARK: 2. Dedicated Grammar Formula & Rules Prompt
-    public static func grammarFormulaPrompt(for title: String, context: String? = nil) -> String {
+    public static func grammarFormulaPrompt(for title: String, context: String? = nil, outputLang: String = "vi") -> String {
         let contextHint = (context != nil && !context!.isEmpty) ? "\n(Ngữ cảnh câu: \"\(context!)\")" : ""
+        let langName = languageDisplayName(for: outputLang)
+        let langInstruction = outputLang.lowercased() == "vi"
+            ? ""
+            : "\n        (Write explanations and example translations in \(langName), while keeping the exact ### 1..5 section headers below unchanged for parsing.)\n"
         return """
-        Hãy phân tích và thiết lập CÔNG THỨC & QUY TẮC NGỮ PHÁP cho cấu trúc '\(title)'\(contextHint) theo đúng khuôn mẫu chuẩn sau để lưu vào Sổ Tay:
+        Hãy phân tích và thiết lập CÔNG THỨC & QUY TẮC NGỮ PHÁP cho cấu trúc '\(title)'\(contextHint) theo đúng khuôn mẫu chuẩn sau để lưu vào Sổ Tay:\(langInstruction)
 
         ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
         [Ghi rõ công thức tổng quát dạng toán học, ví dụ: S + had + V3/ed + by the time + S + V2/ed, hoặc S + wish + (that) + S + V-past / would + V]
@@ -44,9 +52,9 @@ public enum AIPromptBuilder {
         - Giải thích bản chất, hoàn cảnh sử dụng và các dấu hiệu nhận biết (Signal words / Trạng từ đi kèm).
 
         ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
-        - Thể khẳng định (+): ... ➔ Dịch nghĩa tiếng Việt
-        - Thể phủ định (-): ... ➔ Dịch nghĩa tiếng Việt
-        - Thể nghi vấn (?): ... ➔ Dịch nghĩa tiếng Việt
+        - Thể khẳng định (+): ... ➔ Dịch nghĩa tiếng Việt (\(langName))
+        - Thể phủ định (-): ... ➔ Dịch nghĩa tiếng Việt (\(langName))
+        - Thể nghi vấn (?): ... ➔ Dịch nghĩa tiếng Việt (\(langName))
 
         ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
         - Điểm bẫy ngữ pháp thường xuất hiện trong đề thi TOEIC/IELTS hoặc giao tiếp.
@@ -57,10 +65,14 @@ public enum AIPromptBuilder {
     }
     
     // MARK: 3. Word-level Grammar Patterns Prompt
-    public static func wordGrammarPatternsPrompt(for word: String, context: String? = nil) -> String {
+    public static func wordGrammarPatternsPrompt(for word: String, context: String? = nil, outputLang: String = "vi") -> String {
         let contextHint = (context != nil && !context!.isEmpty) ? "\n(Ví dụ ngữ cảnh: \"\(context!)\")" : ""
+        let langName = languageDisplayName(for: outputLang)
+        let langInstruction = outputLang.lowercased() == "vi"
+            ? ""
+            : "\n        (Write explanations and example translations in \(langName), while keeping the exact ### 1..5 section headers below unchanged for parsing.)\n"
         return """
-        Hãy phân tích và trích xuất các CẤU TRÚC & CÔNG THỨC NGỮ PHÁP quan trọng nhất đi với từ '\(word)'\(contextHint) theo đúng cấu trúc sau để lưu vào Sổ Tay:
+        Hãy phân tích và trích xuất các CẤU TRÚC & CÔNG THỨC NGỮ PHÁP quan trọng nhất đi với từ '\(word)'\(contextHint) theo đúng cấu trúc sau để lưu vào Sổ Tay:\(langInstruction)
 
         ### 1. 📐 CÔNG THỨC CHUẨN (FORMULA)
         [Liệt kê các cấu trúc ngữ pháp dạng công thức, ví dụ: S + \(word) + to V / V-ing / that + S + V / prep + O]
@@ -69,7 +81,7 @@ public enum AIPromptBuilder {
         - Các giới từ cố định, cấu trúc đi kèm và ý nghĩa từng trường hợp.
 
         ### 3. 📖 CÁC CÂU VÍ DỤ MINH HỌA (EXAMPLES)
-        - Câu ví dụ thực tế cho từng cấu trúc (kèm dịch nghĩa tiếng Việt).
+        - Câu ví dụ thực tế cho từng cấu trúc (kèm dịch nghĩa \(langName)).
 
         ### 4. ⚠️ LỖI SAI HAY GẶP & BẪY ĐỀ THI (COMMON MISTAKES)
         - Bẫy ngữ pháp thường gặp trong đề thi TOEIC/IELTS khi dùng từ này.
@@ -80,13 +92,17 @@ public enum AIPromptBuilder {
     }
     
     // MARK: 4. Strict Schema Enforcement Grammar Prompt
-    public static func strictEnforcedGrammarPrompt(title: String, context: String? = nil, customNote: String? = nil) -> String {
+    public static func strictEnforcedGrammarPrompt(title: String, context: String? = nil, customNote: String? = nil, outputLang: String = "vi") -> String {
         var extra = ""
         if let ctx = context, !ctx.isEmpty {
             extra += "\n- Câu ví dụ ngữ cảnh người dùng cung cấp: \"\(ctx)\""
         }
         if let note = customNote, !note.isEmpty {
             extra += "\n- Yêu cầu/ghi chú bổ sung: \(note)"
+        }
+        let langName = languageDisplayName(for: outputLang)
+        if outputLang.lowercased() != "vi" {
+            extra += "\n- Output language for explanations & translations: \(langName) (keep the exact ### 1..5 headers unchanged)."
         }
         
         return """
@@ -118,9 +134,10 @@ public enum AIPromptBuilder {
         targetLang: String = "vi",
         domain: String = "Tổng hợp"
     ) -> String {
+        let targetName = languageDisplayName(for: targetLang)
         return """
         You are an elite, highly nuanced translator and linguist.
-        Task: Translate the following text from '\(sourceLang)' to '\(targetLang)'.
+        Task: Translate the following text from '\(sourceLang)' to '\(targetLang)' (\(targetName)).
         
         Domain Context: \(domain)
         
@@ -140,7 +157,8 @@ public enum AIPromptBuilder {
         case "vi": return "Vietnamese"
         case "en": return "English"
         case "ja": return "Japanese"
-        case "zh": return "Chinese"
+        case "zh", "zh-hans", "zh-cn": return "Simplified Chinese"
+        case "zh-hant", "zh-tw", "zh-hk": return "Traditional Chinese"
         case "ko": return "Korean"
         case "fr": return "French"
         case "de": return "German"
@@ -166,11 +184,12 @@ public enum AIPromptBuilder {
     
     // MARK: 6. Grammar Checking & 3-Tone Polishing Prompt
     public static func grammarAndPolishingPrompt(text: String, targetLang: String = "vi") -> String {
+        let langName = languageDisplayName(for: targetLang)
         return """
-        Analyze and polish the following English text. Respond in JSON format only with keys:
+        Analyze and polish the following text. Respond in JSON format only with keys:
         - "has_errors": boolean (true if grammatical/spelling errors exist)
         - "correction": corrected string (or original if already perfect)
-        - "explanation_vi": concise explanation of errors in Vietnamese (or "Câu chuẩn xác" if perfect)
+        - "explanation_vi": concise explanation of errors in \(langName)
         - "academic_version": natural formal/IELTS style rephrase
         - "business_version": professional corporate/workplace style rephrase
         - "casual_version": natural native daily conversational rephrase
@@ -182,11 +201,12 @@ public enum AIPromptBuilder {
     
     // MARK: 7. Word Explanation in Context Prompt
     public static func wordInContextPrompt(word: String, sentence: String, targetLang: String = "vi") -> String {
+        let langName = languageDisplayName(for: targetLang)
         return """
         Explain the word/term '\(word)' specifically as used in this sentence:
         "\(sentence)"
         
-        Provide a concise response in Vietnamese:
+        Provide a concise response in \(langName):
         1. **Nghĩa trong ngữ cảnh này**: ...
         2. **Từ loại & Cấu trúc đi kèm**: ...
         3. **Từ đồng nghĩa phù hợp**: ...

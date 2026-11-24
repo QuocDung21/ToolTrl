@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main, 'feature/**']
+
+jobs:
+  build-and-test:
+    name: Build & Test (macOS 15)
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode toolchain
+        run: |
+          source ./Scripts/toolchain.sh
+          xcodebuild -version
+          swift --version
+
+      - name: Run NekoKit package tests
+        run: swift test --package-path Packages/NekoKit
+
+      - name: Run NekoTrans Xcode tests
+        run: make test
+
+      - name: Build NekoTrans.app (Release)
+        run: make build

@@ -10,6 +10,7 @@ enum IntentTargetLanguage: String, AppEnum {
     case english = "en"
     case japanese = "ja"
     case chinese = "zh"
+    case chineseTraditional = "zh-Hant"
     case korean = "ko"
     case french = "fr"
     case german = "de"
@@ -22,6 +23,7 @@ enum IntentTargetLanguage: String, AppEnum {
         .english: "Tiếng Anh",
         .japanese: "Tiếng Nhật",
         .chinese: "Tiếng Trung",
+        .chineseTraditional: "Tiếng Trung (Phồn thể)",
         .korean: "Tiếng Hàn",
         .french: "Tiếng Pháp",
         .german: "Tiếng Đức",

@@ -382,9 +382,10 @@ public struct AddWordSheet: View {
             )
             targetId = editing.id
         } else {
+            let resolvedPh = ph ?? PinyinConverter.toPinyin(cleanWord)
             guard let savedId = vocabService.addWord(
                 word: cleanWord,
-                phonetic: ph,
+                phonetic: resolvedPh,
                 translation: cleanTrans,
                 exampleEn: exEn,
                 exampleVi: exVi
@@ -395,7 +396,10 @@ public struct AddWordSheet: View {
         dismiss()
         
         if openAI {
-            let prompt = AIPromptBuilder.structuredWordPrompt(for: cleanWord)
+            let prompt = AIPromptBuilder.structuredWordPrompt(
+                for: cleanWord,
+                outputLang: Localization.shared.resolvedLanguage.rawValue
+            )
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                 QuickAIWindowController.shared.showAI(
                     prompt: prompt,

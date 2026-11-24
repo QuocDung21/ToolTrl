@@ -41,6 +41,7 @@ public struct LocalizedRootView<Content: View>: View {
 
     @ObservedObject private var localization: Localization
     @ObservedObject private var flags: FeatureFlagService
+    private var settings = AppSettings.shared
 
     // MARK: - Content
 
@@ -66,5 +67,7 @@ public struct LocalizedRootView<Content: View>: View {
             .environmentObject(flags)
             .environment(\.locale, localization.resolvedLanguage.locale)
             .environment(\.layoutDirection, localization.resolvedLanguage.layoutDirection)
+            .preferredColorScheme(settings.appAppearanceMode.colorScheme)
+            .tint(settings.appAccentTheme.color)
     }
 }

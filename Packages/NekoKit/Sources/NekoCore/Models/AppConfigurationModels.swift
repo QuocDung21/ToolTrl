@@ -333,6 +333,7 @@ public enum TargetLanguage: String, CaseIterable, Identifiable, Sendable {
     case english = "en"
     case japanese = "ja"
     case chinese = "zh"
+    case chineseTraditional = "zh-Hant"
     case korean = "ko"
     case french = "fr"
     case german = "de"
@@ -340,16 +341,71 @@ public enum TargetLanguage: String, CaseIterable, Identifiable, Sendable {
 
     public var id: String { rawValue }
 
-    public var displayName: String {
+    public var voiceLocaleCode: String {
         switch self {
-        case .vietnamese: return "Tiếng Việt"
-        case .english: return "Tiếng Anh"
-        case .japanese: return "Tiếng Nhật"
-        case .chinese: return "Tiếng Trung"
-        case .korean: return "Tiếng Hàn"
-        case .french: return "Tiếng Pháp"
-        case .german: return "Tiếng Đức"
-        case .spanish: return "Tiếng Tây Ban Nha"
+        case .vietnamese: return "vi-VN"
+        case .english: return "en-US"
+        case .japanese: return "ja-JP"
+        case .chinese: return "zh-CN"
+        case .chineseTraditional: return "zh-TW"
+        case .korean: return "ko-KR"
+        case .french: return "fr-FR"
+        case .german: return "de-DE"
+        case .spanish: return "es-ES"
+        }
+    }
+
+    public var displayName: String {
+        let currentAppLang = Defaults[.appLanguage] ?? AppLanguage.resolved(preferredLanguages: Locale.preferredLanguages)
+        switch currentAppLang {
+        case .vietnamese:
+            switch self {
+            case .vietnamese: return "Tiếng Việt"
+            case .english: return "Tiếng Anh"
+            case .japanese: return "Tiếng Nhật"
+            case .chinese: return "Tiếng Trung (Giản thể)"
+            case .chineseTraditional: return "Tiếng Trung (Phồn thể)"
+            case .korean: return "Tiếng Hàn"
+            case .french: return "Tiếng Pháp"
+            case .german: return "Tiếng Đức"
+            case .spanish: return "Tiếng Tây Ban Nha"
+            }
+        case .chineseSimplified:
+            switch self {
+            case .vietnamese: return "越南语"
+            case .english: return "英语"
+            case .japanese: return "日语"
+            case .chinese: return "简体中文"
+            case .chineseTraditional: return "繁体中文"
+            case .korean: return "韩语"
+            case .french: return "法语"
+            case .german: return "德语"
+            case .spanish: return "西班牙语"
+            }
+        case .chineseTraditional:
+            switch self {
+            case .vietnamese: return "越南語"
+            case .english: return "英語"
+            case .japanese: return "日語"
+            case .chinese: return "簡體中文"
+            case .chineseTraditional: return "繁體中文"
+            case .korean: return "韓語"
+            case .french: return "法語"
+            case .german: return "德語"
+            case .spanish: return "西班牙語"
+            }
+        case .english:
+            switch self {
+            case .vietnamese: return "Vietnamese"
+            case .english: return "English"
+            case .japanese: return "Japanese"
+            case .chinese: return "Chinese (Simplified)"
+            case .chineseTraditional: return "Chinese (Traditional)"
+            case .korean: return "Korean"
+            case .french: return "French"
+            case .german: return "German"
+            case .spanish: return "Spanish"
+            }
         }
     }
 
@@ -359,6 +415,7 @@ public enum TargetLanguage: String, CaseIterable, Identifiable, Sendable {
         case .english: return "🇬🇧"
         case .japanese: return "🇯🇵"
         case .chinese: return "🇨🇳"
+        case .chineseTraditional: return "🇹🇼"
         case .korean: return "🇰🇷"
         case .french: return "🇫🇷"
         case .german: return "🇩🇪"
@@ -411,22 +468,28 @@ public enum AppIconType: String, CaseIterable, Identifiable, Codable, Sendable {
 }
 
 public enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
-    case vietnamese = "vi"
-    case english    = "en"
+    case vietnamese         = "vi"
+    case english            = "en"
+    case chineseSimplified  = "zh-Hans"
+    case chineseTraditional = "zh-Hant"
 
     public var id: String { rawValue }
 
     public var nativeName: String {
         switch self {
-        case .vietnamese: "Tiếng Việt"
-        case .english:    "English"
+        case .vietnamese:         "Tiếng Việt"
+        case .english:            "English"
+        case .chineseSimplified:  "简体中文"
+        case .chineseTraditional: "繁體中文"
         }
     }
 
     public var flag: String {
         switch self {
-        case .vietnamese: "🇻🇳"
-        case .english:    "🇺🇸"
+        case .vietnamese:         "🇻🇳"
+        case .english:            "🇺🇸"
+        case .chineseSimplified:  "🇨🇳"
+        case .chineseTraditional: "🇹🇼"
         }
     }
 
@@ -456,9 +519,147 @@ public enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
             .replacingOccurrences(of: "_", with: "-")
             .lowercased()
 
+        if normalized == "zh-hant" || normalized.hasPrefix("zh-hant-")
+            || normalized == "zh-tw" || normalized.hasPrefix("zh-tw-")
+            || normalized == "zh-hk" || normalized.hasPrefix("zh-hk-")
+            || normalized == "zh-mo" || normalized.hasPrefix("zh-mo-") {
+            return .chineseTraditional
+        }
+
+        if normalized == "zh-hans" || normalized.hasPrefix("zh-hans-")
+            || normalized == "zh-cn" || normalized.hasPrefix("zh-cn-")
+            || normalized == "zh-sg" || normalized.hasPrefix("zh-sg-")
+            || normalized == "zh" {
+            return .chineseSimplified
+        }
+
         return allCases.first { language in
             let raw = language.rawValue.lowercased()
             return normalized == raw || normalized.hasPrefix("\(raw)-")
+        }
+    }
+}
+
+public enum AppAppearanceMode: String, CaseIterable, Identifiable, Sendable {
+    case system = "system"
+    case light  = "light"
+    case dark   = "dark"
+
+    public var id: String { rawValue }
+
+    public var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light:  return .light
+        case .dark:   return .dark
+        }
+    }
+
+    public var nsAppearance: NSAppearance? {
+        switch self {
+        case .system: return nil
+        case .light:  return NSAppearance(named: .aqua)
+        case .dark:   return NSAppearance(named: .darkAqua)
+        }
+    }
+
+    public var sfSymbol: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light:  return "sun.max.fill"
+        case .dark:   return "moon.stars.fill"
+        }
+    }
+}
+
+public enum AppAccentTheme: String, CaseIterable, Identifiable, Sendable {
+    case oceanBlue = "ocean_blue"
+    case nekoAmber = "neko_amber"
+    case sakuraPink = "sakura_pink"
+    case emerald = "emerald"
+    case royalIndigo = "royal_indigo"
+    case graphite = "graphite"
+
+    public var id: String { rawValue }
+
+    public var color: Color {
+        switch self {
+        case .oceanBlue:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 0.25, green: 0.62, blue: 1.0, alpha: 1.0)
+                    : NSColor(red: 0.0, green: 0.46, blue: 0.96, alpha: 1.0)
+            }))
+        case .nekoAmber:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 1.0, green: 0.60, blue: 0.18, alpha: 1.0)
+                    : NSColor(red: 0.90, green: 0.42, blue: 0.04, alpha: 1.0)
+            }))
+        case .sakuraPink:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 1.0, green: 0.44, blue: 0.66, alpha: 1.0)
+                    : NSColor(red: 0.86, green: 0.20, blue: 0.48, alpha: 1.0)
+            }))
+        case .emerald:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 0.20, green: 0.82, blue: 0.56, alpha: 1.0)
+                    : NSColor(red: 0.06, green: 0.60, blue: 0.38, alpha: 1.0)
+            }))
+        case .royalIndigo:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 0.58, green: 0.50, blue: 1.0, alpha: 1.0)
+                    : NSColor(red: 0.36, green: 0.28, blue: 0.88, alpha: 1.0)
+            }))
+        case .graphite:
+            return Color(nsColor: NSColor(name: nil, dynamicProvider: { ap in
+                ap.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(red: 0.78, green: 0.80, blue: 0.84, alpha: 1.0)
+                    : NSColor(red: 0.28, green: 0.31, blue: 0.36, alpha: 1.0)
+            }))
+        }
+    }
+}
+
+public enum HUDMaterialStyle: String, CaseIterable, Identifiable, Sendable {
+    case frostedPopover = "popover"
+    case deepHUDGlass   = "hud_window"
+    case ultraClean     = "sidebar"
+
+    public var id: String { rawValue }
+
+    public var nsMaterial: NSVisualEffectView.Material {
+        switch self {
+        case .frostedPopover: return .popover
+        case .deepHUDGlass:   return .hudWindow
+        case .ultraClean:     return .sidebar
+        }
+    }
+
+    public var tintOverlayOpacity: Double {
+        switch self {
+        case .frostedPopover: return 0.52
+        case .deepHUDGlass:   return 0.68
+        case .ultraClean:     return 0.78
+        }
+    }
+}
+
+public enum SelectionPopupStyle: String, CaseIterable, Identifiable, Sendable {
+    case instantTranslation = "instant_translation"
+    case actionBar          = "action_bar"
+    case iconBubble         = "icon_bubble"
+
+    public var id: String { rawValue }
+
+    public var sfSymbol: String {
+        switch self {
+        case .instantTranslation: return "bolt.horizontal.circle.fill"
+        case .actionBar:          return "menubar.rectangle"
+        case .iconBubble:         return "character.bubble.fill"
         }
     }
 }
@@ -476,3 +677,9 @@ extension UpdateChannel: Defaults.Serializable {}
 extension TargetLanguage: Defaults.Serializable {}
 extension AppIconType: Defaults.Serializable {}
 extension AppLanguage: Defaults.Serializable {}
+extension AppAppearanceMode: Defaults.Serializable {}
+extension AppAccentTheme: Defaults.Serializable {}
+extension HUDMaterialStyle: Defaults.Serializable {}
+extension SelectionPopupStyle: Defaults.Serializable {}
+
+

@@ -211,8 +211,12 @@ public struct TranslationHUDView: View {
         }
         .background(
             ZStack {
-                VisualEffectBackground(material: .hudWindow, blendingMode: .behindWindow, cornerRadius: 16)
-                Color(nsColor: .windowBackgroundColor).opacity(0.68)
+                VisualEffectBackground(
+                    material: settings.hudMaterialStyle.nsMaterial,
+                    blendingMode: .behindWindow,
+                    cornerRadius: 16
+                )
+                Color(nsColor: .windowBackgroundColor).opacity(settings.hudMaterialStyle.tintOverlayOpacity)
                     .allowsHitTesting(false)
                 WindowDragArea()
             }

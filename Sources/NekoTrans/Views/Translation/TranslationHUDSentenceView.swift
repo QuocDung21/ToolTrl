@@ -509,6 +509,15 @@ public struct TranslationHUDSentenceView: View {
                         defaultColor: .primary,
                         lineSpacing: 4.5
                     )
+
+                    if settings.showPhonetics,
+                       !viewModel.translatedText.isEmpty,
+                       let pinyin = PinyinConverter.toPinyin(viewModel.translatedText) {
+                        Text(pinyin)
+                            .font(.system(size: 11.5, design: .serif))
+                            .foregroundColor(AppColors.phonetic)
+                            .textSelection(.enabled)
+                    }
                 }
 
                 if !viewModel.translatedText.isEmpty || viewModel.isStreaming {
@@ -563,6 +572,14 @@ public struct TranslationHUDSentenceView: View {
                     defaultColor: .primary.opacity(0.88),
                     lineSpacing: 3.5
                 )
+
+                if settings.showPhonetics,
+                   let pinyin = PinyinConverter.toPinyin(viewModel.originalText) {
+                    Text(pinyin)
+                        .font(.system(size: 11, design: .serif))
+                        .foregroundColor(AppColors.phonetic)
+                        .textSelection(.enabled)
+                }
             }
             .padding(10)
             .background(Color.primary.opacity(0.025))
@@ -621,6 +638,15 @@ public struct TranslationHUDSentenceView: View {
                         defaultColor: .primary,
                         lineSpacing: 4
                     )
+
+                    if settings.showPhonetics,
+                       !viewModel.translatedText.isEmpty,
+                       let pinyin = PinyinConverter.toPinyin(viewModel.translatedText) {
+                        Text(pinyin)
+                            .font(.system(size: 11.5, design: .serif))
+                            .foregroundColor(AppColors.phonetic)
+                            .textSelection(.enabled)
+                    }
                 }
 
                 // Action Bar under translated text

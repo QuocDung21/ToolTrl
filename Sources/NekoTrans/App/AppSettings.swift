@@ -63,6 +63,37 @@ public final class AppSettings {
         }
     }
 
+    public var appAppearanceMode: AppAppearanceMode {
+        didSet {
+            Defaults[.appAppearanceMode] = appAppearanceMode
+            applyAppAppearance()
+        }
+    }
+
+    public var appAccentTheme: AppAccentTheme {
+        didSet {
+            Defaults[.appAccentTheme] = appAccentTheme
+            NotificationCenter.default.post(name: .appThemeDidChange, object: nil)
+        }
+    }
+
+    public var hudMaterialStyle: HUDMaterialStyle {
+        didSet {
+            Defaults[.hudMaterialStyle] = hudMaterialStyle
+        }
+    }
+
+    public func applyAppAppearance() {
+        let targetAppearance = appAppearanceMode.nsAppearance
+        DispatchQueue.main.async {
+            NSApp?.appearance = targetAppearance
+            for window in NSApp?.windows ?? [] {
+                window.appearance = targetAppearance
+            }
+            NotificationCenter.default.post(name: .appThemeDidChange, object: nil)
+        }
+    }
+
     // MARK: - 🔊 Speech & Audio
     public var speechRate: Double {
         didSet { Defaults[.speechRate] = speechRate }
@@ -167,6 +198,12 @@ public final class AppSettings {
         }
     }
 
+    public var selectionPopupStyle: SelectionPopupStyle {
+        didSet {
+            Defaults[.selectionPopupStyle] = selectionPopupStyle
+        }
+    }
+
     public var enableDoubleCmdCTrigger: Bool {
         didSet {
             Defaults[.enableDoubleCmdCTrigger] = enableDoubleCmdCTrigger
@@ -196,7 +233,7 @@ public final class AppSettings {
 
     // MARK: - 🧪 Active State
     @MainActor public var isSelectionBubbleActive: Bool {
-        enableSelectionBubble && FeatureFlagService.shared.isFeatureEnabled(.selectionBubble)
+        enableSelectionBubble
     }
 
     @MainActor public var isDoubleCmdCActive: Bool {
@@ -214,6 +251,9 @@ public final class AppSettings {
         self.clickOutsideDismiss = Defaults[.clickOutsideDismiss]
         self.showInDock = Defaults[.showInDock]
         self.appLanguage = Defaults[.appLanguage]
+        self.appAppearanceMode = Defaults[.appAppearanceMode]
+        self.appAccentTheme = Defaults[.appAccentTheme]
+        self.hudMaterialStyle = Defaults[.hudMaterialStyle]
 
         let savedRate = Defaults[.speechRate]
         self.speechRate = savedRate > 0.05 ? savedRate : 0.50
@@ -255,6 +295,7 @@ public final class AppSettings {
 
         // ── Flags ─────────────────────────────────────────────
         self.enableSelectionBubble = Defaults[.enableSelectionBubble]
+        self.selectionPopupStyle = Defaults[.selectionPopupStyle]
         self.enableDoubleCmdCTrigger = Defaults[.enableDoubleCmdCTrigger]
         self.enableInPlaceReplace = Defaults[.enableInPlaceReplace]
         self.inPlaceReplaceSound = Defaults[.inPlaceReplaceSound]
@@ -298,4 +339,5 @@ public final class AppSettings {
 
 extension Notification.Name {
     public static let showInDockDidChange = Notification.Name("showInDockDidChange")
+    public static let appThemeDidChange = Notification.Name("appThemeDidChange")
 }

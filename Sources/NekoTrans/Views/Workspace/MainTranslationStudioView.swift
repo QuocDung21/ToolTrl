@@ -262,6 +262,16 @@ public struct MainTranslationStudioView: View {
                             .allowsHitTesting(false)
                     }
                 }
+
+                if settings.showPhonetics,
+                   let sourcePinyin = PinyinConverter.toPinyin(vm.originalText) {
+                    Text(sourcePinyin)
+                        .font(.appPhonetic)
+                        .foregroundColor(AppColors.phonetic)
+                        .textSelection(.enabled)
+                        .padding(.horizontal, 18)
+                        .padding(.bottom, 6)
+                }
                 
                 Divider()
                     .opacity(0.4)
@@ -360,6 +370,14 @@ public struct MainTranslationStudioView: View {
                                 .font(.appHeadline)
                                 .lineSpacing(5.5)
                                 .textSelection(.enabled)
+
+                            if settings.showPhonetics,
+                               let targetPinyin = PinyinConverter.toPinyin(vm.translatedText) {
+                                Text(targetPinyin)
+                                    .font(.appPhonetic)
+                                    .foregroundColor(AppColors.phonetic)
+                                    .textSelection(.enabled)
+                            }
                         }
                     }
                     .padding(.horizontal, 18)

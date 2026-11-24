@@ -4,8 +4,10 @@ build
 build/
 build.noindex
 build.noindex/
+DerivedData/
 *.noindex
 *.noindex/
+*.dmg
 Package.resolved
 .swiftpm/
 xcuserdata/

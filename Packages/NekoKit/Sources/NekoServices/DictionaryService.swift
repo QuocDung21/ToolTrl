@@ -60,24 +60,37 @@ public enum OfflineDictionaryParser {
         return text.unicodeScalars.contains(where: { vietnameseDiacritics.contains($0) })
     }
     
-    private static let posKeywords: [(pattern: String, canonical: String)] = [
-        (#"(?i)\b(?:danh từ|dt)\b"#, "noun"),
-        (#"(?i)\b(?:động từ|ngoại động từ|nội động từ|đt)\b"#, "verb"),
-        (#"(?i)\b(?:tính từ|tt)\b"#, "adjective"),
-        (#"(?i)\b(?:phó từ|trạng từ)\b"#, "adverb"),
-        (#"(?i)\b(?:đại từ)\b"#, "pronoun"),
-        (#"(?i)\b(?:giới từ)\b"#, "preposition"),
-        (#"(?i)\b(?:liên từ)\b"#, "conjunction"),
-        (#"(?i)\b(?:thán từ)\b"#, "interjection"),
-        (#"(?i)\bnoun\b"#, "noun"),
-        (#"(?i)\bverb\b"#, "verb"),
-        (#"(?i)\badjective\b"#, "adjective"),
-        (#"(?i)\badverb\b"#, "adverb"),
-        (#"(?i)\bpronoun\b"#, "pronoun"),
-        (#"(?i)\bpreposition\b"#, "preposition"),
-        (#"(?i)\bconjunction\b"#, "conjunction"),
-        (#"(?i)\binterjection\b"#, "interjection")
-    ]
+    private static let compiledPOSRegexes: [(regex: NSRegularExpression, canonical: String)] = {
+        let patterns: [(String, String)] = [
+            (#"(?i)\b(?:danh từ|dt)\b"#, "noun"),
+            (#"(?i)\b(?:động từ|ngoại động từ|nội động từ|đt)\b"#, "verb"),
+            (#"(?i)\b(?:tính từ|tt)\b"#, "adjective"),
+            (#"(?i)\b(?:phó từ|trạng từ)\b"#, "adverb"),
+            (#"(?i)\b(?:đại từ)\b"#, "pronoun"),
+            (#"(?i)\b(?:giới từ)\b"#, "preposition"),
+            (#"(?i)\b(?:liên từ)\b"#, "conjunction"),
+            (#"(?i)\b(?:thán từ)\b"#, "interjection"),
+            (#"(?i)\bnoun\b"#, "noun"),
+            (#"(?i)\bverb\b"#, "verb"),
+            (#"(?i)\badjective\b"#, "adjective"),
+            (#"(?i)\badverb\b"#, "adverb"),
+            (#"(?i)\bpronoun\b"#, "pronoun"),
+            (#"(?i)\bpreposition\b"#, "preposition"),
+            (#"(?i)\bconjunction\b"#, "conjunction"),
+            (#"(?i)\binterjection\b"#, "interjection")
+        ]
+        return patterns.compactMap { pattern, canonical in
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+            return (regex, canonical)
+        }
+    }()
+
+    private static let numberedChunkRegex = try? NSRegularExpression(pattern: #"(?:^|\s+)(\d+)[\.\s]+(?=[^\d\s])"#)
+    private static let bulletChunkRegex = try? NSRegularExpression(pattern: #"(?:^|\s+)[•▸]\s+"#)
+    private static let synonymRegex = try? NSRegularExpression(pattern: #"(?i)\b(?:từ đồng nghĩa|synonyms?)\s*[:]?\s*(.*)$"#)
+    private static let bilingualPunctRegex = try? NSRegularExpression(
+        pattern: #"(?<=[\?\!\.])\s+(?=[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ])"#
+    )
     
     public static func parse(rawText: String, term: String) -> [OfflineMeaningGroup] {
         var text = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -92,13 +105,12 @@ public enum OfflineDictionaryParser {
         
         // 3. Find all POS markers
         var posMatches: [(location: Int, length: Int, canonical: String)] = []
-        for (pattern, canonical) in posKeywords {
-            if let regex = try? NSRegularExpression(pattern: pattern) {
-                let ns = text as NSString
-                let matches = regex.matches(in: text, range: NSRange(location: 0, length: ns.length))
-                for m in matches {
-                    posMatches.append((location: m.range.location, length: m.range.length, canonical: canonical))
-                }
+        let fullNS = text as NSString
+        let fullRange = NSRange(location: 0, length: fullNS.length)
+        for (regex, canonical) in compiledPOSRegexes {
+            let matches = regex.matches(in: text, range: fullRange)
+            for m in matches {
+                posMatches.append((location: m.range.location, length: m.range.length, canonical: canonical))
             }
         }
         
@@ -183,8 +195,7 @@ public enum OfflineDictionaryParser {
         guard !trimmed.isEmpty else { return [] }
         
         // Pattern: Numbered items like " 1 ", " 2 ", " 3 " or at start of string
-        let pattern = #"(?:^|\s+)(\d+)[\.\s]+(?=[^\d\s])"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+        guard let regex = numberedChunkRegex else {
             return [trimmed]
         }
         
@@ -193,8 +204,7 @@ public enum OfflineDictionaryParser {
         
         guard matches.count > 1 else {
             // Check bullet points if no numbers
-            let bulletPattern = #"(?:^|\s+)[•▸]\s+"#
-            if let bulletRegex = try? NSRegularExpression(pattern: bulletPattern) {
+            if let bulletRegex = bulletChunkRegex {
                 let bulletMatches = bulletRegex.matches(in: trimmed, range: NSRange(location: 0, length: ns.length))
                 if bulletMatches.count > 1 {
                     var bulletChunks: [String] = []
@@ -235,8 +245,7 @@ public enum OfflineDictionaryParser {
         
         // 2. Extract synonyms (từ đồng nghĩa / synonyms)
         var synonyms: [String] = []
-        let synPattern = #"(?i)\b(?:từ đồng nghĩa|synonyms?)\s*[:]?\s*(.*)$"#
-        if let synRegex = try? NSRegularExpression(pattern: synPattern) {
+        if let synRegex = synonymRegex {
             let ns = str as NSString
             if let match = synRegex.firstMatch(in: str, range: NSRange(location: 0, length: ns.length)) {
                 if match.numberOfRanges > 1, let range = Range(match.range(at: 1), in: str) {
@@ -298,8 +307,7 @@ public enum OfflineDictionaryParser {
         guard !trimmed.isEmpty else { return ("", nil) }
         
         // 1. Check sentence delimiter (. ! ?) followed by whitespace and uppercase/Vietnamese letter
-        let punctPattern = #"(?<=[\?\!\.])\s+(?=[A-ZÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ])"#
-        if let regex = try? NSRegularExpression(pattern: punctPattern) {
+        if let regex = bilingualPunctRegex {
             let ns = trimmed as NSString
             let matches = regex.matches(in: trimmed, range: NSRange(location: 0, length: ns.length))
             if let first = matches.first {
@@ -347,6 +355,9 @@ public enum OfflineDictionaryParser {
 public final class DictionaryService {
     public static let shared = DictionaryService()
 
+    private static let pipePhoneticRegex = try? NSRegularExpression(pattern: #"\|\s*([^\|]+?)\s*\|"#)
+    private static let slashPhoneticRegex = try? NSRegularExpression(pattern: #"\/\s*([^\/]+?)\s*\/"#)
+
     private init() {}
 
     /// Look up word definition in macOS built-in dictionaries
@@ -369,8 +380,7 @@ public final class DictionaryService {
         guard let def = lookup(term: term) else { return nil }
         
         // Pattern 1: | ˈæp.əl |
-        let pipePattern = #"\|\s*([^\|]+?)\s*\|"#
-        if let regex = try? NSRegularExpression(pattern: pipePattern),
+        if let regex = Self.pipePhoneticRegex,
            let match = regex.firstMatch(in: def, range: NSRange(location: 0, length: min(def.utf16.count, 200))),
            let range = Range(match.range(at: 1), in: def) {
             let phonetic = String(def[range]).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -380,8 +390,7 @@ public final class DictionaryService {
         }
         
         // Pattern 2: / ˈæp.əl /
-        let slashPattern = #"\/\s*([^\/]+?)\s*\/"#
-        if let regex = try? NSRegularExpression(pattern: slashPattern),
+        if let regex = Self.slashPhoneticRegex,
            let match = regex.firstMatch(in: def, range: NSRange(location: 0, length: min(def.utf16.count, 200))),
            let range = Range(match.range(at: 1), in: def) {
             let phonetic = String(def[range]).trimmingCharacters(in: .whitespacesAndNewlines)

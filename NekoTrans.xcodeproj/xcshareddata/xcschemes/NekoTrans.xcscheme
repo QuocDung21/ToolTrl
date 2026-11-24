@@ -21,20 +21,6 @@
                ReferencedContainer = "container:NekoTrans.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "AA000403"
-               BuildableName = "NekoTransSafariExtension.appex"
-               BlueprintName = "NekoTransSafariExtension"
-               ReferencedContainer = "container:NekoTrans.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

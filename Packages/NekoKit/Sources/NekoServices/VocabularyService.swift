@@ -326,6 +326,17 @@ public final class VocabularyService {
             saveWords()
         }
     }
+
+    public var dueForReviewWords: [SavedWordItem] {
+        let now = Date()
+        return savedWords.filter { $0.isDueForReview(at: now) }
+    }
+
+    public func recordReview(id: UUID, grade: ReviewGrade, now: Date = Date()) {
+        guard let index = savedWords.firstIndex(where: { $0.id == id }) else { return }
+        savedWords[index].applyReview(grade: grade, now: now)
+        saveWords()
+    }
     
     public func updateAIDetailedAnalysis(wordId: UUID, analysis: String) {
         if let index = savedWords.firstIndex(where: { $0.id == wordId }) {

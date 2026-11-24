@@ -3,10 +3,9 @@ import CoreSpotlight
 
 /// Service managing cleanup of NekoTrans data from macOS Spotlight.
 /// Indexing has been removed per user requirement to eliminate unnecessary system indexing.
-public final class SpotlightService: @unchecked Sendable {
+public final class SpotlightService: Sendable {
     public static let shared = SpotlightService()
     
-    private let index = CSSearchableIndex.default()
     private let domainIdentifiers = [
         "com.quocdung.tooltrl.vocabulary",
         "com.nekotrans.mac.vocabulary"
@@ -16,7 +15,7 @@ public final class SpotlightService: @unchecked Sendable {
     
     /// Completely clear and purge any NekoTrans indexed items from macOS CoreSpotlight.
     public func clearAllIndex(completion: (@Sendable (Error?) -> Void)? = nil) {
-        index.deleteSearchableItems(withDomainIdentifiers: domainIdentifiers) { error in
+        CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: domainIdentifiers) { error in
             if let error = error {
                 AppLog.spotlight.error("Clear-index failed: \(error.localizedDescription, privacy: .public)")
             } else {

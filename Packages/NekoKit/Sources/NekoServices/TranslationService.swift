@@ -264,15 +264,28 @@ public final class TranslationService {
         return fullResult.isEmpty ? nil : fullResult
     }
     
+    private static let googleWebResultRegex = try? NSRegularExpression(pattern: #"class="result-container">([\s\S]*?)<\/div>"#, options: [])
+
     // MARK: - Engine 1: Google Web Mobile Engine (High Speed, Ultra Reliable)
     private func translateViaGoogleWeb(text: String, from sourceLang: String, to targetLang: String) async -> String? {
-        let sl = (sourceLang == "en" || sourceLang == "vi" || sourceLang == "ja" || sourceLang == "zh" || sourceLang == "ko" || sourceLang == "fr" || sourceLang == "de" || sourceLang == "es") ? sourceLang : "auto"
+        let lowerSource = sourceLang.lowercased()
+        let sl: String
+        if lowerSource == "zh-hant" || lowerSource == "zh-tw" {
+            sl = "zh-TW"
+        } else if lowerSource == "zh-hans" || lowerSource == "zh-cn" || lowerSource == "zh" {
+            sl = "zh-CN"
+        } else if ["en", "vi", "ja", "ko", "fr", "de", "es"].contains(lowerSource) {
+            sl = lowerSource
+        } else {
+            sl = "auto"
+        }
+        let tl = targetLang.lowercased() == "zh-hant" ? "zh-TW" : (targetLang.lowercased() == "zh" ? "zh-CN" : targetLang)
         guard let url = SafeURL.make(
             host: "translate.google.com",
             path: "/m",
             queryItems: [
                 URLQueryItem(name: "sl", value: sl),
-                URLQueryItem(name: "tl", value: targetLang),
+                URLQueryItem(name: "tl", value: tl),
                 URLQueryItem(name: "q", value: text)
             ]
         ) else {
@@ -300,8 +313,7 @@ public final class TranslationService {
             }
             
             // Extract from <div class="result-container">...</div> (supports multiline)
-            let pattern = #"class="result-container">([\s\S]*?)<\/div>"#
-            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+            if let regex = Self.googleWebResultRegex,
                let match = regex.firstMatch(in: html, options: [], range: NSRange(location: 0, length: html.utf16.count)),
                let range = Range(match.range(at: 1), in: html) {
                 let rawText = String(html[range])
@@ -321,13 +333,14 @@ public final class TranslationService {
     // MARK: - Engine 2: Google GTX API (Fast JSON Translation)
     private func translateViaGoogleGTX(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let sl = sourceLang.isEmpty ? "auto" : sourceLang
+        let tl = targetLang.lowercased() == "zh-hant" ? "zh-TW" : (targetLang.lowercased() == "zh" ? "zh-CN" : targetLang)
         guard let url = SafeURL.make(
             host: "translate.googleapis.com",
             path: "/translate_a/single",
             queryItems: [
                 URLQueryItem(name: "client", value: "gtx"),
                 URLQueryItem(name: "sl", value: sl),
-                URLQueryItem(name: "tl", value: targetLang),
+                URLQueryItem(name: "tl", value: tl),
                 URLQueryItem(name: "dt", value: "t"),
                 URLQueryItem(name: "q", value: text)
             ]
@@ -365,12 +378,13 @@ public final class TranslationService {
     // MARK: - Engine 3: MyMemory Translation API
     private func translateViaMyMemory(text: String, from sourceLang: String, to targetLang: String) async -> String? {
         let sl = sourceLang == "auto" ? "en" : sourceLang
+        let tl = targetLang.lowercased() == "zh-hant" ? "zh-TW" : (targetLang.lowercased() == "zh" ? "zh-CN" : targetLang)
         guard let url = SafeURL.make(
             host: "api.mymemory.translated.net",
             path: "/get",
             queryItems: [
                 URLQueryItem(name: "q", value: text),
-                URLQueryItem(name: "langpair", value: "\(sl)|\(targetLang)")
+                URLQueryItem(name: "langpair", value: "\(sl)|\(tl)")
             ]
         ) else {
             return nil

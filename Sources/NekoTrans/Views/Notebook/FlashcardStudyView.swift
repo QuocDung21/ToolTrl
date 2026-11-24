@@ -92,7 +92,8 @@ public struct FlashcardStudyView: View {
                 Button(action: {
                     if currentIndex < items.count {
                         let item = items[currentIndex]
-                        speechService.speak(text: item.cleanTitle, languageCode: "en-US", speakerID: "flashcard")
+                        let voiceCode = PinyinConverter.containsChineseCharacters(item.cleanTitle) ? "zh-CN" : "en-US"
+                        speechService.speak(text: item.cleanTitle, languageCode: voiceCode, speakerID: "flashcard")
                     }
                 }) {
                     HStack(spacing: 4) {
@@ -109,6 +110,15 @@ public struct FlashcardStudyView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Nghe phát âm")
+
+                if isCardFlipped, currentIndex < items.count {
+                    HStack(spacing: 8) {
+                        srsGradeButton(title: "Quên", color: .red, grade: .again)
+                        srsGradeButton(title: "Khó", color: .orange, grade: .hard)
+                        srsGradeButton(title: "Nhớ", color: .blue, grade: .good)
+                        srsGradeButton(title: "Dễ", color: .green, grade: .easy)
+                    }
+                }
                 
                 Button(action: {
                     if currentIndex < items.count - 1 {
@@ -130,6 +140,29 @@ public struct FlashcardStudyView: View {
         }
         .sensoryFeedback(.selection, trigger: isCardFlipped)
         .sensoryFeedback(.impact(weight: .light), trigger: currentIndex)
+    }
+
+    private func srsGradeButton(title: String, color: Color, grade: ReviewGrade) -> some View {
+        Button(action: {
+            guard currentIndex < items.count else { return }
+            let item = items[currentIndex]
+            VocabularyService.shared.recordReview(id: item.id, grade: grade)
+            if currentIndex < items.count - 1 {
+                currentIndex += 1
+                isCardFlipped = false
+            } else {
+                isPresented = false
+            }
+        }) {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(color)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(color.opacity(0.14))
+                .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Front of Card
@@ -157,7 +190,9 @@ public struct FlashcardStudyView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 16)
             
-            if let ph = item.phonetic, !ph.isEmpty, !item.isGrammarFormula {
+            if !item.isGrammarFormula,
+               let ph = (item.phonetic?.isEmpty == false ? item.phonetic : PinyinConverter.toPinyin(item.cleanTitle)),
+               !ph.isEmpty {
                 Text(ph)
                     .font(.system(size: 14, weight: .medium, design: .serif))
                     .foregroundColor(.orange)
