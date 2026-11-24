@@ -147,7 +147,7 @@ final class SystemIntegrationTests: XCTestCase {
         XCTAssertNil(KeychainStore.string(for: testAccount), "Secret must be nil after removeAll()")
     }
 
-    // MARK: - 21. Safari Web Extension & URL Scheme Tests
+    // MARK: - 21. Custom URL Scheme Tests
     func testURLSchemeParsing() {
         guard let url = URL(string: "nekotrans://translate?text=Hello%20world") else {
             XCTFail("Invalid URL")
@@ -158,32 +158,5 @@ final class SystemIntegrationTests: XCTestCase {
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let text = components?.queryItems?.first(where: { $0.name == "text" })?.value
         XCTAssertEqual(text, "Hello world")
-    }
-
-    func testSafariExtensionManifestStructure() {
-        let sourceURL = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // Tests/NekoTransTests
-            .deletingLastPathComponent() // Tests
-            .deletingLastPathComponent() // Project root
-            .appendingPathComponent("Sources/NekoTransSafariExtension/Resources/manifest.json")
-
-        let plugInURL = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/PlugIns/NekoTransSafariExtension.appex/Contents/Resources/manifest.json")
-
-        let manifestURL = FileManager.default.fileExists(atPath: plugInURL.path) ? plugInURL : sourceURL
-        guard FileManager.default.fileExists(atPath: manifestURL.path),
-              let data = try? Data(contentsOf: manifestURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            XCTFail("manifest.json must exist at \(manifestURL.path) and be valid JSON")
-            return
-        }
-
-        XCTAssertEqual(json["manifest_version"] as? Int, 3)
-        XCTAssertNotNil(json["name"])
-        XCTAssertNotNil(json["action"])
-        XCTAssertNotNil(json["background"])
-        XCTAssertNotNil(json["content_scripts"])
-        XCTAssertNotNil(json["icons"])
-        XCTAssertNotNil(json["web_accessible_resources"])
     }
 }

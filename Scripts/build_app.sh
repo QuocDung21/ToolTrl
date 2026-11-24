@@ -46,35 +46,11 @@ else
     cp -R "$BUILT_APP" "$APP_DIR"
 fi
 
-# Ensure Safari Web Extension is bundled into Contents/PlugIns
-if [ -d "$DERIVED_DATA/Build/Products/Release/NekoTransSafariExtension.appex" ]; then
-    mkdir -p "$APP_DIR/Contents/PlugIns"
-    rsync -a --delete "$DERIVED_DATA/Build/Products/Release/NekoTransSafariExtension.appex" "$APP_DIR/Contents/PlugIns/"
-    EXT_RES="$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex/Contents/Resources"
-    if [ -d "$EXT_RES/Resources" ]; then
-        cp -R "$EXT_RES/Resources/"* "$EXT_RES/"
-        rm -rf "$EXT_RES/Resources"
-    fi
-fi
-
 # Generate & Copy AppIcon.icns if needed
 if [ -d "Resources/AppIcon.iconset" ]; then
     iconutil -c icns Resources/AppIcon.iconset -o "$RESOURCES_DIR/AppIcon.icns"
 elif [ -f "Resources/AppIcon.icns" ]; then
     cp Resources/AppIcon.icns "$RESOURCES_DIR/AppIcon.icns"
-fi
-
-# Synchronize AppIcon into Safari Extension bundle (.appex)
-EXT_APPEX_RES="$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex/Contents/Resources"
-if [ -f "$RESOURCES_DIR/AppIcon.icns" ] && [ -d "$EXT_APPEX_RES" ]; then
-    cp "$RESOURCES_DIR/AppIcon.icns" "$EXT_APPEX_RES/AppIcon.icns"
-fi
-EXT_PLIST="$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex/Contents/Info.plist"
-if [ -f "$EXT_PLIST" ]; then
-    /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile 'AppIcon'" "$EXT_PLIST" 2>/dev/null || \
-    /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string 'AppIcon'" "$EXT_PLIST" 2>/dev/null || true
-    /usr/libexec/PlistBuddy -c "Set :CFBundleIconName 'AppIcon'" "$EXT_PLIST" 2>/dev/null || \
-    /usr/libexec/PlistBuddy -c "Add :CFBundleIconName string 'AppIcon'" "$EXT_PLIST" 2>/dev/null || true
 fi
 
 if [ -f "Resources/apexcharts.min.js" ]; then
@@ -143,17 +119,6 @@ find "$APP_DIR/Contents/Frameworks" -name "*.framework" -type d 2>/dev/null | wh
     codesign --force --options runtime --sign "$SIGN_TARGET" "$fw" >/dev/null 2>&1 || true
 done
 
-# Sign embedded app extensions (.appex in Contents/PlugIns) with extension entitlements
-find "$APP_DIR/Contents/PlugIns" -name "*.appex" -type d 2>/dev/null | while read -r appex; do
-    EXT_ENTITLEMENTS="Resources/NekoTransSafariExtension.entitlements"
-    if [ -f "$EXT_ENTITLEMENTS" ]; then
-        codesign --force --options runtime --entitlements "$EXT_ENTITLEMENTS" --sign "$SIGN_TARGET" "$appex" >/dev/null 2>&1 || \
-        codesign --force --options runtime --sign "$SIGN_TARGET" "$appex" >/dev/null 2>&1 || true
-    else
-        codesign --force --options runtime --sign "$SIGN_TARGET" "$appex" >/dev/null 2>&1 || true
-    fi
-done
-
 if [ -n "$IDENTITY" ]; then
     echo "🔏 Ký ứng dụng với chứng chỉ Developer (SHA-1: $IDENTITY)..."
     if ! codesign --force --options runtime $ENTITLEMENTS_FLAG --sign "$IDENTITY" "$APP_DIR"; then
@@ -188,13 +153,9 @@ if [ -d "/Applications/$APP_NAME" ]; then
     fi
     touch "/Applications/$APP_NAME"
     "$LSREGISTER" -f -R -trusted "/Applications/$APP_NAME" >/dev/null 2>&1 || true
-    "$LSREGISTER" -u "$PWD/build.noindex/$APP_NAME/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/build.noindex/$APP_NAME" >/dev/null 2>&1 || true
-    "$LSREGISTER" -u "$PWD/build/$APP_NAME/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/build/$APP_NAME" >/dev/null 2>&1 || true
-    "$LSREGISTER" -u "$PWD/$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$PWD/$APP_DIR" >/dev/null 2>&1 || true
-    "$LSREGISTER" -u "$APP_DIR/Contents/PlugIns/NekoTransSafariExtension.appex" >/dev/null 2>&1 || true
     "$LSREGISTER" -u "$APP_DIR" >/dev/null 2>&1 || true
 else
     touch "$APP_DIR"

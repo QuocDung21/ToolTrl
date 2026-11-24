@@ -51,9 +51,9 @@
 - **Xem nhanh (`Spacebar`)**: Nhấn phím cách để mở cửa sổ Quick Look xem chi tiết mục đang chọn.
 - **Đồng bộ & Xuất dữ liệu**: Sao lưu đám mây qua **GitHub Gist**, đồng bộ 1 chạm sang **Anki Desktop (`AnkiConnect`)**, tự động ghi nhật ký `words.jsonl` cho Obsidian/Logseq, hoặc xuất ra Markdown / TSV.
 
-### 5. 🤖 Trợ lý AI & Tiện ích Trình duyệt (`⌥ + A`)
+### 5. 🤖 Trợ lý AI, Dịch Nổi Khi Bôi Đen & Tích hợp Hệ thống (`⌥ + A`)
+- **Dịch Nổi Tức Thì Khi Bôi Đen (Instant Selection Pill)**: 3 chế độ tùy chọn (*Dịch Nổi 0-Click kèm IPA/Pinyin*, *Thanh Công Cụ Nhanh kiểu PopClip*, hoặc *Nút Tròn Tối Giản*).
 - **Quick AI Assistant**: Cửa sổ nổi tích hợp ChatGPT, Gemini, Claude, Perplexity — tự động điền prompt chuẩn hóa và trích xuất kết quả phân tích lưu thẳng vào Sổ tay.
-- **Safari & Chrome Web Extension**: Dịch song ngữ trực tiếp trên trang web (giữ nguyên cấu trúc DOM, thẻ inline & icon) kết nối an toàn với NekoTrans qua cầu nối loopback cục bộ (`127.0.0.1:42421`).
 - **Apple Shortcuts & Siri (`AppIntents`)**: Hỗ trợ chuỗi hành động tự động hóa dịch văn bản, lưu từ mới và lấy từ cần ôn tập trên macOS.
 
 ### 6. 🎨 Hệ thống Theme 3 lớp & Đa ngôn ngữ
@@ -109,9 +109,8 @@ make install
 make test
 swift test --package-path Packages/NekoKit
 
-# 5. Đóng gói bộ cài đặt .dmg và tiện ích mở rộng Chrome (.zip)
+# 5. Đóng gói bộ cài đặt .dmg
 make dmg
-make chrome
 
 # 6. Dọn dẹp thư mục build & cache
 make clean
@@ -139,11 +138,9 @@ ToolTrl/
 │   ├── Sources/NekoServices/         # Tầng 2: Translation, Dictionary, LocalGGUF (llama.xcframework), OCR, Sync, Cache
 │   ├── Sources/NekoUI/               # Tầng 3: Design System (AppColors, AppTypography, Theme) & Reusable Components
 │   └── Tests/NekoKitTests/           # Swift Testing suites cho Core & Services
-├── Sources/
-│   ├── NekoTrans/                    # Tầng 4: macOS App Shell, Windows/HUD, SwiftUI Views, AppIntents & String Catalog
-│   └── NekoTransSafariExtension/     # Mã nguồn Safari / Chromium Web Extension (Manifest V3)
+├── Sources/NekoTrans/                # Tầng 4: macOS App Shell, Windows/HUD, SwiftUI Views, AppIntents & String Catalog
 ├── Tests/NekoTransTests/             # Bộ kiểm thử tích hợp chia theo mô-đun chức năng
-├── Scripts/                          # Script tự động chọn Xcode toolchain, build .app, đóng gói .dmg & Chrome extension
+├── Scripts/                          # Script tự động chọn Xcode toolchain, build .app & đóng gói .dmg
 └── .github/workflows/                # Pipeline CI kiểm thử tự động & Release phát hành trên macOS 15
 ```
 
