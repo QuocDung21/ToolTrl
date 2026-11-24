@@ -99,20 +99,23 @@
 git clone https://github.com/QuocDung21/ToolTrl.git
 cd ToolTrl
 
-# 2. Biên dịch bản Release và khởi chạy ngay
-make run
+# 2. Phát triển hàng ngày: Incremental Build (chỉ dịch file vừa sửa ~2–5s) & chạy ngay
+make dev-run
 
-# 3. Biên dịch & cài đặt trực tiếp vào /Applications/NekoTrans.app
+# 3. Build tiết kiệm CPU/RAM (chạy nền trên E-cores, không làm nóng/lag máy)
+make dev-low
+
+# 4. Biên dịch bản chuẩn tối ưu (Release) & cài đặt vào /Applications/NekoTrans.app
 make install
 
-# 4. Chạy bộ kiểm thử tự động (NekoKit & NekoTrans Tests)
+# 5. Chạy bộ kiểm thử tự động (NekoKit & NekoTrans Tests)
 make test
 swift test --package-path Packages/NekoKit
 
-# 5. Đóng gói bộ cài đặt .dmg
+# 6. Đóng gói bộ cài đặt .dmg
 make dmg
 
-# 6. Dọn dẹp thư mục build & cache
+# 7. Dọn dẹp thư mục build (giữ lại cache SPM để build lại nhanh)
 make clean
 ```
 
